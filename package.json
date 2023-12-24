@@ -1,0 +1,21 @@
+{
+  "name": "intervalcardstelegrambot",
+  "version": "1.0.0",
+  "description": "telegram bot, that can send card periodically",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "english",
+    "card"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "node-telegram-bot-api": "^0.64.0"
+  }
+}
