@@ -17,7 +17,7 @@ myBot.on('message', (msg) => {
         myBot.sendMessage(chatId, 'Welcome to the IntervalCards Telegram Bot! Here you will can add the card and receive messages from your cards periodically');
     }
 
-    // TODO: redo for TS
+    // TODO: fix TSconfig file
     // TODO: investigate usage info: https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md
     // TODO: investigate API: https://github.com/yagop/node-telegram-bot-api/blob/master/doc/api.md
     // TODO:investigate help from repository's package: https://github.com/yagop/node-telegram-bot-api/blob/master/doc/help.md

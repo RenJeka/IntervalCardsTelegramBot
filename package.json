@@ -2,9 +2,10 @@
   "name": "intervalcardstelegrambot",
   "version": "1.0.0",
   "description": "telegram bot, that can send card periodically",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "npm run dev",
+    "dev": "npx nodemon"
   },
   "keywords": [
     "telegram",
@@ -14,8 +15,21 @@
   ],
   "author": "",
   "license": "ISC",
+  "nodemonConfig": {
+    "watch": ["src"],
+    "ext": ".js,.ts",
+    "exec": "tsc && node --inspect dist/index.js",
+    "ignore": ["**/test/**", "**/docs/**"],
+    "delay": 2500
+  },
   "dependencies": {
+    "@types/node": "^20.10.5",
     "dotenv": "^16.3.1",
     "node-telegram-bot-api": "^0.64.0"
+  },
+  "devDependencies": {
+    "@tsconfig/node20": "^20.1.2",
+    "nodemon": "^3.0.2",
+    "typescript": "5.3.3"
   }
 }
