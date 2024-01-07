@@ -1,14 +1,12 @@
 import dotenv from 'dotenv'
 import TelegramBot, { CallbackQuery, Message, Metadata, SendMessageOptions } from 'node-telegram-bot-api'
 import schedule from "node-schedule";
-import { UserData } from "./common/interfaces/common";
 import { MainInlineKeyboardData } from "./common/enums/mainInlineKeyboard";
 import { DbHelper } from "./helpers/db-helper";
 import { ADD_WORD_KEYBOARD_OPTIONS, BASE_INLINE_KEYBOARD_OPTIONS } from "./const/keyboards";
 import { MessageHelper } from "./helpers/message-helper";
 
 dotenv.config();
-
 const TB_TOKEN: string = process.env.TELEGRAM_BOT_TOKEN!;
 const bot = new TelegramBot(TB_TOKEN,
     {
@@ -18,41 +16,32 @@ const bot = new TelegramBot(TB_TOKEN,
         }
     });
 
-console.log('Bot is working!');
-console.log('TB_TOKEN: ', TB_TOKEN);
-
-const userDB: UserData[] = [];
-
 const messageHelper = new MessageHelper(new DbHelper());
 
 bot.on('message', async (msg: Message, metadata: Metadata) => {
     const messageText = msg.text;
 
-
     switch (messageText) {
         case '/start':
-            await messageHelper.startBotMessageHandler(bot, msg, BASE_INLINE_KEYBOARD_OPTIONS);
+            await messageHelper.startMessageHandler(bot, msg);
             break;
 
         case '/help':
-            await messageHelper.startBotMessageHandler(bot, msg, BASE_INLINE_KEYBOARD_OPTIONS);
+            await messageHelper.helpMessageHandler(bot, msg, BASE_INLINE_KEYBOARD_OPTIONS);
             break;
         default :
-            await messageHelper.startBotMessageHandler(bot, msg, BASE_INLINE_KEYBOARD_OPTIONS);
+            await messageHelper.generalMessageHandler(bot, msg);
     }
 });
 
 bot.on('callback_query', async (query: CallbackQuery) => {
-
-    console.log('query: ', query);
-
     switch (query.data) {
         case MainInlineKeyboardData.SHOW_ALL:
-            // await messageHelper.startBotMessageHandler(bot, query.from.id, BASE_INLINE_KEYBOARD_OPTIONS);
+            await messageHelper.getAllMessagesHandler(bot, query);
             break;
 
         case MainInlineKeyboardData.ADD_WORD:
-            await messageHelper.addWordMessageHandler(bot, query, ADD_WORD_KEYBOARD_OPTIONS);
+            await messageHelper.addWordMessageHandler(bot, query);
             break;
         default :
             // await messageHelper.startBotMessageHandler(bot, query.from.id, BASE_INLINE_KEYBOARD_OPTIONS);
@@ -60,6 +49,10 @@ bot.on('callback_query', async (query: CallbackQuery) => {
 });
 
 bot.on("polling_error", err => console.log('ERROR: ', JSON.stringify(err)));
+
+// TODO: redo all read / write file to read/writeFileSync
+// TODO: move findUserMethod to separate method
+// TODO: redo inline keyboard to reply keaboard
 
 
 // TODO: investigate usage info: https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md

@@ -54,6 +54,35 @@ export class DbHelper {
         })
     }
 
+    getUserStatus(userId?: number): UserStatus | null {
+        if (!userId) {
+            return null;
+        }
+        const userDb: UserDb = this.getUserDb();
+        const currentUserData = userDb.userData.find((userData: UserData) => userData.id === userId)
+        if (!currentUserData) {
+            return null;
+        }
+        return currentUserData.status
+    }
+
+    getUserDictionary(userId?: number): string[] | null {
+        if (!userId) {
+            return null;
+        }
+
+        const userDb = this.getUserDb();
+
+        const currentUser: UserData | undefined = userDb.userData.find((userData: UserData) => userData.id === userId);
+
+        if (!currentUser) {
+            return null;
+        }
+
+        return [...currentUser.dictionary];
+
+    }
+
     private addUserWordToUserDb(userId: number, word: string, userDb?: UserDb): UserDb {
 
         if (!userDb || !userDb.userData?.length) {
@@ -89,22 +118,8 @@ export class DbHelper {
             return userData.id === userId;
         });
 
-
-        console.log('currentUserIndex: ', currentUserIndex);
-        console.log('currentUserIndex: ', currentUserIndex);
         userDbClone.userData[currentUserIndex].status = status;
         return userDbClone;
-    }
-
-    private writeJSON(userDb: UserDb) {
-        fs.writeFile(this.DB_PATH, util.format('%j', userDb), {flag: 'w+'}, (err) => {
-            if (err) {
-                console.error(`Something wrong while writing file. The file ${this.DB_PATH} wouldn't be written. Error: `, err);
-                return;
-            }
-
-            console.log(`The file ${this.DB_PATH} successfully has been written!`);
-        })
     }
 
     private initDb(userData?: UserData) {
@@ -121,4 +136,28 @@ export class DbHelper {
             }
         })
     }
+
+    private writeJSON(userDb: UserDb) {
+        fs.writeFile(this.DB_PATH, util.format('%j', userDb), {flag: 'w+'}, (err) => {
+            if (err) {
+                console.error(`Something wrong while writing file. The file ${this.DB_PATH} wouldn't be written. Error: `, err);
+                return;
+            }
+
+            console.log(`The file ${this.DB_PATH} successfully has been written!`);
+        })
+    }
+
+    private getUserDb(): UserDb {
+        try {
+            const data = fs.readFileSync(this.DB_PATH, {encoding: 'utf-8'});
+            return JSON.parse(data) as UserDb
+        } catch(error) {
+            throw new Error(`Something wrong while reading file. Error: ${JSON.stringify(error)}`)
+        }
+    }
+
+
+
+
 }
