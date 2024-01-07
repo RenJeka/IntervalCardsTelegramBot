@@ -98,7 +98,9 @@ export class DbHelper {
             return userData.id === userId;
         });
 
-        userDbClone.userData[currentUserIndex].dictionary.push(word);
+        if (currentUserIndex >= 0 ) {
+            userDbClone.userData[currentUserIndex].dictionary.push(word);
+        }
 
         return userDbClone;
     }
@@ -118,7 +120,10 @@ export class DbHelper {
             return userData.id === userId;
         });
 
-        userDbClone.userData[currentUserIndex].status = status;
+        if (currentUserIndex >= 0) {
+            userDbClone.userData[currentUserIndex].status = status;
+        }
+
         return userDbClone;
     }
 

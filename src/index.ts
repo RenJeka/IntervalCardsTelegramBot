@@ -54,12 +54,10 @@ bot.on("polling_error", err => console.log('ERROR: ', JSON.stringify(err)));
 // TODO: move findUserMethod to separate method
 // TODO: redo inline keyboard to reply keaboard
 
-
 // TODO: investigate usage info: https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md
 // TODO: investigate API: https://github.com/yagop/node-telegram-bot-api/blob/master/doc/api.md
 // TODO:investigate help from repository's package: https://github.com/yagop/node-telegram-bot-api/blob/master/doc/help.md
 // TODO: redo bot for webhooks: https://github.com/yagop/node-telegram-bot-api/tree/master/examples/webhook
-
 
 //TODO: implement the 'scheduleJob'
 // schedule.scheduleJob('13 * * * *', () => {
