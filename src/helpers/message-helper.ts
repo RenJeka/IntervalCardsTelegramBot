@@ -1,7 +1,11 @@
 import TelegramBot, { CallbackQuery, Message } from "node-telegram-bot-api";
 import { DbHelper } from "./db-helper";
 import { UserStatus } from "../common/enums/userStatus";
-import { ADD_WORD_KEYBOARD_OPTIONS, BASE_INLINE_KEYBOARD_OPTIONS } from "../const/keyboards";
+import {
+    ADD_WORD_KEYBOARD_OPTIONS,
+    BASE_INLINE_KEYBOARD_OPTIONS,
+    REMOVE_WORD_KEYBOARD_OPTIONS
+} from "../const/keyboards";
 import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
 
 export class MessageHelper {
@@ -47,25 +51,24 @@ export class MessageHelper {
 
         switch (currentUserStatus) {
             case UserStatus.ADD_WORD:
-                const dbResponse: DbResponse = this.dbHelper.writeWordByUserId(userId, message.text);
-                let responseMessageText = `The word '${message.text}' has been added. You can add more!`;
 
-                if (!dbResponse.success) {
-                    if (dbResponse.status === DbResponseStatus.DUPLICATE_WORD) {
-                        responseMessageText = `The word '${message.text}' already exist in your dictionary. Please, send other word.`;
-                    }
-                }
-                return bot.sendMessage(
-                    chatId,
-                    responseMessageText,
+                return this.addParticularWordHandler(
+                  bot,
+                  userId,
+                  chatId,
+                  message
                 );
 
             case UserStatus.REMOVE_WORD:
-                // TODO: Remove word logic here
-                return bot.sendMessage(
+
+                return this.removeParticularWordHandler(
+                    bot,
+                    userId,
                     chatId,
-                    `'${ UserStatus.REMOVE_WORD}' functionality in development `,
+                    message
                 );
+
+                break;
 
             case UserStatus.START_LEARN:
                 // TODO: Remove word logic here
@@ -73,6 +76,7 @@ export class MessageHelper {
                     chatId,
                     `'${ UserStatus.START_LEARN}' functionality in development `,
                 );
+                break;
 
             case UserStatus.STOP_LEARN:
                 // TODO: Remove word logic here
@@ -80,6 +84,7 @@ export class MessageHelper {
                     chatId,
                     `'${ UserStatus.STOP_LEARN}' functionality in development `,
                 );
+                break;
 
             default:
                 return await this.startMessageHandler(bot, message);
@@ -119,6 +124,36 @@ export class MessageHelper {
         );
     }
 
+    async removeWordMessageHandler(bot: TelegramBot, query: CallbackQuery): Promise<TelegramBot.Message | undefined> {
+
+        const chatId = query.message?.chat.id;
+        const userId = query.from.id;
+        if (!chatId) {
+            return;
+        }
+
+        this.dbHelper.editUserStatus(userId, UserStatus.REMOVE_WORD)
+
+        try {
+            const userDictionary: string[] | null = this.dbHelper.getUserDictionary(userId);
+
+
+            const userDictionaryWithNumbers: string = this.userDictionaryWithNumbers(userDictionary || []);
+            return bot.sendMessage(
+                chatId,
+                `Please, type number of word and press 'Enter' or send button \n` + userDictionaryWithNumbers,
+                REMOVE_WORD_KEYBOARD_OPTIONS
+            );
+        } catch (error: any) {
+            return bot.sendMessage(
+                chatId,
+                `Something went wrong: ${error?.message || ''}. Please, try again`,
+                REMOVE_WORD_KEYBOARD_OPTIONS
+            );
+        }
+
+    }
+
     async getAllMessagesHandler(bot: TelegramBot, query: CallbackQuery): Promise<TelegramBot.Message | undefined> {
         const chatId = query.message?.chat.id;
         const userId = query.from.id;
@@ -142,6 +177,72 @@ export class MessageHelper {
         return bot.sendMessage(
             chatId,
             `Your words:\n ${userDictionary.join(', \n')}`,
+        );
+    }
+
+
+    private userDictionaryWithNumbers(userDictionary: string[]): string {
+        if (!userDictionary || !userDictionary.length) {
+            return '';
+        }
+
+        let result = '';
+
+        userDictionary.forEach((usersWord: string, index: number) => {
+            result += `${index + 1}. ${usersWord}; \n`
+        });
+
+        return result;
+    }
+
+    private addParticularWordHandler(
+        bot: TelegramBot,
+        userId: number,
+        chatId: number,
+        message:Message
+    ):  Promise<TelegramBot.Message> {
+        const dbResponse: DbResponse = this.dbHelper.writeWordByUserId(userId, message.text || '');
+        let responseMessageText = `The word '${message.text}' has been added. You can add more!`;
+
+        if (!dbResponse.success) {
+            if (dbResponse.status === DbResponseStatus.DUPLICATE_WORD) {
+                responseMessageText = `The word '${message.text}' already exist in your dictionary. Please, send other word.`;
+            }
+            responseMessageText = dbResponse.message || 'Something went wrong! Please, try again.'
+        }
+        return bot.sendMessage(
+            chatId,
+            responseMessageText,
+        );
+    }
+
+
+    private removeParticularWordHandler(
+        bot: TelegramBot,
+        userId: number,
+        chatId: number,
+        message:Message
+    ):  Promise<TelegramBot.Message> {
+        const numberOfWord: number = parseInt(message.text || '')
+        if (Number.isNaN(numberOfWord) || numberOfWord === 0) {
+            return bot.sendMessage(
+                chatId,
+                'Please, provide valid word number.',
+            );
+        }
+
+        const dbResponse: DbResponse = this.dbHelper.removeWordByIndexByUserId(userId, numberOfWord - 1);
+        let responseMessageText = `The word has been deleted successfully. You can delete more!`;
+
+        if (!dbResponse.success) {
+            if (dbResponse.status === DbResponseStatus.WRONG_INPUT) {
+                responseMessageText = `The word with number '${message.text}' hasn't been find. Please, try again`;
+            }
+            responseMessageText = dbResponse.message || 'Something went wrong! Please, try again.'
+        }
+        return bot.sendMessage(
+            chatId,
+            dbResponse.message || responseMessageText,
         );
     }
 }

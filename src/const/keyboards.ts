@@ -22,6 +22,16 @@ export const ADD_WORD_KEYBOARD_OPTIONS: SendMessageOptions = {
     }
 }
 
+export const REMOVE_WORD_KEYBOARD_OPTIONS: SendMessageOptions = {
+    reply_markup: {
+        inline_keyboard: [
+            [{text: '⭐️ Show all words', callback_data: AddingWordsInlineKeyboardData.SHOW_ALL}],
+            [{text: '⭐️ Finish removing words', callback_data: AddingWordsInlineKeyboardData.FINISH}, {text: '⭐️ Cancel', callback_data: AddingWordsInlineKeyboardData.CANCEL}],
+        ],
+        resize_keyboard: true
+    }
+}
+
 export const REPLY_KEYBOARD_OPTIONS: SendMessageOptions = {
     reply_markup: {
         keyboard: [

@@ -50,6 +50,42 @@ export class DbHelper {
         }
     }
 
+    removeWordByIndexByUserId( userId: number, wordIndex: number): DbResponse {
+        try {
+            this.initDb();
+            const currentUser: UserData | null = this.getUserById(userId);
+
+            if (!currentUser) {
+                throw new Error(`Can't find user by id: ${userId}`)
+            }
+
+            if (currentUser.dictionary.length - 1 < wordIndex) {
+                return {
+                    success: false,
+                    status: DbResponseStatus.WRONG_INPUT,
+                    message: `Incorrect word's index`
+                }
+            }
+
+            const deletingWord = currentUser.dictionary[wordIndex];
+            currentUser.dictionary.splice(wordIndex, 1);
+            this.addUserDataToDb(currentUser);
+
+            return {
+                success: true,
+                status: DbResponseStatus.OK,
+                message: `Word '${deletingWord}' has been deleting successfully`
+            }
+
+        } catch (error: any) {
+            return {
+                success: false,
+                status: DbResponseStatus.DB_ERROR,
+                message: error.message ? error.message : 'Something wrong while deleting word from DB'
+            }
+        }
+    }
+
     editUserStatus(userId: number, userStatus: UserStatus = UserStatus.DEFAULT) {
         fs.exists (this.DB_PATH, (isFileExist: boolean) => {
 

@@ -44,6 +44,10 @@ bot.on('callback_query', async (query: CallbackQuery) => {
             await messageHelper.addWordMessageHandler(bot, query);
             break;
 
+        case MainInlineKeyboardData.REMOVE_WORD:
+            await messageHelper.removeWordMessageHandler(bot, query);
+            break;
+
         case AddingWordsInlineKeyboardData.CANCEL:
             await messageHelper.goToMainPage(bot, query);
             break;
@@ -58,19 +62,12 @@ bot.on('callback_query', async (query: CallbackQuery) => {
 
 bot.on("polling_error", err => console.log('ERROR: ', JSON.stringify(err)));
 
-// TODO: redo all read / write file to read/writeFileSync
-// TODO: move findUserMethod to separate method
-// TODO: redo inline keyboard to reply keyboard
-// TODO: make 3 methods: remove word / start learning, stop learning
-// TODO: delete duplicates of words
-// TODO: set-up node-typescript to make possible to debug
-
-// TODO: investigate usage info: https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md
-// TODO: investigate API: https://github.com/yagop/node-telegram-bot-api/blob/master/doc/api.md
-// TODO:investigate help from repository's package: https://github.com/yagop/node-telegram-bot-api/blob/master/doc/help.md
-// TODO: redo bot for webhooks: https://github.com/yagop/node-telegram-bot-api/tree/master/examples/webhook
-
-//TODO: implement the 'scheduleJob'
+// TODO: make 2 methods: start learning, stop learning
+// use the 'scheduleJob': 
 // schedule.scheduleJob('13 * * * *', () => {
 //     bot.sendMessage(chatId, 'Hello! This is a scheduled message.');
 // });
+
+// TODO: redo inline keyboard to reply keyboard
+// TODO: redo all read / write file to read/writeFileSync
+
