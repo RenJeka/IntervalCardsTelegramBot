@@ -1,4 +1,4 @@
-import TelegramBot, { CallbackQuery, Message, SendMessageOptions } from "node-telegram-bot-api";
+import TelegramBot, { CallbackQuery, Message } from "node-telegram-bot-api";
 import { DbHelper } from "./db-helper";
 import { UserStatus } from "../common/enums/userStatus";
 import { ADD_WORD_KEYBOARD_OPTIONS, BASE_INLINE_KEYBOARD_OPTIONS } from "../const/keyboards";
@@ -21,7 +21,7 @@ export class MessageHelper {
         );
     }
 
-    async helpMessageHandler(bot: TelegramBot, message: Message, options: SendMessageOptions): Promise<TelegramBot.Message> {
+    async helpMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
         return this.startMessageHandler(bot, message);
     }
 
@@ -84,14 +84,12 @@ export class MessageHelper {
         const userId = query.from.id;
         this.dbHelper.changeUserStatus(userId, UserStatus.DEFAULT)
 
-        console.log('***************** GO_TO_MAIN_PAGE *********************');
-
         if (!chatId) {
             return;
         }
         return bot.sendMessage(
             chatId,
-            '',
+            'You are on the \'Home page\'',
             BASE_INLINE_KEYBOARD_OPTIONS
         );
     }
@@ -108,7 +106,7 @@ export class MessageHelper {
         }
         return bot.sendMessage(
             chatId,
-            'Please, send me 1 word ...',
+            'Please, type your word and press \'Enter\' or send button',
             ADD_WORD_KEYBOARD_OPTIONS
         );
     }
