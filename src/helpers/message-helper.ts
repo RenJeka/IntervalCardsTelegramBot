@@ -78,6 +78,24 @@ export class MessageHelper {
         }
     }
 
+    async goToMainPage(bot: TelegramBot, query: CallbackQuery): Promise<TelegramBot.Message | undefined> {
+
+        const chatId = query.message?.chat.id;
+        const userId = query.from.id;
+        this.dbHelper.changeUserStatus(userId, UserStatus.DEFAULT)
+
+        console.log('***************** GO_TO_MAIN_PAGE *********************');
+
+        if (!chatId) {
+            return;
+        }
+        return bot.sendMessage(
+            chatId,
+            '',
+            BASE_INLINE_KEYBOARD_OPTIONS
+        );
+    }
+
     async addWordMessageHandler(bot: TelegramBot, query: CallbackQuery): Promise<TelegramBot.Message | undefined> {
 
         const chatId = query.message?.chat.id;
@@ -85,7 +103,6 @@ export class MessageHelper {
         this.dbHelper.changeUserStatus(userId, UserStatus.ADD_WORD)
 
 
-        console.log('query: ', query);
         if (!chatId) {
             return;
         }
