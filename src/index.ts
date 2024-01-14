@@ -27,7 +27,7 @@ bot.on('message', async (msg: Message, metadata: Metadata) => {
             break;
 
         case '/help':
-            await messageHelper.helpMessageHandler(bot, msg, BASE_INLINE_KEYBOARD_OPTIONS);
+            await messageHelper.helpMessageHandler(bot, msg);
             break;
         default :
             await messageHelper.generalMessageHandler(bot, msg);

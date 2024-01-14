@@ -3,6 +3,8 @@ import * as util from "node:util";
 import { UserData, UserDb } from "../common/interfaces/common";
 import { UserStatus } from "../common/enums/userStatus";
 import path from "path";
+import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
+import { ValidateHelper } from "./validate-helper";
 
 export class DbHelper {
 
@@ -11,31 +13,44 @@ export class DbHelper {
     }
 
     readonly DB_DIRECTORY_NAME = 'db';
-    readonly DB_NAME = 'userDb.json';
+    readonly DB_NAME = 'userDb-old';
     readonly DB_PATH = path.join('./', this.DB_DIRECTORY_NAME, this.DB_NAME);
 
-    writeWordByUserId( userId: number, word: string) {
+    writeWordByUserId( userId: number, word: string): DbResponse {
+        try {
+            this.initDb();
+            const currentUser: UserData | null = this.getUserById(userId);
 
-        fs.exists (this.DB_PATH, (isFileExist: boolean) => {
-
-            if (!isFileExist) {
-                this.initDb();
+            if (!currentUser) {
+                throw new Error(`Can't find user by id: ${userId}`)
             }
 
-            fs.readFile(this.DB_PATH, {encoding: 'utf-8'}, (err, data) => {
-                if (err) {
-                    console.error('File can\'t be opened!: ', err);
-                    return;
-
+            if (ValidateHelper.checkDuplicate(currentUser.dictionary, word)) {
+                return {
+                    success: false,
+                    status: DbResponseStatus.DUPLICATE_WORD,
+                    message: `Duplicate word:  '${word}'`
                 }
+            }
+            currentUser.dictionary.push(word);
+            this.addUserDataToDb(currentUser);
 
-                const newUserDb = this.addUserWordToUserDb(userId, word, JSON.parse(data))
-                this.writeJSON(newUserDb);
-            });
-        })
+            return {
+                success: true,
+                status: DbResponseStatus.OK,
+                message: `Word '${word}' has been written successfully`
+            }
+
+        } catch (error: any) {
+            return {
+                success: false,
+                status: DbResponseStatus.DB_ERROR,
+                message: error.message ? error.message : 'Something wrong while writing word to DB'
+            }
+        }
     }
 
-    changeUserStatus(userId: number, userStatus: UserStatus = UserStatus.DEFAULT) {
+    editUserStatus(userId: number, userStatus: UserStatus = UserStatus.DEFAULT) {
         fs.exists (this.DB_PATH, (isFileExist: boolean) => {
 
             if (!isFileExist) {
@@ -83,28 +98,6 @@ export class DbHelper {
 
     }
 
-    private addUserWordToUserDb(userId: number, word: string, userDb?: UserDb): UserDb {
-
-        if (!userDb || !userDb.userData?.length) {
-            return {
-                userData: [
-                    {id: userId, status: UserStatus.DEFAULT, dictionary: [word]}
-                ]
-            }
-        }
-
-        const userDbClone = JSON.parse(JSON.stringify(userDb));
-        const currentUserIndex = userDbClone.userData.findIndex((userData: UserData) => {
-            return userData.id === userId;
-        });
-
-        if (currentUserIndex >= 0 ) {
-            userDbClone.userData[currentUserIndex].dictionary.push(word);
-        }
-
-        return userDbClone;
-    }
-
     private addUserStatusToUserDb(userId: number, status: UserStatus = UserStatus.DEFAULT, userDb?: UserDb): UserDb {
 
         if (!userDb || !userDb.userData?.length) {
@@ -127,7 +120,7 @@ export class DbHelper {
         return userDbClone;
     }
 
-    private initDb(userData?: UserData) {
+    private initDb() {
         fs.exists (this.DB_PATH, (isDbExist: boolean) => {
             if (!isDbExist) {
                 if (!fs.existsSync(this.DB_DIRECTORY_NAME)) {
@@ -135,7 +128,7 @@ export class DbHelper {
                 }
 
                 const userDB: UserDb = {
-                    userData: userData ? [userData] : []
+                    userData: []
                 }
                 this.writeJSON(userDB);
             }
@@ -162,7 +155,28 @@ export class DbHelper {
         }
     }
 
+    private getUserById(userId: number): UserData | null {
+        try {
+            const db: UserDb = this.getUserDb();
+            return db.userData.find(user => user.id === userId) || null
+        } catch (error) {
+            throw error;
+        }
 
+    }
 
+    private addUserDataToDb(currentUser: UserData) {
+        this.initDb();
+        const db: UserDb  = this.getUserDb();
+        const currentUserCopy: UserData = JSON.parse(JSON.stringify(currentUser));
+        const currentUserIndex = db.userData.findIndex(user => user.id === currentUser.id);
 
+        if (currentUserIndex < 0) {
+            db.userData.push(currentUserCopy);
+        }
+
+        db.userData[currentUserIndex] = currentUserCopy;
+
+        this.writeJSON(db);
+    }
 }

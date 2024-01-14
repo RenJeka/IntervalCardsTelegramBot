@@ -2,6 +2,7 @@ import TelegramBot, { CallbackQuery, Message } from "node-telegram-bot-api";
 import { DbHelper } from "./db-helper";
 import { UserStatus } from "../common/enums/userStatus";
 import { ADD_WORD_KEYBOARD_OPTIONS, BASE_INLINE_KEYBOARD_OPTIONS } from "../const/keyboards";
+import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
 
 export class MessageHelper {
     constructor(private dbHelper: DbHelper) { }
@@ -11,7 +12,7 @@ export class MessageHelper {
         const userId = message.from?.id;
 
         if (userId) {
-            this.dbHelper.changeUserStatus(userId, UserStatus.DEFAULT);
+            this.dbHelper.editUserStatus(userId, UserStatus.DEFAULT);
         }
 
         return bot.sendMessage(
@@ -46,10 +47,17 @@ export class MessageHelper {
 
         switch (currentUserStatus) {
             case UserStatus.ADD_WORD:
-                this.dbHelper.writeWordByUserId(userId, message.text);
+                const dbResponse: DbResponse = this.dbHelper.writeWordByUserId(userId, message.text);
+                let responseMessageText = `The word '${message.text}' has been added. You can add more!`;
+
+                if (!dbResponse.success) {
+                    if (dbResponse.status === DbResponseStatus.DUPLICATE_WORD) {
+                        responseMessageText = `The word '${message.text}' already exist in your dictionary. Please, send other word.`;
+                    }
+                }
                 return bot.sendMessage(
                     chatId,
-                    `The word '${message.text}' has been added. You can add more!`,
+                    responseMessageText,
                 );
 
             case UserStatus.REMOVE_WORD:
@@ -82,7 +90,7 @@ export class MessageHelper {
 
         const chatId = query.message?.chat.id;
         const userId = query.from.id;
-        this.dbHelper.changeUserStatus(userId, UserStatus.DEFAULT)
+        this.dbHelper.editUserStatus(userId, UserStatus.DEFAULT)
 
         if (!chatId) {
             return;
@@ -98,7 +106,7 @@ export class MessageHelper {
 
         const chatId = query.message?.chat.id;
         const userId = query.from.id;
-        this.dbHelper.changeUserStatus(userId, UserStatus.ADD_WORD)
+        this.dbHelper.editUserStatus(userId, UserStatus.ADD_WORD)
 
 
         if (!chatId) {
