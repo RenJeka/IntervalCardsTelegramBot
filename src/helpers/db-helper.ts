@@ -13,7 +13,7 @@ export class DbHelper {
     }
 
     readonly DB_DIRECTORY_NAME = 'db';
-    readonly DB_NAME = 'userDb-old';
+    readonly DB_NAME = 'userDb.json';
     readonly DB_PATH = path.join('./', this.DB_DIRECTORY_NAME, this.DB_NAME);
 
     writeWordByUserId( userId: number, word: string): DbResponse {
