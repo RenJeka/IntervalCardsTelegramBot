@@ -131,7 +131,6 @@ export class DbHelper {
         }
 
         return [...currentUser.dictionary];
-
     }
 
     checkIsUserExist(userId: number): boolean {
@@ -145,7 +144,7 @@ export class DbHelper {
     private addUserStatusToUserDb(userId: number, status: UserStatus = UserStatus.DEFAULT, userDb?: UserDb): UserDb {
 
         // TODO: mutation logic. Instead UserStatus this code add new User to DB
-        if (!userDb || !userDb.userData?.length) {
+        if (!userDb || !userDb.userData?.length || !this.checkIsUserExist(userId)) {
             return {
                 userData: [
                     {id: userId, status: UserStatus.DEFAULT, dictionary: []}
@@ -208,7 +207,6 @@ export class DbHelper {
         } catch (error) {
             throw error;
         }
-
     }
 
     private addUserDataToDb(currentUser: UserData) {
