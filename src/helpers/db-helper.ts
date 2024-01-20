@@ -12,9 +12,9 @@ export class DbHelper {
         this.initDb();
     }
 
-    readonly DB_DIRECTORY_NAME = 'db';
-    readonly DB_NAME = 'userDb.json';
-    readonly DB_PATH = path.join('./', this.DB_DIRECTORY_NAME, this.DB_NAME);
+    private DB_DIRECTORY_NAME = 'db';
+    private DB_NAME = 'userDb.json';
+    private DB_PATH = path.join('./', this.DB_DIRECTORY_NAME, this.DB_NAME);
 
     writeWordByUserId( userId: number, word: string): DbResponse {
         try {
@@ -86,7 +86,7 @@ export class DbHelper {
         }
     }
 
-    editUserStatus(userId: number, userStatus: UserStatus = UserStatus.DEFAULT) {
+    setUserStatus(userId: number, userStatus: UserStatus = UserStatus.DEFAULT) {
         fs.exists (this.DB_PATH, (isFileExist: boolean) => {
 
             if (!isFileExist) {
@@ -134,8 +134,17 @@ export class DbHelper {
 
     }
 
+    checkIsUserExist(userId: number): boolean {
+        if (typeof userId !== 'number') {
+            return false;
+        }
+        const currentUser = this.getUserById(userId);
+        return !!currentUser;
+    }
+
     private addUserStatusToUserDb(userId: number, status: UserStatus = UserStatus.DEFAULT, userDb?: UserDb): UserDb {
 
+        // TODO: mutation logic. Instead UserStatus this code add new User to DB
         if (!userDb || !userDb.userData?.length) {
             return {
                 userData: [
@@ -193,6 +202,7 @@ export class DbHelper {
 
     private getUserById(userId: number): UserData | null {
         try {
+            this.initDb();
             const db: UserDb = this.getUserDb();
             return db.userData.find(user => user.id === userId) || null
         } catch (error) {

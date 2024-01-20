@@ -4,7 +4,8 @@ import { UserStatus } from "../common/enums/userStatus";
 import {
     ADD_WORD_KEYBOARD_OPTIONS,
     BASE_INLINE_KEYBOARD_OPTIONS,
-    REMOVE_WORD_KEYBOARD_OPTIONS, START_LEARN_KEYBOARD_OPTIONS
+    REMOVE_WORD_KEYBOARD_OPTIONS,
+    START_LEARN_KEYBOARD_OPTIONS
 } from "../const/keyboards";
 import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
 import schedule, { Job } from "node-schedule";
@@ -22,7 +23,7 @@ export class MessageHelper {
         const userId = message.from?.id;
 
         if (userId) {
-            this.dbHelper.editUserStatus(userId, UserStatus.DEFAULT);
+            this.dbHelper.setUserStatus(userId, UserStatus.DEFAULT);
         }
 
         return bot.sendMessage(
@@ -54,6 +55,10 @@ export class MessageHelper {
         }
 
         const currentUserStatus: UserStatus | null = this.dbHelper.getUserStatus(userId);
+
+        if (!currentUserStatus) {
+            this.dbHelper.setUserStatus(userId, UserStatus.DEFAULT);
+        }
 
         switch (currentUserStatus) {
             case UserStatus.ADD_WORD:
@@ -101,7 +106,7 @@ export class MessageHelper {
 
         const chatId = query.message?.chat.id;
         const userId = query.from.id;
-        this.dbHelper.editUserStatus(userId, UserStatus.DEFAULT)
+        this.dbHelper.setUserStatus(userId, UserStatus.DEFAULT)
 
         if (!chatId) {
             return;
@@ -117,7 +122,7 @@ export class MessageHelper {
 
         const chatId = query.message?.chat.id;
         const userId = query.from.id;
-        this.dbHelper.editUserStatus(userId, UserStatus.ADD_WORD)
+        this.dbHelper.setUserStatus(userId, UserStatus.ADD_WORD)
 
 
         if (!chatId) {
@@ -138,7 +143,7 @@ export class MessageHelper {
             return;
         }
 
-        this.dbHelper.editUserStatus(userId, UserStatus.REMOVE_WORD)
+        this.dbHelper.setUserStatus(userId, UserStatus.REMOVE_WORD)
 
         try {
             const userDictionary: string[] | null = this.dbHelper.getUserDictionary(userId);
@@ -203,7 +208,7 @@ export class MessageHelper {
                     BASE_INLINE_KEYBOARD_OPTIONS
                 );
             }
-            this.dbHelper.editUserStatus(userId, UserStatus.START_LEARN);
+            this.dbHelper.setUserStatus(userId, UserStatus.START_LEARN);
 
             this.currentJob = schedule.scheduleJob('*/5 * * * * *', () => {
                 const randomIndex = Math.floor(Math.random() * userDictionary.length);
@@ -231,7 +236,7 @@ export class MessageHelper {
         }
 
         try {
-            this.dbHelper.editUserStatus(userId, UserStatus.DEFAULT)
+            this.dbHelper.setUserStatus(userId, UserStatus.DEFAULT)
             // TODO: Logic to stop learning here
             this.currentJob.cancel();
             return bot.sendMessage(
