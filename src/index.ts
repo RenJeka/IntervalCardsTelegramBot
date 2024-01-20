@@ -1,6 +1,5 @@
 import dotenv from 'dotenv'
 import TelegramBot, { CallbackQuery, Message, Metadata, SendMessageOptions } from 'node-telegram-bot-api'
-import schedule from "node-schedule";
 import { AddingWordsInlineKeyboardData, MainInlineKeyboardData } from "./common/enums/mainInlineKeyboard";
 import { DbHelper } from "./helpers/db-helper";
 import { ADD_WORD_KEYBOARD_OPTIONS, BASE_INLINE_KEYBOARD_OPTIONS } from "./const/keyboards";
@@ -65,7 +64,7 @@ bot.on('callback_query', async (query: CallbackQuery) => {
             break;
 
         default :
-            // await messageHelper.startBotMessageHandler(bot, query.from.id, BASE_INLINE_KEYBOARD_OPTIONS);
+            await messageHelper.startMessageHandler(bot, query.message!);
     }
 });
 

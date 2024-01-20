@@ -82,18 +82,9 @@ export class MessageHelper {
                 break;
 
             case UserStatus.START_LEARN:
-                // TODO: Remove word logic here
                 return bot.sendMessage(
                     chatId,
-                    `'${ UserStatus.START_LEARN}' functionality in development `,
-                );
-                break;
-
-            case UserStatus.STOP_LEARN:
-                // TODO: Remove word logic here
-                return bot.sendMessage(
-                    chatId,
-                    `'${ UserStatus.STOP_LEARN}' functionality in development `,
+                    `Now You are in learning mode. Please, use the keyboard menu to navigate or do action you want.`,
                 );
                 break;
 
@@ -216,7 +207,7 @@ export class MessageHelper {
             });
             return bot.sendMessage(
                 chatId,
-                `You are in learning. Every 3 hour you will get 1 word`,
+                `You are in learning. Every 5 seconds you will get 1 word`,
                 START_LEARN_KEYBOARD_OPTIONS
             );
         } catch (error: any) {

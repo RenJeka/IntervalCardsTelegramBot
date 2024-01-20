@@ -18,7 +18,6 @@ export class DbHelper {
 
     writeWordByUserId( userId: number, word: string): DbResponse {
         try {
-            this.initDb();
             const currentUser: UserData | null = this.getUserById(userId);
 
             if (!currentUser) {
@@ -52,7 +51,6 @@ export class DbHelper {
 
     removeWordByIndexByUserId( userId: number, wordIndex: number): DbResponse {
         try {
-            this.initDb();
             const currentUser: UserData | null = this.getUserById(userId);
 
             if (!currentUser) {
@@ -87,21 +85,14 @@ export class DbHelper {
     }
 
     setUserStatus(userId: number, userStatus: UserStatus = UserStatus.DEFAULT) {
-        fs.exists (this.DB_PATH, (isFileExist: boolean) => {
-
-            if (!isFileExist) {
-                this.initDb();
+        fs.readFile(this.DB_PATH, {encoding: 'utf-8'}, (err, data) => {
+            if (err) {
+                console.error('File can\'t be opened!: ', err);
+                return;
             }
 
-            fs.readFile(this.DB_PATH, {encoding: 'utf-8'}, (err, data) => {
-                if (err) {
-                    console.error('File can\'t be opened!: ', err);
-                    return;
-                }
-
-                const newUserDb = this.addUserStatusToUserDb(userId, userStatus, JSON.parse(data))
-                this.writeJSON(newUserDb);
-            })
+            const newUserDb = this.addUserStatusToUserDb(userId, userStatus, JSON.parse(data));
+            this.writeJSON(newUserDb);
         })
     }
 
@@ -141,15 +132,10 @@ export class DbHelper {
         return !!currentUser;
     }
 
-    private addUserStatusToUserDb(userId: number, status: UserStatus = UserStatus.DEFAULT, userDb?: UserDb): UserDb {
+    private addUserStatusToUserDb(userId: number, status: UserStatus = UserStatus.DEFAULT, userDb: UserDb): UserDb {
 
-        // TODO: mutation logic. Instead UserStatus this code add new User to DB
-        if (!userDb || !userDb.userData?.length || !this.checkIsUserExist(userId)) {
-            return {
-                userData: [
-                    {id: userId, status: UserStatus.DEFAULT, dictionary: []}
-                ]
-            }
+        if (!this.checkIsUserExist(userId)) {
+            this.initUser(userId);
         }
 
         const userDbClone = JSON.parse(JSON.stringify(userDb));
@@ -179,6 +165,17 @@ export class DbHelper {
         })
     }
 
+    private initUser(userId: number) {
+        if (this.checkIsUserExist(userId)) {
+           return
+        }
+        this.addUserDataToDb({
+            id: userId,
+            status: UserStatus.DEFAULT,
+            dictionary: []
+        })
+    }
+
     private writeJSON(userDb: UserDb) {
         fs.writeFile(this.DB_PATH, util.format('%j', userDb), {flag: 'w+'}, (err) => {
             if (err) {
@@ -201,7 +198,6 @@ export class DbHelper {
 
     private getUserById(userId: number): UserData | null {
         try {
-            this.initDb();
             const db: UserDb = this.getUserDb();
             return db.userData.find(user => user.id === userId) || null
         } catch (error) {
@@ -210,16 +206,15 @@ export class DbHelper {
     }
 
     private addUserDataToDb(currentUser: UserData) {
-        this.initDb();
         const db: UserDb  = this.getUserDb();
         const currentUserCopy: UserData = JSON.parse(JSON.stringify(currentUser));
         const currentUserIndex = db.userData.findIndex(user => user.id === currentUser.id);
 
         if (currentUserIndex < 0) {
             db.userData.push(currentUserCopy);
+        } else {
+            db.userData[currentUserIndex] = currentUserCopy;
         }
-
-        db.userData[currentUserIndex] = currentUserCopy;
 
         this.writeJSON(db);
     }
