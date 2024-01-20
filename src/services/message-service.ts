@@ -8,15 +8,14 @@ import {
     START_LEARN_KEYBOARD_OPTIONS
 } from "../const/keyboards";
 import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
-import schedule, { Job } from "node-schedule";
+import { ScheduleService } from "./schedule-service";
 
 export class MessageService {
 
-    private userJobs: { userId: number, job: Job; }[] = [];
-
-    private currentJob: Job = {} as Job;
-
-    constructor(private dbService: DbService) { }
+    constructor(
+        private dbService: DbService,
+        private scheduleService: ScheduleService,
+    ) { }
 
     async startMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
         const chatId = message.chat.id;
@@ -201,10 +200,7 @@ export class MessageService {
             }
             this.dbService.setUserStatus(userId, UserStatus.START_LEARN);
 
-            this.currentJob = schedule.scheduleJob('*/5 * * * * *', () => {
-                const randomIndex = Math.floor(Math.random() * userDictionary.length);
-                bot.sendMessage(chatId, userDictionary[randomIndex]);
-            });
+            this.scheduleService.startLearnByUserId(bot, userDictionary, userId, chatId);
             return bot.sendMessage(
                 chatId,
                 `You are in learning. Every 5 seconds you will get 1 word`,
@@ -227,9 +223,10 @@ export class MessageService {
         }
 
         try {
-            this.dbService.setUserStatus(userId, UserStatus.DEFAULT)
-            // TODO: Logic to stop learning here
-            this.currentJob.cancel();
+            this.scheduleService.stopLearnByUserId(userId);
+
+            this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
+
             return bot.sendMessage(
                 chatId,
                 `You have been exit from learn mode. Nice work!`,

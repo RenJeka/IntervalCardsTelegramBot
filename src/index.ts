@@ -4,6 +4,7 @@ import { AddingWordsInlineKeyboardData, MainInlineKeyboardData } from "./common/
 import { DbService } from "./services/db-service";
 import { ADD_WORD_KEYBOARD_OPTIONS, BASE_INLINE_KEYBOARD_OPTIONS } from "./const/keyboards";
 import { MessageService } from "./services/message-service";
+import { ScheduleService } from "./services/schedule-service";
 
 dotenv.config();
 const TB_TOKEN: string = process.env.TELEGRAM_BOT_TOKEN!;
@@ -15,7 +16,12 @@ const bot = new TelegramBot(TB_TOKEN,
         }
     });
 
-const messageService = new MessageService(new DbService());
+const dbService = new DbService();
+const scheduleService = new ScheduleService(dbService);
+const messageService = new MessageService(
+    dbService,
+    scheduleService
+);
 
 bot.on('message', async (msg: Message, metadata: Metadata) => {
     const messageText = msg.text;
