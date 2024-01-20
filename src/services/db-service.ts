@@ -4,9 +4,9 @@ import { UserData, UserDb } from "../common/interfaces/common";
 import { UserStatus } from "../common/enums/userStatus";
 import path from "path";
 import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
-import { ValidateHelper } from "./validate-helper";
+import { ValidateHelper } from "../helpers/validate-helper";
 
-export class DbHelper {
+export class DbService {
 
     constructor() {
         this.initDb();

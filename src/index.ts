@@ -1,9 +1,9 @@
 import dotenv from 'dotenv'
 import TelegramBot, { CallbackQuery, Message, Metadata, SendMessageOptions } from 'node-telegram-bot-api'
 import { AddingWordsInlineKeyboardData, MainInlineKeyboardData } from "./common/enums/mainInlineKeyboard";
-import { DbHelper } from "./helpers/db-helper";
+import { DbService } from "./services/db-service";
 import { ADD_WORD_KEYBOARD_OPTIONS, BASE_INLINE_KEYBOARD_OPTIONS } from "./const/keyboards";
-import { MessageHelper } from "./helpers/message-helper";
+import { MessageService } from "./services/message-service";
 
 dotenv.config();
 const TB_TOKEN: string = process.env.TELEGRAM_BOT_TOKEN!;
@@ -15,56 +15,56 @@ const bot = new TelegramBot(TB_TOKEN,
         }
     });
 
-const messageHelper = new MessageHelper(new DbHelper());
+const messageService = new MessageService(new DbService());
 
 bot.on('message', async (msg: Message, metadata: Metadata) => {
     const messageText = msg.text;
 
     switch (messageText) {
         case '/start':
-            await messageHelper.startMessageHandler(bot, msg);
+            await messageService.startMessageHandler(bot, msg);
             break;
 
         case '/help':
-            await messageHelper.helpMessageHandler(bot, msg);
+            await messageService.helpMessageHandler(bot, msg);
             break;
         default :
-            await messageHelper.generalMessageHandler(bot, msg);
+            await messageService.generalMessageHandler(bot, msg);
     }
 });
 
 bot.on('callback_query', async (query: CallbackQuery) => {
     switch (query.data) {
         case MainInlineKeyboardData.SHOW_ALL:
-            await messageHelper.getAllMessagesHandler(bot, query);
+            await messageService.getAllMessagesHandler(bot, query);
             break;
 
         case MainInlineKeyboardData.ADD_WORD:
-            await messageHelper.addWordMessageHandler(bot, query);
+            await messageService.addWordMessageHandler(bot, query);
             break;
 
         case MainInlineKeyboardData.REMOVE_WORD:
-            await messageHelper.removeWordMessageHandler(bot, query);
+            await messageService.removeWordMessageHandler(bot, query);
             break;
 
         case MainInlineKeyboardData.START_LEARN:
-            await messageHelper.startLearn(bot, query);
+            await messageService.startLearn(bot, query);
             break;
 
         case MainInlineKeyboardData.STOP_LEARN:
-            await messageHelper.stopLearn(bot, query);
+            await messageService.stopLearn(bot, query);
             break;
 
         case AddingWordsInlineKeyboardData.CANCEL:
-            await messageHelper.goToMainPage(bot, query);
+            await messageService.goToMainPage(bot, query);
             break;
 
         case AddingWordsInlineKeyboardData.FINISH:
-            await messageHelper.goToMainPage(bot, query);
+            await messageService.goToMainPage(bot, query);
             break;
 
         default :
-            await messageHelper.startMessageHandler(bot, query.message!);
+            await messageService.startMessageHandler(bot, query.message!);
     }
 });
 

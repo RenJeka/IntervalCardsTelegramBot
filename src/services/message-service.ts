@@ -1,5 +1,5 @@
 import TelegramBot, { CallbackQuery, Message } from "node-telegram-bot-api";
-import { DbHelper } from "./db-helper";
+import { DbService } from "./db-service";
 import { UserStatus } from "../common/enums/userStatus";
 import {
     ADD_WORD_KEYBOARD_OPTIONS,
@@ -10,20 +10,20 @@ import {
 import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
 import schedule, { Job } from "node-schedule";
 
-export class MessageHelper {
+export class MessageService {
 
     private userJobs: { userId: number, job: Job; }[] = [];
 
     private currentJob: Job = {} as Job;
 
-    constructor(private dbHelper: DbHelper) { }
+    constructor(private dbService: DbService) { }
 
     async startMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
         const chatId = message.chat.id;
         const userId = message.from?.id;
 
         if (userId) {
-            this.dbHelper.setUserStatus(userId, UserStatus.DEFAULT);
+            this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
         }
 
         return bot.sendMessage(
@@ -54,10 +54,10 @@ export class MessageHelper {
             );
         }
 
-        const currentUserStatus: UserStatus | null = this.dbHelper.getUserStatus(userId);
+        const currentUserStatus: UserStatus | null = this.dbService.getUserStatus(userId);
 
         if (!currentUserStatus) {
-            this.dbHelper.setUserStatus(userId, UserStatus.DEFAULT);
+            this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
         }
 
         switch (currentUserStatus) {
@@ -97,7 +97,7 @@ export class MessageHelper {
 
         const chatId = query.message?.chat.id;
         const userId = query.from.id;
-        this.dbHelper.setUserStatus(userId, UserStatus.DEFAULT)
+        this.dbService.setUserStatus(userId, UserStatus.DEFAULT)
 
         if (!chatId) {
             return;
@@ -113,7 +113,7 @@ export class MessageHelper {
 
         const chatId = query.message?.chat.id;
         const userId = query.from.id;
-        this.dbHelper.setUserStatus(userId, UserStatus.ADD_WORD)
+        this.dbService.setUserStatus(userId, UserStatus.ADD_WORD)
 
 
         if (!chatId) {
@@ -134,10 +134,10 @@ export class MessageHelper {
             return;
         }
 
-        this.dbHelper.setUserStatus(userId, UserStatus.REMOVE_WORD)
+        this.dbService.setUserStatus(userId, UserStatus.REMOVE_WORD)
 
         try {
-            const userDictionary: string[] | null = this.dbHelper.getUserDictionary(userId);
+            const userDictionary: string[] | null = this.dbService.getUserDictionary(userId);
 
             const userDictionaryWithNumbers: string = this.userDictionaryWithNumbers(userDictionary || []);
             return bot.sendMessage(
@@ -165,7 +165,7 @@ export class MessageHelper {
             // );
         }
 
-        const userDictionary: string[] | null = this.dbHelper.getUserDictionary(userId);
+        const userDictionary: string[] | null = this.dbService.getUserDictionary(userId);
 
 
         if (!userDictionary || !userDictionary.length) {
@@ -191,7 +191,7 @@ export class MessageHelper {
 
             // TODO: Logic to start learning here
             // TODO: move logic for job --> to jobHelper
-            const userDictionary = this.dbHelper.getUserDictionary(userId);
+            const userDictionary = this.dbService.getUserDictionary(userId);
             if (!userDictionary || !userDictionary?.length) {
                 return bot.sendMessage(
                     chatId,
@@ -199,7 +199,7 @@ export class MessageHelper {
                     BASE_INLINE_KEYBOARD_OPTIONS
                 );
             }
-            this.dbHelper.setUserStatus(userId, UserStatus.START_LEARN);
+            this.dbService.setUserStatus(userId, UserStatus.START_LEARN);
 
             this.currentJob = schedule.scheduleJob('*/5 * * * * *', () => {
                 const randomIndex = Math.floor(Math.random() * userDictionary.length);
@@ -227,7 +227,7 @@ export class MessageHelper {
         }
 
         try {
-            this.dbHelper.setUserStatus(userId, UserStatus.DEFAULT)
+            this.dbService.setUserStatus(userId, UserStatus.DEFAULT)
             // TODO: Logic to stop learning here
             this.currentJob.cancel();
             return bot.sendMessage(
@@ -265,7 +265,7 @@ export class MessageHelper {
         chatId: number,
         message:Message
     ):  Promise<TelegramBot.Message> {
-        const dbResponse: DbResponse = this.dbHelper.writeWordByUserId(userId, message.text || '');
+        const dbResponse: DbResponse = this.dbService.writeWordByUserId(userId, message.text || '');
         let responseMessageText = `The word '${message.text}' has been added. You can add more!`;
 
         if (!dbResponse.success) {
@@ -295,7 +295,7 @@ export class MessageHelper {
             );
         }
 
-        const dbResponse: DbResponse = this.dbHelper.removeWordByIndexByUserId(userId, numberOfWord - 1);
+        const dbResponse: DbResponse = this.dbService.removeWordByIndexByUserId(userId, numberOfWord - 1);
         let responseMessageText = `The word has been deleted successfully. You can delete more!`;
 
         if (!dbResponse.success) {
