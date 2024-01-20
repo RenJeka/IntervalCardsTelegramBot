@@ -48,6 +48,14 @@ bot.on('callback_query', async (query: CallbackQuery) => {
             await messageHelper.removeWordMessageHandler(bot, query);
             break;
 
+        case MainInlineKeyboardData.START_LEARN:
+            await messageHelper.startLearn(bot, query);
+            break;
+
+        case MainInlineKeyboardData.STOP_LEARN:
+            await messageHelper.stopLearn(bot, query);
+            break;
+
         case AddingWordsInlineKeyboardData.CANCEL:
             await messageHelper.goToMainPage(bot, query);
             break;
@@ -55,6 +63,7 @@ bot.on('callback_query', async (query: CallbackQuery) => {
         case AddingWordsInlineKeyboardData.FINISH:
             await messageHelper.goToMainPage(bot, query);
             break;
+
         default :
             // await messageHelper.startBotMessageHandler(bot, query.from.id, BASE_INLINE_KEYBOARD_OPTIONS);
     }

@@ -4,11 +4,17 @@ import { UserStatus } from "../common/enums/userStatus";
 import {
     ADD_WORD_KEYBOARD_OPTIONS,
     BASE_INLINE_KEYBOARD_OPTIONS,
-    REMOVE_WORD_KEYBOARD_OPTIONS
+    REMOVE_WORD_KEYBOARD_OPTIONS, START_LEARN_KEYBOARD_OPTIONS
 } from "../const/keyboards";
 import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
+import schedule, { Job } from "node-schedule";
 
 export class MessageHelper {
+
+    private userJobs: { userId: number, job: Job; }[] = [];
+
+    private currentJob: Job = {} as Job;
+
     constructor(private dbHelper: DbHelper) { }
 
     async startMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
@@ -137,7 +143,6 @@ export class MessageHelper {
         try {
             const userDictionary: string[] | null = this.dbHelper.getUserDictionary(userId);
 
-
             const userDictionaryWithNumbers: string = this.userDictionaryWithNumbers(userDictionary || []);
             return bot.sendMessage(
                 chatId,
@@ -151,7 +156,6 @@ export class MessageHelper {
                 REMOVE_WORD_KEYBOARD_OPTIONS
             );
         }
-
     }
 
     async getAllMessagesHandler(bot: TelegramBot, query: CallbackQuery): Promise<TelegramBot.Message | undefined> {
@@ -178,6 +182,61 @@ export class MessageHelper {
             chatId,
             `Your words:\n ${userDictionary.join(', \n')}`,
         );
+    }
+
+    async startLearn(bot: TelegramBot, query: CallbackQuery): Promise<TelegramBot.Message | undefined> {
+        const chatId = query.message?.chat.id;
+        const userId = query.from.id;
+        if (!chatId) {
+            return;
+        }
+
+        try {
+            // TODO: check for empty user dictionary
+            this.dbHelper.editUserStatus(userId, UserStatus.START_LEARN)
+            // TODO: Logic to start learning here
+            // TODO: move logic for job --> to jobHelper
+
+            this.currentJob = schedule.scheduleJob('*/5 * * * * *', () => {
+                bot.sendMessage(chatId, 'Hello! This is a scheduled message.');
+            });
+            return bot.sendMessage(
+                chatId,
+                `You are in learning. Every 3 hour you will get 1 word`,
+                START_LEARN_KEYBOARD_OPTIONS
+            );
+        } catch (error: any) {
+            return bot.sendMessage(
+                chatId,
+                `Something went wrong: ${error?.message || ''}. Please, try again`,
+                BASE_INLINE_KEYBOARD_OPTIONS
+            );
+        }
+    }
+
+    async stopLearn(bot: TelegramBot, query: CallbackQuery): Promise<TelegramBot.Message | undefined> {
+        const chatId = query.message?.chat.id;
+        const userId = query.from.id;
+        if (!chatId) {
+            return;
+        }
+
+        try {
+            this.dbHelper.editUserStatus(userId, UserStatus.DEFAULT)
+            // TODO: Logic to stop learning here
+            this.currentJob.cancel();
+            return bot.sendMessage(
+                chatId,
+                `You have been exit from learn mode. Nice work!`,
+                BASE_INLINE_KEYBOARD_OPTIONS
+            );
+        } catch (error: any) {
+            return bot.sendMessage(
+                chatId,
+                `Something went wrong: ${error?.message || ''}. Please, try again`,
+                BASE_INLINE_KEYBOARD_OPTIONS
+            );
+        }
     }
 
 
