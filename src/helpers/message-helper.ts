@@ -192,13 +192,22 @@ export class MessageHelper {
         }
 
         try {
-            // TODO: check for empty user dictionary
-            this.dbHelper.editUserStatus(userId, UserStatus.START_LEARN)
+
             // TODO: Logic to start learning here
             // TODO: move logic for job --> to jobHelper
+            const userDictionary = this.dbHelper.getUserDictionary(userId);
+            if (!userDictionary || !userDictionary?.length) {
+                return bot.sendMessage(
+                    chatId,
+                    `You are have no words. Please, add some`,
+                    BASE_INLINE_KEYBOARD_OPTIONS
+                );
+            }
+            this.dbHelper.editUserStatus(userId, UserStatus.START_LEARN);
 
             this.currentJob = schedule.scheduleJob('*/5 * * * * *', () => {
-                bot.sendMessage(chatId, 'Hello! This is a scheduled message.');
+                const randomIndex = Math.floor(Math.random() * userDictionary.length);
+                bot.sendMessage(chatId, userDictionary[randomIndex]);
             });
             return bot.sendMessage(
                 chatId,
