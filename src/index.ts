@@ -76,12 +76,4 @@ bot.on('callback_query', async (query: CallbackQuery) => {
 
 bot.on("polling_error", err => console.log('ERROR: ', JSON.stringify(err)));
 
-// TODO: make 2 methods: start learning, stop learning
-// use the 'scheduleJob': 
-// schedule.scheduleJob('13 * * * *', () => {
-//     bot.sendMessage(chatId, 'Hello! This is a scheduled message.');
-// });
-
 // TODO: redo inline keyboard to reply keyboard
-// TODO: redo all read / write file to read/writeFileSync
-

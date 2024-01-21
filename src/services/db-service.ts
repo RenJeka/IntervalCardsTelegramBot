@@ -5,6 +5,7 @@ import { UserStatus } from "../common/enums/userStatus";
 import path from "path";
 import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
 import { ValidateHelper } from "../helpers/validate-helper";
+import { writeFileSync } from "fs";
 
 export class DbService {
 
@@ -85,15 +86,21 @@ export class DbService {
     }
 
     setUserStatus(userId: number, userStatus: UserStatus = UserStatus.DEFAULT) {
-        fs.readFile(this.DB_PATH, {encoding: 'utf-8'}, (err, data) => {
-            if (err) {
-                console.error('File can\'t be opened!: ', err);
-                return;
-            }
+        if (!this.checkIsUserExist(userId)) {
+            this.initUser(userId);
+        }
 
-            const newUserDb = this.addUserStatusToUserDb(userId, userStatus, JSON.parse(data));
-            this.writeJSON(newUserDb);
-        })
+        const userDb: UserDb = this.getUserDb();
+        const currentUser = userDb.userData.find((userData: UserData) => {
+            return userData.id === userId;
+        });
+
+        if (currentUser) {
+            currentUser.status = userStatus;
+            this.addUserDataToDb(currentUser);
+        } else {
+            console.error(`setUserStatus: no user with id '${userId}' found`)
+        }
     }
 
     getUserStatus(userId?: number): UserStatus | null {
@@ -132,24 +139,6 @@ export class DbService {
         return !!currentUser;
     }
 
-    private addUserStatusToUserDb(userId: number, status: UserStatus = UserStatus.DEFAULT, userDb: UserDb): UserDb {
-
-        if (!this.checkIsUserExist(userId)) {
-            this.initUser(userId);
-        }
-
-        const userDbClone = JSON.parse(JSON.stringify(userDb));
-        const currentUserIndex = userDbClone.userData.findIndex((userData: UserData) => {
-            return userData.id === userId;
-        });
-
-        if (currentUserIndex >= 0) {
-            userDbClone.userData[currentUserIndex].status = status;
-        }
-
-        return userDbClone;
-    }
-
     private initDb() {
         fs.exists (this.DB_PATH, (isDbExist: boolean) => {
             if (!isDbExist) {
@@ -177,14 +166,11 @@ export class DbService {
     }
 
     private writeJSON(userDb: UserDb) {
-        fs.writeFile(this.DB_PATH, util.format('%j', userDb), {flag: 'w+'}, (err) => {
-            if (err) {
-                console.error(`Something wrong while writing file. The file ${this.DB_PATH} wouldn't be written. Error: `, err);
-                return;
-            }
-
-            console.log(`The file ${this.DB_PATH} successfully has been written!`);
-        })
+        try {
+            writeFileSync(this.DB_PATH,  util.format('%j', userDb), {flag: 'w+'})
+        } catch (err) {
+            throw err
+        }
     }
 
     private getUserDb(): UserDb {
