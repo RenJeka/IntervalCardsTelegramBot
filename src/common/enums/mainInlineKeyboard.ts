@@ -3,7 +3,7 @@ export enum MainReplyKeyboardData {
     ADD_WORD = '➕️ Add word',
     REMOVE_WORD = '➖️ Remove word',
     START_LEARN = '🟢️ Start learning',
-    STOP_LEARN = '🟥️ Stop learningn',
+    STOP_LEARN = '🟥️ Stop learn',
 }
 
 export enum AddingWordsReplyKeyboardData {

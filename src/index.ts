@@ -2,7 +2,9 @@ import dotenv from 'dotenv'
 import TelegramBot, { Message, Metadata } from 'node-telegram-bot-api'
 import {
     AddingWordsReplyKeyboardData,
-    MainReplyKeyboardData
+    MainReplyKeyboardData,
+    RemovingWordsReplyKeyboardData,
+    StartLearningReplyKeyboardData
 } from "./common/enums/mainInlineKeyboard";
 import { DbService } from "./services/db-service";
 import { MessageService } from "./services/message-service";
@@ -53,7 +55,7 @@ bot.on('message', async (msg: Message, metadata: Metadata) => {
             await messageService.startLearn(bot, msg);
             break;
 
-        case MainReplyKeyboardData.STOP_LEARN:
+        case StartLearningReplyKeyboardData.STOP_LEARN:
             await messageService.stopLearn(bot, msg);
             break;
 
@@ -64,6 +66,11 @@ bot.on('message', async (msg: Message, metadata: Metadata) => {
         case AddingWordsReplyKeyboardData.FINISH:
             await messageService.goToMainPage(bot, msg);
             break;
+
+        case RemovingWordsReplyKeyboardData.FINISH:
+            await messageService.goToMainPage(bot, msg);
+            break;
+
         default :
             await messageService.generalMessageHandler(bot, msg);
     }
@@ -71,9 +78,7 @@ bot.on('message', async (msg: Message, metadata: Metadata) => {
 
 bot.on("polling_error", err => console.log('ERROR: ', JSON.stringify(err)));
 
-// TODO: check working of MessageService
-// TODO: delete unused keyboard options... And other that can be
-// TODO: on pressing 'Cancel' or other word — bot add word 'Cancel'
-// TODO: test the bot
-// TODO: redo inline keyboard to reply keyboard
+// TODO: make deleting operations by inline keyboard
+// TODO: dockerfile
+
 
