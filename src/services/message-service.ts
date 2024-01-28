@@ -1,10 +1,10 @@
-import TelegramBot, { CallbackQuery, Message } from "node-telegram-bot-api";
+import TelegramBot, { Message } from "node-telegram-bot-api";
 import { DbService } from "./db-service";
 import { UserStatus } from "../common/enums/userStatus";
 import {
     ADD_WORD_KEYBOARD_OPTIONS,
-    BASE_INLINE_KEYBOARD_OPTIONS,
     REMOVE_WORD_KEYBOARD_OPTIONS,
+    REPLY_KEYBOARD_OPTIONS,
     START_LEARN_KEYBOARD_OPTIONS
 } from "../const/keyboards";
 import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
@@ -18,17 +18,14 @@ export class MessageService {
     ) { }
 
     async startMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
-        const chatId = message.chat.id;
-        const userId = message.from?.id;
+        const {chatId, userId} = this.getIdsFromMessage(message);
 
-        if (userId) {
-            this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
-        }
+        this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
 
         return bot.sendMessage(
             chatId,
             'Welcome to the IntervalCards Telegram Bot! Here you will can add the card and receive messages from your cards periodically',
-            BASE_INLINE_KEYBOARD_OPTIONS
+            REPLY_KEYBOARD_OPTIONS
         );
     }
 
@@ -37,14 +34,7 @@ export class MessageService {
     }
 
     async generalMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
-        const chatId = message.chat.id;
-        const userId = message.from?.id;
-        if (!userId) {
-            return bot.sendMessage(
-                chatId,
-                'To use the application I should define You as a user. But I can\'t',
-            );
-        }
+        const {chatId, userId} = this.getIdsFromMessage(message);
 
         if (!message.text) {
             return bot.sendMessage(
@@ -92,28 +82,22 @@ export class MessageService {
         }
     }
 
-    async goToMainPage(bot: TelegramBot, query: CallbackQuery): Promise<TelegramBot.Message | undefined> {
+    async goToMainPage(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
 
-        const chatId = query.message?.chat.id;
-        const userId = query.from.id;
+        const {chatId, userId} = this.getIdsFromMessage(message);
         this.dbService.setUserStatus(userId, UserStatus.DEFAULT)
 
-        if (!chatId) {
-            return;
-        }
         return bot.sendMessage(
             chatId,
             'You are on the \'Home page\'',
-            BASE_INLINE_KEYBOARD_OPTIONS
+            REPLY_KEYBOARD_OPTIONS
         );
     }
 
-    async addWordMessageHandler(bot: TelegramBot, query: CallbackQuery): Promise<TelegramBot.Message | undefined> {
+    async addWordMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
 
-        const chatId = query.message?.chat.id;
-        const userId = query.from.id;
+        const {chatId, userId} = this.getIdsFromMessage(message);
         this.dbService.setUserStatus(userId, UserStatus.ADD_WORD)
-
 
         if (!chatId) {
             return;
@@ -125,13 +109,9 @@ export class MessageService {
         );
     }
 
-    async removeWordMessageHandler(bot: TelegramBot, query: CallbackQuery): Promise<TelegramBot.Message | undefined> {
+    async removeWordMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
 
-        const chatId = query.message?.chat.id;
-        const userId = query.from.id;
-        if (!chatId) {
-            return;
-        }
+        const {chatId, userId} = this.getIdsFromMessage(message);
 
         this.dbService.setUserStatus(userId, UserStatus.REMOVE_WORD)
 
@@ -153,20 +133,12 @@ export class MessageService {
         }
     }
 
-    async getAllMessagesHandler(bot: TelegramBot, query: CallbackQuery): Promise<TelegramBot.Message | undefined> {
-        const chatId = query.message?.chat.id;
-        const userId = query.from.id;
-        if (!userId || !chatId) {
-            return
-            // return bot.sendMessage(
-            //     chatId,
-            //     'To use the application I should define You as a user. But I can\'t',
-            // );
-        }
+    async getAllMessagesHandler(bot: TelegramBot,  message: Message): Promise<TelegramBot.Message | undefined> {
+        const {chatId, userId} = this.getIdsFromMessage(message);
 
         const userDictionary: string[] | null = this.dbService.getUserDictionary(userId);
 
-
+        console.log('getAllMessagesHandler');
         if (!userDictionary || !userDictionary.length) {
             return bot.sendMessage(
                 chatId,
@@ -179,23 +151,16 @@ export class MessageService {
         );
     }
 
-    async startLearn(bot: TelegramBot, query: CallbackQuery): Promise<TelegramBot.Message | undefined> {
-        const chatId = query.message?.chat.id;
-        const userId = query.from.id;
-        if (!chatId) {
-            return;
-        }
-
+    async startLearn(bot: TelegramBot,  message: Message): Promise<TelegramBot.Message | undefined> {
+        const {chatId, userId} = this.getIdsFromMessage(message);
         try {
 
-            // TODO: Logic to start learning here
-            // TODO: move logic for job --> to jobHelper
             const userDictionary = this.dbService.getUserDictionary(userId);
             if (!userDictionary || !userDictionary?.length) {
                 return bot.sendMessage(
                     chatId,
                     `You are have no words. Please, add some`,
-                    BASE_INLINE_KEYBOARD_OPTIONS
+                    REPLY_KEYBOARD_OPTIONS
                 );
             }
             this.dbService.setUserStatus(userId, UserStatus.START_LEARN);
@@ -210,18 +175,13 @@ export class MessageService {
             return bot.sendMessage(
                 chatId,
                 `Something went wrong: ${error?.message || ''}. Please, try again`,
-                BASE_INLINE_KEYBOARD_OPTIONS
+                REPLY_KEYBOARD_OPTIONS
             );
         }
     }
 
-    async stopLearn(bot: TelegramBot, query: CallbackQuery): Promise<TelegramBot.Message | undefined> {
-        const chatId = query.message?.chat.id;
-        const userId = query.from.id;
-        if (!chatId) {
-            return;
-        }
-
+    async stopLearn(bot: TelegramBot,  message: Message): Promise<TelegramBot.Message | undefined> {
+        const {chatId, userId} = this.getIdsFromMessage(message);
         try {
             this.scheduleService.stopLearnByUserId(userId);
 
@@ -230,13 +190,13 @@ export class MessageService {
             return bot.sendMessage(
                 chatId,
                 `You have been exit from learn mode. Nice work!`,
-                BASE_INLINE_KEYBOARD_OPTIONS
+                REPLY_KEYBOARD_OPTIONS
             );
         } catch (error: any) {
             return bot.sendMessage(
                 chatId,
                 `Something went wrong: ${error?.message || ''}. Please, try again`,
-                BASE_INLINE_KEYBOARD_OPTIONS
+                REPLY_KEYBOARD_OPTIONS
             );
         }
     }
@@ -305,5 +265,22 @@ export class MessageService {
             chatId,
             dbResponse.message || responseMessageText,
         );
+    }
+
+    private getIdsFromMessage(message: Message): {chatId: number, userId: number} {
+        if (!message) {
+            throw new Error(`getIdsFromMessage: Can't extract ids from message. Message not found.`)
+        }
+        const chatId = message.chat.id;
+        const userId = message.from?.id;
+
+        if (!chatId) {
+            throw new Error(`getIdsFromMessage: chatId not found.`)
+        }
+        if (!userId) {
+            throw new Error(`getIdsFromMessage: userId not found.`)
+        }
+
+        return {chatId, userId}
     }
 }

@@ -1,22 +1,25 @@
 import { SendMessageOptions } from "node-telegram-bot-api";
-import { AddingWordsInlineKeyboardData, MainInlineKeyboardData } from "../common/enums/mainInlineKeyboard";
+import {
+    AddingWordsReplyKeyboardData,
+    MainReplyKeyboardData,
+    RemovingWordsReplyKeyboardData, StartLearningReplyKeyboardData
+} from "../common/enums/mainInlineKeyboard";
 
-export const BASE_INLINE_KEYBOARD_OPTIONS: SendMessageOptions = {
+export const REPLY_KEYBOARD_OPTIONS: SendMessageOptions = {
     reply_markup: {
-        inline_keyboard: [
-            [{text: '📜️️ Show all words', callback_data: MainInlineKeyboardData.SHOW_ALL}],
-            [{text: '➕️ Add word', callback_data: MainInlineKeyboardData.ADD_WORD}, {text: '➖️ Remove word', callback_data: MainInlineKeyboardData.REMOVE_WORD}],
-            [{text: '🟢️ Start learning', callback_data: MainInlineKeyboardData.START_LEARN}, {text: '🟥️ Stop learning', callback_data: MainInlineKeyboardData.STOP_LEARN}],
-        ],
-        resize_keyboard: true
+        keyboard: [
+            [{text: MainReplyKeyboardData.SHOW_ALL}],
+            [{text: MainReplyKeyboardData.ADD_WORD}, {text: MainReplyKeyboardData.REMOVE_WORD}],
+            [{text: MainReplyKeyboardData.START_LEARN}, {text: MainReplyKeyboardData.STOP_LEARN}],
+        ]
     }
 }
 
 export const ADD_WORD_KEYBOARD_OPTIONS: SendMessageOptions = {
     reply_markup: {
-        inline_keyboard: [
-            [{text: '📜️️ Show all words', callback_data: AddingWordsInlineKeyboardData.SHOW_ALL}],
-            [{text: '✔️Finish adding words', callback_data: AddingWordsInlineKeyboardData.FINISH}, {text: '❌️Cancel', callback_data: AddingWordsInlineKeyboardData.CANCEL}],
+        keyboard: [
+            [{text: AddingWordsReplyKeyboardData.SHOW_ALL}],
+            [{text: AddingWordsReplyKeyboardData.FINISH}, {text: AddingWordsReplyKeyboardData.CANCEL}],
         ],
         resize_keyboard: true
     }
@@ -24,20 +27,9 @@ export const ADD_WORD_KEYBOARD_OPTIONS: SendMessageOptions = {
 
 export const REMOVE_WORD_KEYBOARD_OPTIONS: SendMessageOptions = {
     reply_markup: {
-        inline_keyboard: [
-            [{text: '📜️️ Show all words', callback_data: AddingWordsInlineKeyboardData.SHOW_ALL}],
-            [{text: '✔️Finish removing words', callback_data: AddingWordsInlineKeyboardData.FINISH}, {text: '❌️Cancel', callback_data: AddingWordsInlineKeyboardData.CANCEL}],
-        ],
-        resize_keyboard: true
-    }
-}
-
-export const REPLY_KEYBOARD_OPTIONS: SendMessageOptions = {
-    reply_markup: {
         keyboard: [
-            [{text: '📜️ Show all words'}],
-            [{text: '➕️ Add word'}, {text: '➖️Remove word'}],
-            [{text: '🟢️ Start learning'}, {text: '🟥️ Stop learning'}],
+            [{text: RemovingWordsReplyKeyboardData.SHOW_ALL}],
+            [{text: RemovingWordsReplyKeyboardData.FINISH}, {text: RemovingWordsReplyKeyboardData.CANCEL}],
         ],
         resize_keyboard: true
     }
@@ -45,8 +37,8 @@ export const REPLY_KEYBOARD_OPTIONS: SendMessageOptions = {
 
 export const START_LEARN_KEYBOARD_OPTIONS: SendMessageOptions = {
     reply_markup: {
-        inline_keyboard: [
-            [{text: '🟥️ Stop learn', callback_data: MainInlineKeyboardData.STOP_LEARN}],
+        keyboard: [
+            [{text: StartLearningReplyKeyboardData.STOP_LEARN}],
         ],
         resize_keyboard: true
     }
