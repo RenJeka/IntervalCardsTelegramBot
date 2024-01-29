@@ -79,7 +79,7 @@ bot.on('message', async (msg: Message, metadata: Metadata) => {
 bot.on("polling_error", err => console.log('ERROR: ', JSON.stringify(err)));
 
 // TODO: make deleting operations by inline keyboard
+// TODO: redo users dictionary with object ({id: 123, word: ...})
 // TODO: make schedule from 9:00 till 21:00
-// TODO: dockerfile
 
 

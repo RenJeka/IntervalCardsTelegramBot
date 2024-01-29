@@ -5,7 +5,9 @@
   "main": "src/index.ts",
   "scripts": {
     "start": "npm run dev",
-    "dev": "rm -rf dist && npx nodemon"
+    "dev": "rm -rf dist && npx nodemon",
+    "docker-build": "docker build -t telegram-bot-docker .",
+    "docker-run": "docker run -d telegram-bot-docker"
   },
   "keywords": [
     "telegram",
