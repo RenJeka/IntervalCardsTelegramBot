@@ -1,11 +1,12 @@
 import * as fs from "fs";
 import * as util from "node:util";
-import { UserData, UserDb } from "../common/interfaces/common";
+import { UserData, UserDb, UserWord } from "../common/interfaces/common";
 import { UserStatus } from "../common/enums/userStatus";
 import path from "path";
 import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
 import { ValidateHelper } from "../helpers/validate-helper";
 import { writeFileSync } from "fs";
+import { randomUUID } from "crypto";
 
 export class DbService {
 
@@ -32,7 +33,12 @@ export class DbService {
                     message: `Duplicate word:  '${word}'`
                 }
             }
-            currentUser.dictionary.push(word);
+
+            const currentUserWord: UserWord = {
+                id: randomUUID(),
+                text: word
+            }
+            currentUser.dictionary.push(currentUserWord);
             this.addUserDataToDb(currentUser);
 
             return {
@@ -66,7 +72,7 @@ export class DbService {
                 }
             }
 
-            const deletingWord = currentUser.dictionary[wordIndex];
+            const deletingWord = currentUser.dictionary[wordIndex].text;
             currentUser.dictionary.splice(wordIndex, 1);
             this.addUserDataToDb(currentUser);
 
@@ -115,20 +121,23 @@ export class DbService {
         return currentUserData.status
     }
 
-    getUserDictionary(userId?: number): string[] | null {
+    getUserDictionary(userId: number): UserWord[]{
         if (!userId) {
-            return null;
+            return [];
         }
 
         const userDb = this.getUserDb();
-
         const currentUser: UserData | undefined = userDb.userData.find((userData: UserData) => userData.id === userId);
 
         if (!currentUser) {
-            return null;
+            return [];
         }
 
         return [...currentUser.dictionary];
+    }
+
+    getFlatUserDictionary(userId: number): string[] {
+        return this.getUserDictionary(userId).map(word => word.text);
     }
 
     checkIsUserExist(userId: number): boolean {

@@ -116,7 +116,7 @@ export class MessageService {
         this.dbService.setUserStatus(userId, UserStatus.REMOVE_WORD)
 
         try {
-            const userDictionary: string[] | null = this.dbService.getUserDictionary(userId);
+            const userDictionary: string[] = this.dbService.getFlatUserDictionary(userId);
 
             const userDictionaryWithNumbers: string = this.userDictionaryWithNumbers(userDictionary || []);
             return bot.sendMessage(
@@ -136,7 +136,7 @@ export class MessageService {
     async getAllMessagesHandler(bot: TelegramBot,  message: Message): Promise<TelegramBot.Message | undefined> {
         const {chatId, userId} = this.getIdsFromMessage(message);
 
-        const userDictionary: string[] | null = this.dbService.getUserDictionary(userId);
+        const userDictionary: string[] = this.dbService.getFlatUserDictionary(userId);
 
         console.log('getAllMessagesHandler');
         if (!userDictionary || !userDictionary.length) {
@@ -155,7 +155,7 @@ export class MessageService {
         const {chatId, userId} = this.getIdsFromMessage(message);
         try {
 
-            const userDictionary = this.dbService.getUserDictionary(userId);
+            const userDictionary = this.dbService.getFlatUserDictionary(userId);
             if (!userDictionary || !userDictionary?.length) {
                 return bot.sendMessage(
                     chatId,

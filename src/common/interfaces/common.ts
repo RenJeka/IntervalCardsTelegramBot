@@ -7,5 +7,10 @@ export interface UserDb {
 export interface UserData {
     id: number;
     status: UserStatus;
-    dictionary: string[];
+    dictionary: UserWord[];
+}
+
+export interface UserWord {
+    id: string;
+    text: string;
 }

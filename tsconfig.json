@@ -108,7 +108,7 @@
     "skipLibCheck": true,
     /* Skip type checking all .d.ts files. */
     "lib": [
-      "es2015.collection"
+      "ES2020"
     ]
   },
   "include": ["src/**/*"],
