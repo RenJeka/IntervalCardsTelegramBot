@@ -56,37 +56,39 @@ export class DbService {
         }
     }
 
-    removeWordByIndexByUserId( userId: number, wordIndex: number): DbResponse {
+    removeWordById(userId: number, wordId: string): DbResponse {
         try {
             const currentUser: UserData | null = this.getUserById(userId);
 
             if (!currentUser) {
-                throw new Error(`Can't find user by id: ${userId}`)
+                throw new Error(`❌️Can't find user by id: ${userId}`)
             }
 
-            if (currentUser.dictionary.length - 1 < wordIndex) {
+            const wordIndex = currentUser.dictionary.findIndex(userWord => userWord.id === wordId);
+
+            if (wordIndex !== -1) {
+                const deletingWord = currentUser.dictionary[wordIndex].text;
+                // TODO: implements deleting via DBService
+                currentUser.dictionary.splice(wordIndex, 1);
+                this.addUserDataToDb(currentUser);
                 return {
-                    success: false,
-                    status: DbResponseStatus.WRONG_INPUT,
-                    message: `Incorrect word's index`
+                    success: true,
+                    status: DbResponseStatus.OK,
+                    message: `✔️ Word '${deletingWord}' has been deleting successfully`
                 }
             }
 
-            const deletingWord = currentUser.dictionary[wordIndex].text;
-            currentUser.dictionary.splice(wordIndex, 1);
-            this.addUserDataToDb(currentUser);
-
             return {
-                success: true,
-                status: DbResponseStatus.OK,
-                message: `Word '${deletingWord}' has been deleting successfully`
+                success: false,
+                status: DbResponseStatus.WRONG_INPUT,
+                message: `❌️Incorrect word's index`
             }
 
         } catch (error: any) {
             return {
                 success: false,
                 status: DbResponseStatus.DB_ERROR,
-                message: error.message ? error.message : 'Something wrong while deleting word from DB'
+                message: error.message ? error.message : '❌️Something wrong while deleting word from DB'
             }
         }
     }

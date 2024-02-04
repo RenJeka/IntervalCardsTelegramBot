@@ -1,5 +1,5 @@
 import dotenv from 'dotenv'
-import TelegramBot, { Message, Metadata } from 'node-telegram-bot-api'
+import TelegramBot, { CallbackQuery, Message, Metadata } from 'node-telegram-bot-api'
 import {
     AddingWordsReplyKeyboardData,
     MainReplyKeyboardData,
@@ -74,6 +74,10 @@ bot.on('message', async (msg: Message, metadata: Metadata) => {
         default :
             await messageService.generalMessageHandler(bot, msg);
     }
+});
+
+bot.on('callback_query', async (query: CallbackQuery) => {
+    await messageService.generalCallbackHandler(bot, query);
 });
 
 bot.on("polling_error", err => console.log('ERROR: ', JSON.stringify(err)));

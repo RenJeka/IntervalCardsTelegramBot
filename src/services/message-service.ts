@@ -1,4 +1,4 @@
-import TelegramBot, { Message } from "node-telegram-bot-api";
+import TelegramBot, { CallbackQuery, Message } from "node-telegram-bot-api";
 import { DbService } from "./db-service";
 import { UserStatus } from "../common/enums/userStatus";
 import {
@@ -52,21 +52,11 @@ export class MessageService {
 
         switch (currentUserStatus) {
             case UserStatus.ADD_WORD:
-
                 return this.addParticularWordHandler(
                   bot,
                   userId,
                   chatId,
                   message
-                );
-
-            case UserStatus.REMOVE_WORD:
-
-                return this.removeParticularWordHandler(
-                    bot,
-                    userId,
-                    chatId,
-                    message
                 );
 
             case UserStatus.START_LEARN:
@@ -77,6 +67,37 @@ export class MessageService {
 
             default:
                 return await this.startMessageHandler(bot, message);
+        }
+    }
+
+    async generalCallbackHandler(bot: TelegramBot, query: CallbackQuery): Promise<TelegramBot.Message> {
+        const {chatId, userId} = this.getIdsFromCallbackQuery(query);
+
+        if (!query.data) {
+            return bot.sendMessage(
+                chatId,
+                'I did not receive any data from You, Please, try again.',
+            );
+        }
+
+        const currentUserStatus: UserStatus | null = this.dbService.getUserStatus(userId);
+
+        if (!currentUserStatus) {
+            this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
+        }
+
+        switch (currentUserStatus) {
+            case UserStatus.REMOVE_WORD:
+
+                return this.removeParticularWordHandler(
+                    bot,
+                    userId,
+                    chatId,
+                    query.data
+                );
+
+            default:
+                return await this.startMessageHandler(bot, query.message!);
         }
     }
 
@@ -117,14 +138,14 @@ export class MessageService {
 
             await bot.sendMessage(
                 chatId,
-                `Please, chose the word You want to delete ⬇️`,
+                `Please, chose the word You want to delete \n ⬇️⬇️⬇️`,
                 getRemoveWordsKeyboard(this.dbService.getUserDictionary(userId))
             );
 
             // We can't pass empty message in  'bot.sendMessage' method
             return bot.sendMessage(
                 chatId,
-                'Chose word to delete and press it! ⬆️',
+                '⬆️⬆️⬆️\n Chose word to delete and press it!',
                 REMOVE_WORD_KEYBOARD_OPTIONS
             );
         } catch (error: any) {
@@ -230,22 +251,23 @@ export class MessageService {
         bot: TelegramBot,
         userId: number,
         chatId: number,
-        message:Message
+        wordId: string
     ):  Promise<TelegramBot.Message> {
-        const numberOfWord: number = parseInt(message.text || '')
-        if (Number.isNaN(numberOfWord) || numberOfWord === 0) {
+
+        console.log('removeParticularWordHandler. wordId: ', wordId);
+        if (!wordId) {
             return bot.sendMessage(
                 chatId,
-                'Please, provide valid word number.',
+                `Word didn't find`,
             );
         }
 
-        const dbResponse: DbResponse = this.dbService.removeWordByIndexByUserId(userId, numberOfWord - 1);
+        const dbResponse: DbResponse = this.dbService.removeWordById(userId, wordId);
         let responseMessageText = `The word has been deleted successfully. You can delete more!`;
 
         if (!dbResponse.success) {
             if (dbResponse.status === DbResponseStatus.WRONG_INPUT) {
-                responseMessageText = `The word with number '${message.text}' hasn't been find. Please, try again`;
+                responseMessageText = `The word with number hasn't been find. Please, try again`;
             }
             responseMessageText = dbResponse.message || 'Something went wrong! Please, try again.'
         }
@@ -261,6 +283,23 @@ export class MessageService {
         }
         const chatId = message.chat.id;
         const userId = message.from?.id;
+
+        if (!chatId) {
+            throw new Error(`getIdsFromMessage: chatId not found.`)
+        }
+        if (!userId) {
+            throw new Error(`getIdsFromMessage: userId not found.`)
+        }
+
+        return {chatId, userId}
+    }
+
+    private getIdsFromCallbackQuery(query: CallbackQuery): {chatId: number, userId: number} {
+        if (!query) {
+            throw new Error(`getIdsFromMessage: Can't extract ids from query. Query not found.`)
+        }
+        const chatId = query.message?.chat?.id;
+        const userId = query.from?.id;
 
         if (!chatId) {
             throw new Error(`getIdsFromMessage: chatId not found.`)
