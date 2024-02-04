@@ -82,8 +82,12 @@ bot.on('callback_query', async (query: CallbackQuery) => {
 
 bot.on("polling_error", err => console.log('ERROR: ', JSON.stringify(err)));
 
-// TODO: ICTB-3 make deleting operations by inline keyboard
 // TODO: ICTB-4 make schedule from 9:00 till 21:00
+// TODO: ICTB-5 cut-off version v1.0.0
 // TODO: ICTB-10 Implement translation
+// TODO: ICTB-11 add left bottom menu
+// TODO: ICTB-12 add instruction '/instruction'
+// TODO: ICTB-13 add button to check user status (user mode)
+// TODO: ICTB-17 add logging
 
 
