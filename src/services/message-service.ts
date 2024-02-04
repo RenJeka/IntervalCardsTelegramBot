@@ -3,7 +3,7 @@ import { DbService } from "./db-service";
 import { UserStatus } from "../common/enums/userStatus";
 import {
     ADD_WORD_KEYBOARD_OPTIONS,
-    REMOVE_WORD_KEYBOARD_OPTIONS,
+    REMOVE_WORD_KEYBOARD_OPTIONS, REMOVE_WORD_WORDS_KEYBOARD,
     REPLY_KEYBOARD_OPTIONS,
     START_LEARN_KEYBOARD_OPTIONS
 } from "../const/keyboards";
@@ -119,9 +119,16 @@ export class MessageService {
             const userDictionary: string[] = this.dbService.getFlatUserDictionary(userId);
 
             const userDictionaryWithNumbers: string = this.userDictionaryWithNumbers(userDictionary || []);
+
+            await bot.sendMessage(
+                chatId,
+                `Please, chose the word You want to delete\n` + userDictionaryWithNumbers,
+                REMOVE_WORD_WORDS_KEYBOARD
+            );
+
             return bot.sendMessage(
                 chatId,
-                `Please, type number of word and press 'Enter' or send button \n` + userDictionaryWithNumbers,
+                'Chose word to delete and press it! ⬆️',
                 REMOVE_WORD_KEYBOARD_OPTIONS
             );
         } catch (error: any) {
