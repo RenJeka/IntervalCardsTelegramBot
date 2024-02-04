@@ -3,9 +3,10 @@ import { DbService } from "./db-service";
 import { UserStatus } from "../common/enums/userStatus";
 import {
     ADD_WORD_KEYBOARD_OPTIONS,
-    REMOVE_WORD_KEYBOARD_OPTIONS, REMOVE_WORD_WORDS_KEYBOARD,
+    REMOVE_WORD_KEYBOARD_OPTIONS,
     REPLY_KEYBOARD_OPTIONS,
-    START_LEARN_KEYBOARD_OPTIONS
+    START_LEARN_KEYBOARD_OPTIONS,
+    getRemoveWordsKeyboard,
 } from "../const/keyboards";
 import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
 import { ScheduleService } from "./schedule-service";
@@ -68,14 +69,11 @@ export class MessageService {
                     message
                 );
 
-                break;
-
             case UserStatus.START_LEARN:
                 return bot.sendMessage(
                     chatId,
                     `Now You are in learning mode. Please, use the keyboard menu to navigate or do action you want.`,
                 );
-                break;
 
             default:
                 return await this.startMessageHandler(bot, message);
@@ -116,16 +114,14 @@ export class MessageService {
         this.dbService.setUserStatus(userId, UserStatus.REMOVE_WORD)
 
         try {
-            const userDictionary: string[] = this.dbService.getFlatUserDictionary(userId);
-
-            const userDictionaryWithNumbers: string = this.userDictionaryWithNumbers(userDictionary || []);
 
             await bot.sendMessage(
                 chatId,
-                `Please, chose the word You want to delete\n` + userDictionaryWithNumbers,
-                REMOVE_WORD_WORDS_KEYBOARD
+                `Please, chose the word You want to delete ⬇️`,
+                getRemoveWordsKeyboard(this.dbService.getUserDictionary(userId))
             );
 
+            // We can't pass empty message in  'bot.sendMessage' method
             return bot.sendMessage(
                 chatId,
                 'Chose word to delete and press it! ⬆️',
@@ -206,21 +202,6 @@ export class MessageService {
                 REPLY_KEYBOARD_OPTIONS
             );
         }
-    }
-
-
-    private userDictionaryWithNumbers(userDictionary: string[]): string {
-        if (!userDictionary || !userDictionary.length) {
-            return '';
-        }
-
-        let result = '';
-
-        userDictionary.forEach((usersWord: string, index: number) => {
-            result += `${index + 1}. ${usersWord}; \n`
-        });
-
-        return result;
     }
 
     private addParticularWordHandler(
