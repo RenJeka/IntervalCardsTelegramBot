@@ -1,5 +1,5 @@
 import dotenv from 'dotenv'
-import TelegramBot, { CallbackQuery, Message, Metadata } from 'node-telegram-bot-api'
+import TelegramBot, { BotCommand, CallbackQuery, Message, Metadata } from 'node-telegram-bot-api'
 import {
     AddingWordsReplyKeyboardData,
     MainReplyKeyboardData,
@@ -26,6 +26,18 @@ const messageService = new MessageService(
     dbService,
     scheduleService
 );
+const commands: BotCommand[] = [
+    { command: 'start', description: 'Start the bot'},
+    { command: 'instruction', description: 'Additional information about the bot' }
+];
+
+bot.setMyCommands(commands)
+    .then(() => {
+        console.log('Bot commands set successfully!');
+    })
+    .catch((error) => {
+        console.error('Error while setting bot commands: ', error.message);
+    })
 
 bot.on('message', async (msg: Message, metadata: Metadata) => {
     const messageText = msg.text;
@@ -35,8 +47,8 @@ bot.on('message', async (msg: Message, metadata: Metadata) => {
             await messageService.startMessageHandler(bot, msg);
             break;
 
-        case '/help':
-            await messageService.helpMessageHandler(bot, msg);
+        case '/instruction':
+            await messageService.instructionMessageHandler(bot, msg);
             break;
 
         case MainReplyKeyboardData.SHOW_ALL:
@@ -82,11 +94,9 @@ bot.on('callback_query', async (query: CallbackQuery) => {
 
 bot.on("polling_error", err => console.log('ERROR: ', JSON.stringify(err)));
 
-// TODO: ICTB-4 make schedule from 9:00 till 21:00
 // TODO: ICTB-5 cut-off version v1.0.0
+// TODO: ICTB-8 add Standard words set #1 (the 30 common usefully words from 3 letters. Ask ChatGPT)
 // TODO: ICTB-10 Implement translation
-// TODO: ICTB-11 add left bottom menu
-// TODO: ICTB-12 add instruction '/instruction'
 // TODO: ICTB-13 add button to check user status (user mode)
 // TODO: ICTB-17 add logging
 

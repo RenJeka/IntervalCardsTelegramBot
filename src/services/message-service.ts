@@ -10,6 +10,7 @@ import {
 } from "../const/keyboards";
 import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
 import { ScheduleService } from "./schedule-service";
+import { MainReplyKeyboardData } from "../common/enums/mainInlineKeyboard";
 
 export class MessageService {
 
@@ -30,8 +31,26 @@ export class MessageService {
         );
     }
 
-    async helpMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
-        return this.startMessageHandler(bot, message);
+    async instructionMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
+        const {chatId, userId} = this.getIdsFromMessage(message);
+
+        this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
+
+        return bot.sendMessage(
+            chatId,
+            `
+            This bot helps you to learn words:
+            1. Firstly, add several words You wand to learn (use the '${MainReplyKeyboardData.ADD_WORD}' button).
+            2. Press '${MainReplyKeyboardData.START_LEARN}' button to start learning process.
+            Every 1 hour You will get 1 word from your words while you in the learning process.
+            This will continue from 9:00 (9:00 a.m.) to 22:00 (10:00 p.m.).
+            
+            🔹 If you want to stop learn — just press '${MainReplyKeyboardData.STOP_LEARN}' button.
+            🔹 If you wan to remove word — go out from learning mode, press '${MainReplyKeyboardData.STOP_LEARN}' button, remove unnecessary words and start learning mode again.
+            🔹 Any time you can get all of your word by pressing '${MainReplyKeyboardData.SHOW_ALL}' button.
+            `,
+            REPLY_KEYBOARD_OPTIONS
+        );
     }
 
     async generalMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
