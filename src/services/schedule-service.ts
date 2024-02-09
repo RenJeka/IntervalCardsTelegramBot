@@ -16,7 +16,7 @@ export class ScheduleService {
         chatId?: number,
     ) {
         try {
-            const currentUserJob: Job = schedule.scheduleJob('*/10 * * * * *', () => {
+            const currentUserJob: Job = schedule.scheduleJob('0 9-21 * * *', () => {
                 const randomIndex = Math.floor(Math.random() * userDictionary.length);
                 if (chatId) {
                     bot.sendMessage(chatId, userDictionary[randomIndex]);

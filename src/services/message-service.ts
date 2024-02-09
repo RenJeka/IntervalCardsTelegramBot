@@ -192,7 +192,7 @@ export class MessageService {
             this.scheduleService.startLearnByUserId(bot, userDictionary, userId, chatId);
             return bot.sendMessage(
                 chatId,
-                `You are in learning. Every 5 seconds you will get 1 word`,
+                `You are in learning. Every hour You will get 1 word. This will continue from 9:00 (9:00 a.m.) to 22:00 (10:00 p.m.)`,
                 START_LEARN_KEYBOARD_OPTIONS
             );
         } catch (error: any) {
