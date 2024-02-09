@@ -26,7 +26,7 @@ export class MessageService {
 
         return bot.sendMessage(
             chatId,
-            'Welcome to the IntervalCards Telegram Bot! Here you will can add the card and receive messages from your cards periodically',
+            `Welcome to the IntervalCards Telegram Bot! \n  Here you will can add words and receive messages with random word from your words periodically.\n  Please, use '☰ Menu' ➼ '/instruction' for more information`,
             REPLY_KEYBOARD_OPTIONS
         );
     }
@@ -42,12 +42,12 @@ export class MessageService {
             This bot helps you to learn words:
             1. Firstly, add several words You wand to learn (use the '${MainReplyKeyboardData.ADD_WORD}' button).
             2. Press '${MainReplyKeyboardData.START_LEARN}' button to start learning process.
-            Every 1 hour You will get 1 word from your words while you in the learning process.
-            This will continue from 9:00 (9:00 a.m.) to 22:00 (10:00 p.m.).
             
-            🔹 If you want to stop learn — just press '${MainReplyKeyboardData.STOP_LEARN}' button.
-            🔹 If you wan to remove word — go out from learning mode, press '${MainReplyKeyboardData.STOP_LEARN}' button, remove unnecessary words and start learning mode again.
-            🔹 Any time you can get all of your word by pressing '${MainReplyKeyboardData.SHOW_ALL}' button.
+            ⦿ Every 1 hour You will get 1 word from your words while you in the learning process.
+            ⦿ This will continue from 9:00 (9:00 a.m.) to 22:00 (10:00 p.m.).
+            ⦿ If you want to stop learn — just press '${MainReplyKeyboardData.STOP_LEARN}' button.
+            ⦿ If you wan to remove word — go out from learning mode, press '${MainReplyKeyboardData.STOP_LEARN}' button, remove unnecessary words and start learning mode again.
+            ⦿ You can get all of your word by pressing '${MainReplyKeyboardData.SHOW_ALL}' button.
             `,
             REPLY_KEYBOARD_OPTIONS
         );
