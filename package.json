@@ -6,7 +6,7 @@
   "scripts": {
     "start": "npm run dev",
     "dev": "rm -rf dist && npx nodemon",
-    "build": "rm -rf dist && tsc && cp package.json .env dist",
+    "build": "rm -rf dist && tsc && cp package.json .env dist && cd dist && npm install --production",
     "docker-build": "npm run build && docker build -t telegram-bot-docker-alpine-production .",
     "docker-run": "docker run -d telegram-bot-docker-alpine-production"
   },

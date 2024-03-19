@@ -1,6 +1,6 @@
 FROM alpine
 RUN apk update && apk upgrade
-RUN apk add nodejs npm
+RUN apk add nodejs
 
 # Set the working directory in the container
 WORKDIR /app
@@ -9,7 +9,7 @@ WORKDIR /app
 COPY dist ./
 
 # # Install app dependencies
-RUN npm install --production
+# RUN npm install --production
 
 # Expose any ports the app uses
 # In this case, the bot doesn't need any ports exposed as it interacts with Telegram servers
