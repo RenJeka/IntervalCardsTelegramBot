@@ -9,9 +9,11 @@ import {
 import { DbService } from "./services/db-service";
 import { MessageService } from "./services/message-service";
 import { ScheduleService } from "./services/schedule-service";
+import * as AWS from "aws-sdk";
 
 dotenv.config();
 const TB_TOKEN: string = process.env.TELEGRAM_BOT_TOKEN!;
+const dynamoDBTableName: string = process.env.AWS_DYNAMODB_TABLE_NAME!;
 const bot = new TelegramBot(TB_TOKEN,
     {
         polling: {
@@ -30,6 +32,10 @@ const commands: BotCommand[] = [
     { command: 'start', description: 'Start the bot'},
     { command: 'instruction', description: 'Additional information about the bot' }
 ];
+const dynamodb = new AWS.DynamoDB.DocumentClient();
+const awsDynamoDBParams = {
+    TableName: dynamoDBTableName,
+};
 
 bot.setMyCommands(commands)
     .then(() => {
@@ -93,6 +99,15 @@ bot.on('callback_query', async (query: CallbackQuery) => {
 });
 
 bot.on("polling_error", err => console.log('ERROR: ', JSON.stringify(err)));
+
+// Scan the table
+dynamodb.scan(awsDynamoDBParams, (err, data) => {
+    if (err) {
+        console.error("Error scanning table:", JSON.stringify(err, null, 2));
+    } else {
+        console.log("Scan succeeded:", JSON.stringify(data.Items, null, 2));
+    }
+});
 
 // TODO: ICTB-5 check node:20-slim
 // TODO: ICTB-6 cut-off version v1.0.0
