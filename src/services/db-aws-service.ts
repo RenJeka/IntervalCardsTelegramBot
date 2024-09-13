@@ -1,22 +1,45 @@
 import * as fs from "fs";
 import * as util from "node:util";
-import { UserData, UserDb, UserWord } from "../common/interfaces/common";
+import { UserData, UserDb, UserWord, UserWordAWS } from "../common/interfaces/common";
 import { UserStatus } from "../common/enums/userStatus";
-import path from "path";
 import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
 import { ValidateHelper } from "../helpers/validate-helper";
 import { writeFileSync } from "fs";
 import { randomUUID } from "crypto";
+import {IDbService} from "../common/interfaces/iDbService";
+import path from "path";
+import {DynamoDBClient, DynamoDBClientConfig, ListTablesCommand, ScanCommand, ScanCommandInput, ScanCommandOutput} from "@aws-sdk/client-dynamodb";
+import { unmarshall } from "@aws-sdk/util-dynamodb";
 
-export class DbService {
+//TODO: implement getUserDictionary
+//TODO: output all words into bot
+//TODO: implement checkIsUserExist
+//TODO: implement getUserStatus
+//TODO: implement setUserStatus
+//TODO: implement getFlatUserDictionary
+//TODO: implement writeWordByUserId
+//TODO: implement removeWordById
 
-    constructor() {
-        this.initDb();
-    }
+export class DbAwsService implements IDbService{
 
     private DB_DIRECTORY_NAME = 'db';
     private DB_NAME = 'userDb.json';
     private DB_PATH = path.join('./', this.DB_DIRECTORY_NAME, this.DB_NAME);
+
+    private dynamoDbRegion: string = process.env.AWS_REGION!;
+    private dynamoDbWordsTableName: string = process.env.AWS_WORDS_TABLE_NAME!;
+
+    private config: DynamoDBClientConfig = {
+        region: this.dynamoDbRegion,
+    };
+    private client = new DynamoDBClient(this.config);
+
+    constructor() {
+        this.listTables()
+        if (!this.dynamoDbRegion || !this.dynamoDbWordsTableName) {
+            throw new Error('AWS_REGION or AWS_WORDS_TABLE_NAME are not defined')
+        }
+    }
 
     writeWordByUserId( userId: number, word: string): DbResponse {
         try {
@@ -35,7 +58,7 @@ export class DbService {
             }
 
             const currentUserWord: UserWord = {
-                id: randomUUID(),
+                id: randomUUID() as string,
                 text: word
             }
             currentUser.dictionary.push(currentUserWord);
@@ -138,31 +161,45 @@ export class DbService {
         return [...currentUser.dictionary];
     }
 
-    getFlatUserDictionary(userId: number): string[] {
-        return this.getUserDictionary(userId).map(word => word.text);
+    async getUserDictionaryAWS(userId: number): Promise<UserWordAWS[]> {
+
+        console.log('DYNAMO_DB_WORDS_TABLE_NAME: ', this.dynamoDbWordsTableName);
+        const scanInput: ScanCommandInput = {
+            TableName: this.dynamoDbWordsTableName,
+            ReturnConsumedCapacity: "INDEXES",
+            FilterExpression: "user_id = :uid",
+            ExpressionAttributeValues: {
+                ':uid': { S: userId.toString() }
+                // ':uid': { S: '0' }
+            }
+        }
+
+        try {
+            const command = new ScanCommand(scanInput);
+            const response: ScanCommandOutput = await this.client.send(command);
+            const items: UserWordAWS[]  = response.Items?.map(item => unmarshall(item)) as UserWordAWS[];
+            console.log('ConsumedCapacity:', JSON.stringify(response.ConsumedCapacity, null, 2));
+            console.log('Unmarshalled items:', items);
+
+            return items
+        } catch(error) {
+            throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
+        }
     }
 
+    async getFlatUserDictionary(userId: number): Promise<string[]> {
+        if (!userId) {
+            return [];
+        }
+        return (await this.getUserDictionaryAWS(userId)).map((word: UserWordAWS) => word.word);
+    }
+    
     checkIsUserExist(userId: number): boolean {
         if (typeof userId !== 'number') {
             return false;
         }
         const currentUser = this.getUserById(userId);
         return !!currentUser;
-    }
-
-    private initDb() {
-        fs.exists (this.DB_PATH, (isDbExist: boolean) => {
-            if (!isDbExist) {
-                if (!fs.existsSync(this.DB_DIRECTORY_NAME)) {
-                    fs.mkdirSync(this.DB_DIRECTORY_NAME);
-                }
-
-                const userDB: UserDb = {
-                    userData: []
-                }
-                this.writeJSON(userDB);
-            }
-        })
     }
 
     private initUser(userId: number) {
@@ -193,6 +230,26 @@ export class DbService {
         }
     }
 
+    private async getUserDbAWS(): Promise<UserDb> {
+        try {
+
+            const scanInput: ScanCommandInput = {
+                TableName: this.dynamoDbWordsTableName,
+                ReturnConsumedCapacity: "TOTAL"
+            }
+
+            const command = new ScanCommand(scanInput);
+            const response: ScanCommandOutput = await this.client.send(command);
+
+            console.log('Scan succeeded:', JSON.stringify(response, null, 2));
+            return {userData: []}
+        } catch(error) {
+            throw new Error(`Something wrong while reading file. Error: ${JSON.stringify(error, null, 2)}`)
+        }
+    }
+
+
+
     private getUserById(userId: number): UserData | null {
         try {
             const db: UserDb = this.getUserDb();
@@ -214,5 +271,24 @@ export class DbService {
         }
 
         this.writeJSON(db);
+    }
+
+    /**
+     * For development. To make sure that DynamoDB connected successfully
+     */
+    private async listTables() {
+        const input = {
+            ExclusiveStartTableName: this.dynamoDbWordsTableName,
+            Limit: Number("int"),
+        };
+        const listCommandCommand = new ListTablesCommand(input)
+
+        try {
+            const response = await this.client.send(listCommandCommand);
+            console.log('ListTablesCommand:', response);
+
+        } catch(error) {
+            console.log('Error while list tables: ', JSON.stringify(error))
+        }
     }
 }

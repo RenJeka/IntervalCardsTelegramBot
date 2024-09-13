@@ -1,5 +1,4 @@
 import TelegramBot, { CallbackQuery, Message } from "node-telegram-bot-api";
-import { DbService } from "./db-service";
 import { UserStatus } from "../common/enums/userStatus";
 import {
     ADD_WORD_KEYBOARD_OPTIONS,
@@ -11,11 +10,12 @@ import {
 import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
 import { ScheduleService } from "./schedule-service";
 import { MainReplyKeyboardData } from "../common/enums/mainInlineKeyboard";
+import { IDbService } from "../common/interfaces/iDbService";
 
 export class MessageService {
 
     constructor(
-        private dbService: DbService,
+        private dbService: IDbService,
         private scheduleService: ScheduleService,
     ) { }
 
@@ -179,7 +179,7 @@ export class MessageService {
     async getAllMessagesHandler(bot: TelegramBot,  message: Message): Promise<TelegramBot.Message | undefined> {
         const {chatId, userId} = this.getIdsFromMessage(message);
 
-        const userDictionary: string[] = this.dbService.getFlatUserDictionary(userId);
+        const userDictionary: string[] = await this.dbService.getFlatUserDictionary(userId);
 
         console.log('getAllMessagesHandler');
         if (!userDictionary || !userDictionary.length) {
@@ -198,7 +198,7 @@ export class MessageService {
         const {chatId, userId} = this.getIdsFromMessage(message);
         try {
 
-            const userDictionary = this.dbService.getFlatUserDictionary(userId);
+            const userDictionary = await this.dbService.getFlatUserDictionary(userId);
             if (!userDictionary || !userDictionary?.length) {
                 return bot.sendMessage(
                     chatId,
