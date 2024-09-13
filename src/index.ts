@@ -1,4 +1,4 @@
-import dotenv from 'dotenv'
+import { config as dotEnvConfig } from 'dotenv'
 import TelegramBot, { BotCommand, CallbackQuery, Message, Metadata } from 'node-telegram-bot-api'
 import {
     AddingWordsReplyKeyboardData,
@@ -6,14 +6,16 @@ import {
     RemovingWordsReplyKeyboardData,
     StartLearningReplyKeyboardData
 } from "./common/enums/mainInlineKeyboard";
-import { DbService } from "./services/db-service";
+import { DbLocalService } from "./services/db-local-service";
+import { DbAwsService } from "./services/db-aws-service";
 import { MessageService } from "./services/message-service";
 import { ScheduleService } from "./services/schedule-service";
-import * as AWS from "aws-sdk";
 
-dotenv.config();
+
+dotEnvConfig();
 const TB_TOKEN: string = process.env.TELEGRAM_BOT_TOKEN!;
-const dynamoDBTableName: string = process.env.AWS_DYNAMODB_TABLE_NAME!;
+
+console.log('TB_TOKEN: ', TB_TOKEN);
 const bot = new TelegramBot(TB_TOKEN,
     {
         polling: {
@@ -22,26 +24,23 @@ const bot = new TelegramBot(TB_TOKEN,
         }
     });
 
-const dbService = new DbService();
-const scheduleService = new ScheduleService(dbService);
+const dbService = new DbLocalService();
+const dbAwsService = new DbAwsService();
+const scheduleService = new ScheduleService(dbAwsService);
 const messageService = new MessageService(
-    dbService,
+    dbAwsService,
     scheduleService
 );
 const commands: BotCommand[] = [
     { command: 'start', description: 'Start the bot'},
     { command: 'instruction', description: 'Additional information about the bot' }
 ];
-const dynamodb = new AWS.DynamoDB.DocumentClient();
-const awsDynamoDBParams = {
-    TableName: dynamoDBTableName,
-};
 
 bot.setMyCommands(commands)
     .then(() => {
         console.log('Bot commands set successfully!');
     })
-    .catch((error) => {
+    .catch((error: { message: any; }) => {
         console.error('Error while setting bot commands: ', error.message);
     })
 
@@ -98,16 +97,8 @@ bot.on('callback_query', async (query: CallbackQuery) => {
     await messageService.generalCallbackHandler(bot, query);
 });
 
-bot.on("polling_error", err => console.log('ERROR: ', JSON.stringify(err)));
+bot.on("polling_error", (err: any) => console.log('ERROR: ', JSON.stringify(err)));
 
-// Scan the table
-dynamodb.scan(awsDynamoDBParams, (err, data) => {
-    if (err) {
-        console.error("Error scanning table:", JSON.stringify(err, null, 2));
-    } else {
-        console.log("Scan succeeded:", JSON.stringify(data.Items, null, 2));
-    }
-});
 
 // TODO: ICTB-5 check node:20-slim
 // TODO: ICTB-6 cut-off version v1.0.0

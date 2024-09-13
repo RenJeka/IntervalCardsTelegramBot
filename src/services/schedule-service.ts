@@ -1,13 +1,13 @@
-import { DbService } from "./db-service";
 import schedule, { Job } from "node-schedule";
 import TelegramBot from "node-telegram-bot-api";
+import { IDbService } from "../common/interfaces/iDbService";
 
 export class ScheduleService {
 
     private userJobs: Map<number, Job> = new Map;
 
 
-    constructor(dbService: DbService) { }
+    constructor(dbService: IDbService) { }
 
     startLearnByUserId(
         bot: TelegramBot,
