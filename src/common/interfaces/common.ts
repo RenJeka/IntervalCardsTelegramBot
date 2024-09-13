@@ -21,10 +21,10 @@ export interface UserDataAWS {
 }
 
 export interface UserWordAWS {
-    _id: string;
+    _id: number;
     user_id: string;
     word: string;
-    translation: string;
-    example: string;
-    comment: string;
+    translation?: string;
+    example?: string;
+    comment?: string;
 }

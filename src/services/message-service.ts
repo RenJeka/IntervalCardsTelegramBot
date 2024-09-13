@@ -11,6 +11,7 @@ import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
 import { ScheduleService } from "./schedule-service";
 import { MainReplyKeyboardData } from "../common/enums/mainInlineKeyboard";
 import { IDbService } from "../common/interfaces/iDbService";
+import { UserWord } from "../common/interfaces/common";
 
 export class MessageService {
 
@@ -71,7 +72,7 @@ export class MessageService {
 
         switch (currentUserStatus) {
             case UserStatus.ADD_WORD:
-                return this.addParticularWordHandler(
+                return await this.addParticularWordHandler(
                   bot,
                   userId,
                   chatId,
@@ -158,7 +159,7 @@ export class MessageService {
             await bot.sendMessage(
                 chatId,
                 `Please, chose the word You want to delete \n ⬇️⬇️⬇️`,
-                getRemoveWordsKeyboard(this.dbService.getUserDictionary(userId))
+                getRemoveWordsKeyboard((await this.dbService.getUserDictionary(userId)) as unknown as UserWord[])
             );
 
             // We can't pass empty message in  'bot.sendMessage' method
@@ -244,13 +245,13 @@ export class MessageService {
         }
     }
 
-    private addParticularWordHandler(
+    private async addParticularWordHandler(
         bot: TelegramBot,
         userId: number,
         chatId: number,
         message:Message
     ):  Promise<TelegramBot.Message> {
-        const dbResponse: DbResponse = this.dbService.writeWordByUserId(userId, message.text || '');
+        const dbResponse: DbResponse = await this.dbService.writeWordByUserId(userId, message.text || '');
         let responseMessageText = `The word '${message.text}' has been added. You can add more!`;
 
         if (!dbResponse.success) {

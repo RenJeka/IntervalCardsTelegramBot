@@ -9,7 +9,7 @@ import { writeFileSync } from "fs";
 import { randomUUID } from "crypto";
 import {IDbService} from "../common/interfaces/iDbService";
 
-export class DbLocalService implements IDbService{
+export class DbLocalService{
 
     constructor() {
         this.initDb();

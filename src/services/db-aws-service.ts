@@ -3,21 +3,17 @@ import * as util from "node:util";
 import { UserData, UserDb, UserWord, UserWordAWS } from "../common/interfaces/common";
 import { UserStatus } from "../common/enums/userStatus";
 import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
-import { ValidateHelper } from "../helpers/validate-helper";
 import { writeFileSync } from "fs";
-import { randomUUID } from "crypto";
 import {IDbService} from "../common/interfaces/iDbService";
 import path from "path";
-import {DynamoDBClient, DynamoDBClientConfig, ListTablesCommand, ScanCommand, ScanCommandInput, ScanCommandOutput} from "@aws-sdk/client-dynamodb";
-import { unmarshall } from "@aws-sdk/util-dynamodb";
+import {DynamoDBClient, DynamoDBClientConfig, ListTablesCommand, PutItemCommand, PutItemCommandInput, ScanCommand, ScanCommandInput, ScanCommandOutput} from "@aws-sdk/client-dynamodb";
+import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 
-//TODO: implement getUserDictionary
-//TODO: output all words into bot
+
 //TODO: implement checkIsUserExist
 //TODO: implement getUserStatus
 //TODO: implement setUserStatus
 //TODO: implement getFlatUserDictionary
-//TODO: implement writeWordByUserId
 //TODO: implement removeWordById
 
 export class DbAwsService implements IDbService{
@@ -41,7 +37,7 @@ export class DbAwsService implements IDbService{
         }
     }
 
-    writeWordByUserId( userId: number, word: string): DbResponse {
+    async writeWordByUserId( userId: number, word: string): Promise<DbResponse> {
         try {
             const currentUser: UserData | null = this.getUserById(userId);
 
@@ -49,7 +45,7 @@ export class DbAwsService implements IDbService{
                 throw new Error(`Can't find user by id: ${userId}`)
             }
 
-            if (ValidateHelper.checkDuplicate(currentUser.dictionary, word)) {
+            if (await this.checkDuplicate(userId, word)) {
                 return {
                     success: false,
                     status: DbResponseStatus.DUPLICATE_WORD,
@@ -57,17 +53,31 @@ export class DbAwsService implements IDbService{
                 }
             }
 
-            const currentUserWord: UserWord = {
-                id: randomUUID() as string,
-                text: word
+            const currentUserWord: UserWordAWS = {
+                _id: new Date().getTime(),
+                user_id: userId.toString(),
+                word: word.trim().toLowerCase()
             }
-            currentUser.dictionary.push(currentUserWord);
-            this.addUserDataToDb(currentUser);
+
+            const putItemParams: PutItemCommandInput  = {
+                TableName: this.dynamoDbWordsTableName,
+                Item: marshall(currentUserWord),
+                ReturnConsumedCapacity: 'INDEXES',
+              };
+
+            const command = new PutItemCommand(putItemParams)
+            const response = await this.client.send(command);
+            console.log('response: ', JSON.stringify(response));
+
+            if (response?.$metadata?.httpStatusCode !== 200) {
+                throw new Error(`❌️Something went wrong while writing word to DB: ${JSON.stringify(response)}`)
+            }
 
             return {
                 success: true,
                 status: DbResponseStatus.OK,
-                message: `Word '${word}' has been written successfully`
+                message: `Word '${word}' has been written successfully`,
+                consumedCapacity: JSON.stringify(response.ConsumedCapacity)
             }
 
         } catch (error: any) {
@@ -146,31 +156,14 @@ export class DbAwsService implements IDbService{
         return currentUserData.status
     }
 
-    getUserDictionary(userId: number): UserWord[]{
-        if (!userId) {
-            return [];
-        }
-
-        const userDb = this.getUserDb();
-        const currentUser: UserData | undefined = userDb.userData.find((userData: UserData) => userData.id === userId);
-
-        if (!currentUser) {
-            return [];
-        }
-
-        return [...currentUser.dictionary];
-    }
-
-    async getUserDictionaryAWS(userId: number): Promise<UserWordAWS[]> {
-
-        console.log('DYNAMO_DB_WORDS_TABLE_NAME: ', this.dynamoDbWordsTableName);
+    async getUserDictionary(userId: number): Promise<UserWordAWS[]> {
         const scanInput: ScanCommandInput = {
             TableName: this.dynamoDbWordsTableName,
             ReturnConsumedCapacity: "INDEXES",
             FilterExpression: "user_id = :uid",
             ExpressionAttributeValues: {
                 ':uid': { S: userId.toString() }
-                // ':uid': { S: '0' }
+                // ':uid': { S: '0' } // for general words
             }
         }
 
@@ -191,7 +184,7 @@ export class DbAwsService implements IDbService{
         if (!userId) {
             return [];
         }
-        return (await this.getUserDictionaryAWS(userId)).map((word: UserWordAWS) => word.word);
+        return (await this.getUserDictionary(userId)).map((word: UserWordAWS) => word.word);
     }
     
     checkIsUserExist(userId: number): boolean {
@@ -248,8 +241,6 @@ export class DbAwsService implements IDbService{
         }
     }
 
-
-
     private getUserById(userId: number): UserData | null {
         try {
             const db: UserDb = this.getUserDb();
@@ -289,6 +280,33 @@ export class DbAwsService implements IDbService{
 
         } catch(error) {
             console.log('Error while list tables: ', JSON.stringify(error))
+        }
+    }
+
+    /**
+     * 
+     * @param userId 
+     * @param word 
+     * @returns 
+     */
+    private async checkDuplicate(userId: number, word: string): Promise<boolean> {
+        const scanInput: ScanCommandInput = {
+            TableName: this.dynamoDbWordsTableName,
+            ReturnConsumedCapacity: "INDEXES",
+            FilterExpression: "word = :w",
+            ExpressionAttributeValues: {
+                ':w': { S: word }
+            }
+        }
+
+        try {
+            const command = new ScanCommand(scanInput);
+            const response: ScanCommandOutput = await this.client.send(command);
+
+
+            return response?.Count!! > 0
+        } catch(error) {
+            throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
         }
     }
 }
