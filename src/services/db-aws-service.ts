@@ -15,7 +15,11 @@ import {
     PutItemCommandInput,
     ScanCommandInput,
     ScanCommandOutput,
-    DeleteItemCommand, DeleteItemCommandInput
+    DeleteItemCommand,
+    DeleteItemCommandInput,
+    GetItemInput,
+    GetItemCommand,
+    GetItemCommandOutput
 } from "@aws-sdk/client-dynamodb";
 import {marshall, unmarshall} from "@aws-sdk/util-dynamodb";
 
@@ -100,27 +104,34 @@ export class DbAwsService implements IDbService {
     }
 
     async removeWordById(userId: number, wordId: string): Promise<DbResponse> {
+        const itemInput: GetItemInput | DeleteItemCommandInput = {
+            TableName: this.dynamoDbWordsTableName,
+            ReturnConsumedCapacity: "INDEXES",
+            Key: {'_id': {N: wordId}, 'user_id': {S: userId.toString()}}
+        }
         try {
+            // Check if current User exist
             const currentUser: UserData | null = this.getUserById(userId);
-
             if (!currentUser) {
                 throw new Error(`❌️Can't find user by id: ${userId}`)
             }
 
-            // TODO: check that userID consistent (match) that wordId
-            const deleteItemParams: DeleteItemCommandInput = {
-                TableName: this.dynamoDbWordsTableName,
-                Key: {'_id': {N: wordId}, 'user_id': {S: userId.toString()}}
-            } as unknown as DeleteItemCommandInput;
+            // Check if word exist for user
+            const getItemCommand = new GetItemCommand(itemInput);
+            const getItemResponse: GetItemCommandOutput = await this.client.send(getItemCommand) as GetItemCommandOutput;
+            if (!getItemResponse?.Item) {
+                return {
+                    success: false,
+                    status: DbResponseStatus.WRONG_INPUT,
+                    message: `❌️Incorrect word's index`
+                }
+            }
 
-            const command = new DeleteItemCommand(deleteItemParams);
-
-            const response = await this.client.send(command);
-
-            console.log('response: ' , JSON.stringify(response))
-
-            if (response?.$metadata?.httpStatusCode !== 200) {
-                throw new Error(`❌️Something went wrong while deleting word to DB: ${JSON.stringify(response)}`)
+            //deleteItem
+            const deleteItemCommand = new DeleteItemCommand(itemInput);
+            const deleteItemResponse = await this.client.send(deleteItemCommand);
+            if (getItemResponse?.$metadata?.httpStatusCode !== 200) {
+                throw new Error(`❌️Something went wrong while deleting word to DB: ${JSON.stringify(deleteItemResponse)}`)
             }
 
             return {
@@ -128,13 +139,6 @@ export class DbAwsService implements IDbService {
                 status: DbResponseStatus.OK,
                 message: `✔️ Word '' has been deleting successfully`
             }
-
-            // TODO: implement DbResponseStatus.WRONG_INPUT
-            // return {
-            //     success: false,
-            //     status: DbResponseStatus.WRONG_INPUT,
-            //     message: `❌️Incorrect word's index`
-            // }
 
         } catch (error: any) {
             return {
@@ -188,7 +192,7 @@ export class DbAwsService implements IDbService {
 
         try {
             const command = new ScanCommand(scanInput);
-            const response: ScanCommandOutput = await this.client.send(command);
+            const response: ScanCommandOutput = await this.client.send(command) as ScanCommandOutput;
             const items: UserWordAWS[] = response.Items?.map(item => unmarshall(item)) as UserWordAWS[];
             // console.log('ConsumedCapacity:', JSON.stringify(response.ConsumedCapacity, null, 2));
             // console.log('Unmarshalled items:', items);
