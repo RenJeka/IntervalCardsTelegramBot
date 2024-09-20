@@ -105,6 +105,8 @@ export class DbAwsService implements IDbService {
             ReturnConsumedCapacity: "INDEXES",
             Key: {'_id': {N: wordId}, 'user_id': {S: userId.toString()}}
         }
+        let deletingItem: UserWordAWS;
+
         try {
             // Check if current User exist
             const currentUser: UserData | null = this.getUserById(userId);
@@ -123,6 +125,11 @@ export class DbAwsService implements IDbService {
                 }
             }
 
+            console.log('getItemResponse:', JSON.stringify(getItemResponse));
+            console.log('unmarshall(getItemResponse.Item):', unmarshall(getItemResponse.Item));
+
+            deletingItem = unmarshall(getItemResponse.Item) as UserWordAWS
+
             //deleteItem
             const deleteItemCommand = new DeleteItemCommand(itemInput);
             const deleteItemResponse: DeleteItemCommandOutput = await this.client.send(deleteItemCommand) as DeleteItemCommandOutput;
@@ -133,7 +140,7 @@ export class DbAwsService implements IDbService {
             return {
                 success: true,
                 status: DbResponseStatus.OK,
-                message: `✔️ Word '' has been deleting successfully`
+                message: `✔️ Word '${deletingItem.word}' has been deleting successfully`
             }
 
         } catch (error: any) {
