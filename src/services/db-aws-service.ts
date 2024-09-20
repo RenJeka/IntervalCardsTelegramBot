@@ -9,33 +9,32 @@ import path from "path";
 import {
     DynamoDBClient,
     ListTablesCommand,
+    GetItemCommand,
     PutItemCommand,
     ScanCommand,
-    DynamoDBClientConfig,
-    PutItemCommandInput,
-    ScanCommandInput,
-    ScanCommandOutput,
     DeleteItemCommand,
-    DeleteItemCommandInput,
+    DynamoDBClientConfig,
+    ScanCommandInput,
     GetItemInput,
-    GetItemCommand,
-    GetItemCommandOutput
+    PutItemCommandInput,
+    DeleteItemCommandInput,
+    ScanCommandOutput,
+    GetItemCommandOutput,
+    PutItemCommandOutput,
+    DeleteItemCommandOutput
 } from "@aws-sdk/client-dynamodb";
 import {marshall, unmarshall} from "@aws-sdk/util-dynamodb";
 
-
-//TODO: implement checkIsUserExist
-//TODO: implement getUserStatus
-//TODO: implement setUserStatus
-//TODO: implement getFlatUserDictionary
-//TODO: implement removeWordById
+//TODO: 1. Implement managing users and its statuses via DynamoDB table ↓↓↓
+//TODO: 1.1 implement checkIsUserExist
+//TODO: 1.2 implement getUserStatus
+//TODO: 1.3 implement setUserStatus
 
 export class DbAwsService implements IDbService {
 
     private DB_DIRECTORY_NAME = 'db';
     private DB_NAME = 'userDb.json';
     private DB_PATH = path.join('./', this.DB_DIRECTORY_NAME, this.DB_NAME);
-
     private dynamoDbRegion: string = process.env.AWS_REGION!;
     private dynamoDbWordsTableName: string = process.env.AWS_WORDS_TABLE_NAME!;
 
@@ -45,7 +44,7 @@ export class DbAwsService implements IDbService {
     private client = new DynamoDBClient(this.config);
 
     constructor() {
-        this.listTables()
+        // this.listTables()
         if (!this.dynamoDbRegion || !this.dynamoDbWordsTableName) {
             throw new Error('AWS_REGION or AWS_WORDS_TABLE_NAME are not defined')
         }
@@ -54,7 +53,6 @@ export class DbAwsService implements IDbService {
     async writeWordByUserId(userId: number, word: string): Promise<DbResponse> {
         try {
             const currentUser: UserData | null = this.getUserById(userId);
-
             if (!currentUser) {
                 throw new Error(`❌️Can't find user by id: ${userId}`)
             }
@@ -80,9 +78,7 @@ export class DbAwsService implements IDbService {
             };
 
             const command = new PutItemCommand(putItemParams)
-            const response = await this.client.send(command);
-            // console.log('response: ', JSON.stringify(response));
-
+            const response: PutItemCommandOutput = await this.client.send(command) as  PutItemCommandOutput;
             if (response?.$metadata?.httpStatusCode !== 200) {
                 throw new Error(`❌️Something went wrong while writing word to DB: ${JSON.stringify(response)}`)
             }
@@ -129,7 +125,7 @@ export class DbAwsService implements IDbService {
 
             //deleteItem
             const deleteItemCommand = new DeleteItemCommand(itemInput);
-            const deleteItemResponse = await this.client.send(deleteItemCommand);
+            const deleteItemResponse: DeleteItemCommandOutput = await this.client.send(deleteItemCommand) as DeleteItemCommandOutput;
             if (getItemResponse?.$metadata?.httpStatusCode !== 200) {
                 throw new Error(`❌️Something went wrong while deleting word to DB: ${JSON.stringify(deleteItemResponse)}`)
             }
@@ -194,9 +190,6 @@ export class DbAwsService implements IDbService {
             const command = new ScanCommand(scanInput);
             const response: ScanCommandOutput = await this.client.send(command) as ScanCommandOutput;
             const items: UserWordAWS[] = response.Items?.map(item => unmarshall(item)) as UserWordAWS[];
-            // console.log('ConsumedCapacity:', JSON.stringify(response.ConsumedCapacity, null, 2));
-            // console.log('Unmarshalled items:', items);
-
             return items
         } catch (error) {
             throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
@@ -243,24 +236,6 @@ export class DbAwsService implements IDbService {
             return JSON.parse(data) as UserDb
         } catch (error) {
             throw new Error(`Something wrong while reading file. Error: ${JSON.stringify(error)}`)
-        }
-    }
-
-    private async getUserDbAWS(): Promise<UserDb> {
-        try {
-
-            const scanInput: ScanCommandInput = {
-                TableName: this.dynamoDbWordsTableName,
-                ReturnConsumedCapacity: "TOTAL"
-            }
-
-            const command = new ScanCommand(scanInput);
-            const response: ScanCommandOutput = await this.client.send(command);
-
-            console.log('Scan succeeded:', JSON.stringify(response, null, 2));
-            return {userData: []}
-        } catch (error) {
-            throw new Error(`Something wrong while reading file. Error: ${JSON.stringify(error, null, 2)}`)
         }
     }
 
