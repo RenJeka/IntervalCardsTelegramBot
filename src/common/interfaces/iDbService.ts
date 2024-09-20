@@ -4,7 +4,7 @@ import {UserStatus} from "../enums/userStatus";
 
 export interface IDbService {
     writeWordByUserId(userId: number, word: string): Promise<DbResponse>;
-    removeWordById(userId: number, wordId: string): DbResponse ;
+    removeWordById(userId: number, wordId: string): Promise<DbResponse>;
     setUserStatus(userId: number, userStatus: UserStatus): void ;
     getUserStatus(userId?: number): UserStatus | null;
     getUserDictionary(userId: number): Promise<UserWordAWS[]>;

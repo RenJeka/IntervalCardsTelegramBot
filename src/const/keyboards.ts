@@ -4,7 +4,7 @@ import {
     MainReplyKeyboardData,
     RemovingWordsReplyKeyboardData, StartLearningReplyKeyboardData
 } from "../common/enums/mainInlineKeyboard";
-import { UserWord } from "../common/interfaces/common";
+import {UserWord, UserWordAWS} from "../common/interfaces/common";
 
 export const REPLY_KEYBOARD_OPTIONS: SendMessageOptions = {
     reply_markup: {
@@ -46,9 +46,9 @@ export const START_LEARN_KEYBOARD_OPTIONS: SendMessageOptions = {
 }
 
 
-export function getRemoveWordsKeyboard(userDictionary: UserWord[]): SendMessageOptions {
-    const keyboard: InlineKeyboardButton[][] = userDictionary.map((userWord: UserWord) => {
-        return [{text: userWord.text, callback_data: userWord.id}]
+export function getRemoveWordsKeyboard(userDictionary: UserWordAWS[]): SendMessageOptions {
+    const keyboard: InlineKeyboardButton[][] = userDictionary.map((userWord: UserWordAWS) => {
+        return [{text: userWord.word, callback_data: userWord._id.toString()}]
     })
 
    return {

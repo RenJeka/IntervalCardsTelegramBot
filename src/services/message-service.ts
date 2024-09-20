@@ -11,7 +11,7 @@ import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
 import { ScheduleService } from "./schedule-service";
 import { MainReplyKeyboardData } from "../common/enums/mainInlineKeyboard";
 import { IDbService } from "../common/interfaces/iDbService";
-import { UserWord } from "../common/interfaces/common";
+import {UserWord, UserWordAWS} from "../common/interfaces/common";
 
 export class MessageService {
 
@@ -109,7 +109,9 @@ export class MessageService {
         switch (currentUserStatus) {
             case UserStatus.REMOVE_WORD:
 
-                return this.removeParticularWordHandler(
+                console.log('query.data', query.data);
+
+                return await this.removeParticularWordHandler(
                     bot,
                     userId,
                     chatId,
@@ -159,7 +161,7 @@ export class MessageService {
             await bot.sendMessage(
                 chatId,
                 `Please, chose the word You want to delete \n ⬇️⬇️⬇️`,
-                getRemoveWordsKeyboard((await this.dbService.getUserDictionary(userId)) as unknown as UserWord[])
+                getRemoveWordsKeyboard((await this.dbService.getUserDictionary(userId)) as unknown as UserWordAWS[])
             );
 
             // We can't pass empty message in  'bot.sendMessage' method
@@ -267,7 +269,7 @@ export class MessageService {
     }
 
 
-    private removeParticularWordHandler(
+    private async removeParticularWordHandler(
         bot: TelegramBot,
         userId: number,
         chatId: number,
@@ -282,7 +284,7 @@ export class MessageService {
             );
         }
 
-        const dbResponse: DbResponse = this.dbService.removeWordById(userId, wordId);
+        const dbResponse: DbResponse = await this.dbService.removeWordById(userId, wordId);
         let responseMessageText = `The word has been deleted successfully. You can delete more!`;
 
         if (!dbResponse.success) {
