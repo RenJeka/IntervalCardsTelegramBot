@@ -1,13 +1,23 @@
 import * as fs from "fs";
 import * as util from "node:util";
-import { UserData, UserDb, UserWord, UserWordAWS } from "../common/interfaces/common";
-import { UserStatus } from "../common/enums/userStatus";
-import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
-import { writeFileSync } from "fs";
+import {UserData, UserDb, UserWord, UserWordAWS} from "../common/interfaces/common";
+import {UserStatus} from "../common/enums/userStatus";
+import {DbResponse, DbResponseStatus} from "../common/interfaces/dbResponse";
+import {writeFileSync} from "fs";
 import {IDbService} from "../common/interfaces/iDbService";
 import path from "path";
-import {DynamoDBClient, DynamoDBClientConfig, ListTablesCommand, PutItemCommand, PutItemCommandInput, ScanCommand, ScanCommandInput, ScanCommandOutput} from "@aws-sdk/client-dynamodb";
-import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
+import {
+    DynamoDBClient,
+    ListTablesCommand,
+    PutItemCommand,
+    ScanCommand,
+    DynamoDBClientConfig,
+    PutItemCommandInput,
+    ScanCommandInput,
+    ScanCommandOutput,
+    DeleteItemCommand, DeleteItemCommandInput
+} from "@aws-sdk/client-dynamodb";
+import {marshall, unmarshall} from "@aws-sdk/util-dynamodb";
 
 
 //TODO: implement checkIsUserExist
@@ -16,7 +26,7 @@ import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 //TODO: implement getFlatUserDictionary
 //TODO: implement removeWordById
 
-export class DbAwsService implements IDbService{
+export class DbAwsService implements IDbService {
 
     private DB_DIRECTORY_NAME = 'db';
     private DB_NAME = 'userDb.json';
@@ -37,12 +47,12 @@ export class DbAwsService implements IDbService{
         }
     }
 
-    async writeWordByUserId( userId: number, word: string): Promise<DbResponse> {
+    async writeWordByUserId(userId: number, word: string): Promise<DbResponse> {
         try {
             const currentUser: UserData | null = this.getUserById(userId);
 
             if (!currentUser) {
-                throw new Error(`Can't find user by id: ${userId}`)
+                throw new Error(`❌️Can't find user by id: ${userId}`)
             }
 
             if (await this.checkDuplicate(userId, word)) {
@@ -59,15 +69,15 @@ export class DbAwsService implements IDbService{
                 word: word.trim().toLowerCase()
             }
 
-            const putItemParams: PutItemCommandInput  = {
+            const putItemParams: PutItemCommandInput = {
                 TableName: this.dynamoDbWordsTableName,
                 Item: marshall(currentUserWord),
                 ReturnConsumedCapacity: 'INDEXES',
-              };
+            };
 
             const command = new PutItemCommand(putItemParams)
             const response = await this.client.send(command);
-            console.log('response: ', JSON.stringify(response));
+            // console.log('response: ', JSON.stringify(response));
 
             if (response?.$metadata?.httpStatusCode !== 200) {
                 throw new Error(`❌️Something went wrong while writing word to DB: ${JSON.stringify(response)}`)
@@ -89,7 +99,7 @@ export class DbAwsService implements IDbService{
         }
     }
 
-    removeWordById(userId: number, wordId: string): DbResponse {
+    async removeWordById(userId: number, wordId: string): Promise<DbResponse> {
         try {
             const currentUser: UserData | null = this.getUserById(userId);
 
@@ -97,25 +107,34 @@ export class DbAwsService implements IDbService{
                 throw new Error(`❌️Can't find user by id: ${userId}`)
             }
 
-            const wordIndex = currentUser.dictionary.findIndex(userWord => userWord.id === wordId);
+            // TODO: check that userID consistent (match) that wordId
+            const deleteItemParams: DeleteItemCommandInput = {
+                TableName: this.dynamoDbWordsTableName,
+                Key: {'_id': {N: wordId}, 'user_id': {S: userId.toString()}}
+            } as unknown as DeleteItemCommandInput;
 
-            if (wordIndex !== -1) {
-                const deletingWord = currentUser.dictionary[wordIndex].text;
-                // TODO: implements deleting via DBService
-                currentUser.dictionary.splice(wordIndex, 1);
-                this.addUserDataToDb(currentUser);
-                return {
-                    success: true,
-                    status: DbResponseStatus.OK,
-                    message: `✔️ Word '${deletingWord}' has been deleting successfully`
-                }
+            const command = new DeleteItemCommand(deleteItemParams);
+
+            const response = await this.client.send(command);
+
+            console.log('response: ' , JSON.stringify(response))
+
+            if (response?.$metadata?.httpStatusCode !== 200) {
+                throw new Error(`❌️Something went wrong while deleting word to DB: ${JSON.stringify(response)}`)
             }
 
             return {
-                success: false,
-                status: DbResponseStatus.WRONG_INPUT,
-                message: `❌️Incorrect word's index`
+                success: true,
+                status: DbResponseStatus.OK,
+                message: `✔️ Word '' has been deleting successfully`
             }
+
+            // TODO: implement DbResponseStatus.WRONG_INPUT
+            // return {
+            //     success: false,
+            //     status: DbResponseStatus.WRONG_INPUT,
+            //     message: `❌️Incorrect word's index`
+            // }
 
         } catch (error: any) {
             return {
@@ -162,7 +181,7 @@ export class DbAwsService implements IDbService{
             ReturnConsumedCapacity: "INDEXES",
             FilterExpression: "user_id = :uid",
             ExpressionAttributeValues: {
-                ':uid': { S: userId.toString() }
+                ':uid': {S: userId.toString()}
                 // ':uid': { S: '0' } // for general words
             }
         }
@@ -170,12 +189,12 @@ export class DbAwsService implements IDbService{
         try {
             const command = new ScanCommand(scanInput);
             const response: ScanCommandOutput = await this.client.send(command);
-            const items: UserWordAWS[]  = response.Items?.map(item => unmarshall(item)) as UserWordAWS[];
-            console.log('ConsumedCapacity:', JSON.stringify(response.ConsumedCapacity, null, 2));
-            console.log('Unmarshalled items:', items);
+            const items: UserWordAWS[] = response.Items?.map(item => unmarshall(item)) as UserWordAWS[];
+            // console.log('ConsumedCapacity:', JSON.stringify(response.ConsumedCapacity, null, 2));
+            // console.log('Unmarshalled items:', items);
 
             return items
-        } catch(error) {
+        } catch (error) {
             throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
         }
     }
@@ -186,7 +205,7 @@ export class DbAwsService implements IDbService{
         }
         return (await this.getUserDictionary(userId)).map((word: UserWordAWS) => word.word);
     }
-    
+
     checkIsUserExist(userId: number): boolean {
         if (typeof userId !== 'number') {
             return false;
@@ -197,7 +216,7 @@ export class DbAwsService implements IDbService{
 
     private initUser(userId: number) {
         if (this.checkIsUserExist(userId)) {
-           return
+            return
         }
         this.addUserDataToDb({
             id: userId,
@@ -208,7 +227,7 @@ export class DbAwsService implements IDbService{
 
     private writeJSON(userDb: UserDb) {
         try {
-            writeFileSync(this.DB_PATH,  util.format('%j', userDb), {flag: 'w+'})
+            writeFileSync(this.DB_PATH, util.format('%j', userDb), {flag: 'w+'})
         } catch (err) {
             throw err
         }
@@ -218,7 +237,7 @@ export class DbAwsService implements IDbService{
         try {
             const data = fs.readFileSync(this.DB_PATH, {encoding: 'utf-8'});
             return JSON.parse(data) as UserDb
-        } catch(error) {
+        } catch (error) {
             throw new Error(`Something wrong while reading file. Error: ${JSON.stringify(error)}`)
         }
     }
@@ -236,7 +255,7 @@ export class DbAwsService implements IDbService{
 
             console.log('Scan succeeded:', JSON.stringify(response, null, 2));
             return {userData: []}
-        } catch(error) {
+        } catch (error) {
             throw new Error(`Something wrong while reading file. Error: ${JSON.stringify(error, null, 2)}`)
         }
     }
@@ -251,7 +270,7 @@ export class DbAwsService implements IDbService{
     }
 
     private addUserDataToDb(currentUser: UserData) {
-        const db: UserDb  = this.getUserDb();
+        const db: UserDb = this.getUserDb();
         const currentUserCopy: UserData = JSON.parse(JSON.stringify(currentUser));
         const currentUserIndex = db.userData.findIndex(user => user.id === currentUser.id);
 
@@ -278,16 +297,16 @@ export class DbAwsService implements IDbService{
             const response = await this.client.send(listCommandCommand);
             console.log('ListTablesCommand:', response);
 
-        } catch(error) {
+        } catch (error) {
             console.log('Error while list tables: ', JSON.stringify(error))
         }
     }
 
     /**
-     * 
-     * @param userId 
-     * @param word 
-     * @returns 
+     *
+     * @param userId
+     * @param word
+     * @returns
      */
     private async checkDuplicate(userId: number, word: string): Promise<boolean> {
         const scanInput: ScanCommandInput = {
@@ -295,7 +314,7 @@ export class DbAwsService implements IDbService{
             ReturnConsumedCapacity: "INDEXES",
             FilterExpression: "word = :w",
             ExpressionAttributeValues: {
-                ':w': { S: word }
+                ':w': {S: word}
             }
         }
 
@@ -305,7 +324,7 @@ export class DbAwsService implements IDbService{
 
 
             return response?.Count!! > 0
-        } catch(error) {
+        } catch (error) {
             throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
         }
     }
