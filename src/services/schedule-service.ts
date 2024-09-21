@@ -16,8 +16,8 @@ export class ScheduleService {
     ) {
         try {
             const cronJob: CronJob = new CronJob(
-                '0 9-21 * * *', // Run every hour at minute 0, from 9 to 21
-                // '*/5 * 9-21 * * *', // Develop mode. Run every 5 seconds
+                '0 9-22 * * *', // Run every hour at minute 0, from 9 to 21
+                // '*/5 * * * * *', // Develop mode. Run every 5 seconds
                 () => {
                     const randomIndex = Math.floor(Math.random() * userDictionary.length);
                     if (chatId) {
