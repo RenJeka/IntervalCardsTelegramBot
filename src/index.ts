@@ -6,7 +6,6 @@ import {
     RemovingWordsReplyKeyboardData,
     StartLearningReplyKeyboardData
 } from "./common/enums/mainInlineKeyboard";
-// import { DbLocalService } from "./services/db-local-service";
 import { DbAwsService } from "./services/db-aws-service";
 import { MessageService } from "./services/message-service";
 import { ScheduleService } from "./services/schedule-service";
@@ -24,7 +23,6 @@ const bot = new TelegramBot(TB_TOKEN,
         }
     });
 
-// const dbService = new DbLocalService();
 const dbAwsService = new DbAwsService();
 const scheduleService = new ScheduleService();
 const messageService = new MessageService(
@@ -107,6 +105,5 @@ bot.on("polling_error", (err: any) => console.log('ERROR: ', JSON.stringify(err)
 // TODO: ICTB-10 Implement translation
 // TODO: ICTB-13 add button to check user status (user mode)
 // TODO: ICTB-17 add logging
-// TODO: ICTB-20 Change DataBase to DynamoDB
 
 
