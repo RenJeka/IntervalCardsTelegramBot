@@ -1,13 +1,12 @@
-import schedule, { Job } from "node-schedule";
+import { CronJob } from 'cron/dist';
 import TelegramBot from "node-telegram-bot-api";
-import { IDbService } from "../common/interfaces/iDbService";
 
 export class ScheduleService {
 
-    private userJobs: Map<number, Job> = new Map;
+    private userJobs: Map<number, CronJob> = new Map;
+    private timeZone: string = 'Europe/Kyiv';
 
-
-    constructor(dbService: IDbService) { }
+    constructor() { }
 
     startLearnByUserId(
         bot: TelegramBot,
@@ -16,14 +15,22 @@ export class ScheduleService {
         chatId?: number,
     ) {
         try {
-            const currentUserJob: Job = schedule.scheduleJob('*/10 9-21 * * *', () => {
-                const randomIndex = Math.floor(Math.random() * userDictionary.length);
-                if (chatId) {
-                    bot.sendMessage(chatId, userDictionary[randomIndex]);
-                }
-            });
+            const cronJob: CronJob = new CronJob(
+                '0 9-21 * * *', // Run every hour at minute 0, from 9 to 21
+                // '*/5 * 9-21 * * *', // Develop mode. Run every 5 seconds
+                () => {
+                    const randomIndex = Math.floor(Math.random() * userDictionary.length);
+                    if (chatId) {
+                        bot.sendMessage(chatId, userDictionary[randomIndex]);
+                    }
+                },
+                null,
+                true,
+                this.timeZone
+            );
 
-            this.userJobs.set(userId, currentUserJob);
+            this.userJobs.set(userId, cronJob);
+
         } catch (err) {
             throw err;
         }
@@ -34,7 +41,7 @@ export class ScheduleService {
     ) {
         try {
             if (this.userJobs.has(userId)) {
-                this.userJobs.get(userId)!.cancel();
+                this.userJobs.get(userId)!.stop();
             }
         } catch (err) {
             throw err;

@@ -6,7 +6,7 @@ import {
     RemovingWordsReplyKeyboardData,
     StartLearningReplyKeyboardData
 } from "./common/enums/mainInlineKeyboard";
-import { DbLocalService } from "./services/db-local-service";
+// import { DbLocalService } from "./services/db-local-service";
 import { DbAwsService } from "./services/db-aws-service";
 import { MessageService } from "./services/message-service";
 import { ScheduleService } from "./services/schedule-service";
@@ -24,9 +24,9 @@ const bot = new TelegramBot(TB_TOKEN,
         }
     });
 
-const dbService = new DbLocalService();
+// const dbService = new DbLocalService();
 const dbAwsService = new DbAwsService();
-const scheduleService = new ScheduleService(dbAwsService);
+const scheduleService = new ScheduleService();
 const messageService = new MessageService(
     dbAwsService,
     scheduleService
