@@ -48,6 +48,8 @@ export class DbAwsService implements IDbService {
         if (!this.dynamoDbRegion || !this.dynamoDbWordsTableName) {
             throw new Error('AWS_REGION or AWS_WORDS_TABLE_NAME are not defined')
         }
+
+        this.initDb();
     }
 
     async writeWordByUserId(userId: number, word: string): Promise<DbResponse> {
@@ -216,6 +218,21 @@ export class DbAwsService implements IDbService {
         }
         const currentUser = this.getUserById(userId);
         return !!currentUser;
+    }
+
+    private initDb() {
+        fs.exists (this.DB_PATH, (isDbExist: boolean) => {
+            if (!isDbExist) {
+                if (!fs.existsSync(this.DB_DIRECTORY_NAME)) {
+                    fs.mkdirSync(this.DB_DIRECTORY_NAME);
+                }
+
+                const userDB: UserDb = {
+                    userData: []
+                }
+                this.writeJSON(userDB);
+            }
+        })
     }
 
     private initUser(userId: number) {
