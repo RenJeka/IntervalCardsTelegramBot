@@ -1,10 +1,21 @@
 
+###CURRENT WORK:
+
+```
+TODO: ICTB-5 check node:20-slim
+TODO: ICTB-6 cut-off version v1.0.0
+TODO: ICTB-7 .env for dev & for prod. Add schedule for dev '*/10 9-21 * * *' + for prod '0 9-21 * * *'
+TODO: ICTB-10 Implement translation
+TODO: ICTB-13 add button to check user status (user mode)
+TODO: ICTB-17 add logging
+TODO: ICTB-21 add translation of user's word wia separator ('--' OR '/' OR 'brake line (\n)')
+```
 
 ---
 ##### 9/23/2024
 TODO: ICTB-21 add translation of user's word wia separator ('--' OR '/' OR 'brake line (\n)')
 
-TODO: ICTB-18 add task stack in `tasksTrackingSystem.md` (separate block for current tasks)
+~~TODO: ICTB-18 add task stack in `tasksTrackingSystem.md` (separate block for current tasks)~~
 
 ---
 ##### 9/21/2024
