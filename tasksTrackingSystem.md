@@ -1,6 +1,16 @@
 
 
 ---
+##### 9/23/2024
+TODO: ICTB-21 add translation of user's word wia separator ('--' OR '/' OR 'brake line (\n)')
+
+TODO: ICTB-18 add task stack in `tasksTrackingSystem.md` (separate block for current tasks)
+
+---
+##### 9/21/2024
+~~TODO: ICTB-20 Change DataBase to DynamoDB~~
+
+---
 ##### 2/11/2024
 TODO: ICTB-5 check node:20-slim
 
