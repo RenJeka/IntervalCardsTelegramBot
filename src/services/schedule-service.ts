@@ -20,8 +20,10 @@ export class ScheduleService {
                 // '*/5 * * * * *', // Develop mode. Run every 5 seconds
                 () => {
                     const randomIndex = Math.floor(Math.random() * userDictionary.length);
+                    const translation = ` --- ||${userDictionary[randomIndex]}||`; // TODO: change after ICTB-21
+                    const fullMessage = userDictionary[randomIndex] + (translation || '');
                     if (chatId) {
-                        bot.sendMessage(chatId, userDictionary[randomIndex]);
+                        bot.sendMessage(chatId, fullMessage, { parse_mode: 'MarkdownV2' });
                     }
                 },
                 null,
