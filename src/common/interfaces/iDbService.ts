@@ -1,5 +1,5 @@
 import {DbResponse} from "./dbResponse";
-import {UserWordAWS} from "./common";
+import {UserItemAWS} from "./common";
 import {UserStatus} from "../enums/userStatus";
 
 export interface IDbService {
@@ -7,7 +7,7 @@ export interface IDbService {
     removeWordById(userId: number, wordId: string): Promise<DbResponse>;
     setUserStatus(userId: number, userStatus: UserStatus): void ;
     getUserStatus(userId?: number): UserStatus | null;
-    getUserDictionary(userId: number): Promise<UserWordAWS[]>;
+    getUserDictionary(userId: number): Promise<UserItemAWS[]>;
     getFlatUserDictionary(userId: number): Promise<string[]>;
     checkIsUserExist(userId: number): boolean;
 }

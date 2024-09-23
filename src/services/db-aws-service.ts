@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as util from "node:util";
-import {UserData, UserDb, UserWord, UserWordAWS} from "../common/interfaces/common";
+import {UserData, UserDb, UserItemAWS} from "../common/interfaces/common";
 import {UserStatus} from "../common/enums/userStatus";
 import {DbResponse, DbResponseStatus} from "../common/interfaces/dbResponse";
 import {writeFileSync} from "fs";
@@ -52,25 +52,30 @@ export class DbAwsService implements IDbService {
         this.initDb();
     }
 
-    async writeWordByUserId(userId: number, word: string): Promise<DbResponse> {
+    async writeWordByUserId(userId: number, message: string): Promise<DbResponse> {
+        const separator: string = '/'
+
         try {
             const currentUser: UserData | null = this.getUserById(userId);
             if (!currentUser) {
                 throw new Error(`❌️Can't find user by id: ${userId}`)
             }
 
-            if (await this.checkDuplicate(userId, word)) {
+            const parsedItem: string[] = message.split(separator).map(item => item.trim().toLowerCase())
+
+            if (await this.checkDuplicate(userId, message)) {
                 return {
                     success: false,
                     status: DbResponseStatus.DUPLICATE_WORD,
-                    message: `Duplicate word:  '${word}'`
+                    message: `Duplicate word:  '${message}'`
                 }
             }
 
-            const currentUserWord: UserWordAWS = {
+            const currentUserWord: UserItemAWS = {
                 _id: new Date().getTime(),
                 user_id: userId.toString(),
-                word: word.trim().toLowerCase()
+                word: parsedItem[0],
+                translation: parsedItem[1] || ''
             }
 
             const putItemParams: PutItemCommandInput = {
@@ -88,7 +93,7 @@ export class DbAwsService implements IDbService {
             return {
                 success: true,
                 status: DbResponseStatus.OK,
-                message: `Word '${word}' has been written successfully`,
+                message: `Word '${message}' has been written successfully`,
                 consumedCapacity: JSON.stringify(response.ConsumedCapacity)
             }
 
@@ -107,7 +112,7 @@ export class DbAwsService implements IDbService {
             ReturnConsumedCapacity: "INDEXES",
             Key: {'_id': {N: wordId}, 'user_id': {S: userId.toString()}}
         }
-        let deletingItem: UserWordAWS;
+        let deletingItem: UserItemAWS;
 
         try {
             // Check if current User exist
@@ -130,7 +135,7 @@ export class DbAwsService implements IDbService {
             console.log('getItemResponse:', JSON.stringify(getItemResponse));
             console.log('unmarshall(getItemResponse.Item):', unmarshall(getItemResponse.Item));
 
-            deletingItem = unmarshall(getItemResponse.Item) as UserWordAWS
+            deletingItem = unmarshall(getItemResponse.Item) as UserItemAWS
 
             //deleteItem
             const deleteItemCommand = new DeleteItemCommand(itemInput);
@@ -184,7 +189,7 @@ export class DbAwsService implements IDbService {
         return currentUserData.status
     }
 
-    async getUserDictionary(userId: number): Promise<UserWordAWS[]> {
+    async getUserDictionary(userId: number): Promise<UserItemAWS[]> {
         const scanInput: ScanCommandInput = {
             TableName: this.dynamoDbWordsTableName,
             ReturnConsumedCapacity: "INDEXES",
@@ -198,7 +203,7 @@ export class DbAwsService implements IDbService {
         try {
             const command = new ScanCommand(scanInput);
             const response: ScanCommandOutput = await this.client.send(command) as ScanCommandOutput;
-            const items: UserWordAWS[] = response.Items?.map(item => unmarshall(item)) as UserWordAWS[];
+            const items: UserItemAWS[] = response.Items?.map(item => unmarshall(item)) as UserItemAWS[];
             return items
         } catch (error) {
             throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
@@ -209,7 +214,7 @@ export class DbAwsService implements IDbService {
         if (!userId) {
             return [];
         }
-        return (await this.getUserDictionary(userId)).map((word: UserWordAWS) => word.word);
+        return (await this.getUserDictionary(userId)).map((word: UserItemAWS) => word.word);
     }
 
     checkIsUserExist(userId: number): boolean {

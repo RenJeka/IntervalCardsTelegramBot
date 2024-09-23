@@ -11,7 +11,7 @@ import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
 import { ScheduleService } from "./schedule-service";
 import { MainReplyKeyboardData } from "../common/enums/mainInlineKeyboard";
 import { IDbService } from "../common/interfaces/iDbService";
-import {UserWord, UserWordAWS} from "../common/interfaces/common";
+import {UserWord, UserItemAWS} from "../common/interfaces/common";
 
 export class MessageService {
 
@@ -57,7 +57,7 @@ export class MessageService {
     async generalMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
         const {chatId, userId} = this.getIdsFromMessage(message);
 
-        if (!message.text) {
+        if (!message.text?.trim()) {
             return bot.sendMessage(
                 chatId,
                 'I did not receive any message from You, Please, try again.',
@@ -161,7 +161,7 @@ export class MessageService {
             await bot.sendMessage(
                 chatId,
                 `Please, chose the word You want to delete \n ⬇️⬇️⬇️`,
-                getRemoveWordsKeyboard((await this.dbService.getUserDictionary(userId)) as unknown as UserWordAWS[])
+                getRemoveWordsKeyboard((await this.dbService.getUserDictionary(userId)) as unknown as UserItemAWS[])
             );
 
             // We can't pass empty message in  'bot.sendMessage' method
@@ -201,8 +201,8 @@ export class MessageService {
         const {chatId, userId} = this.getIdsFromMessage(message);
         try {
 
-            const userDictionary = await this.dbService.getFlatUserDictionary(userId);
-            if (!userDictionary || !userDictionary?.length) {
+            const userItems: UserItemAWS[] = await this.dbService.getUserDictionary(userId);
+            if (!userItems || !userItems?.length) {
                 return bot.sendMessage(
                     chatId,
                     `You are have no words. Please, add some`,
@@ -211,10 +211,11 @@ export class MessageService {
             }
             this.dbService.setUserStatus(userId, UserStatus.START_LEARN);
 
-            this.scheduleService.startLearnByUserId(bot, userDictionary, userId, chatId);
+            this.scheduleService.startLearnByUserId(bot, userItems, userId, chatId);
             return bot.sendMessage(
                 chatId,
-                `You are in learning. Every hour You will get 1 word. This will continue from 9:00 (9:00 a.m.) to 22:00 (10:00 p.m.)`,
+                `You are in learning. Every hour You will get 1 word. This will continue from 9:00 (9:00 a.m.) to 22:00 (10:00 p.m.).
+                Please, add translation via '/' separator`,
                 START_LEARN_KEYBOARD_OPTIONS
             );
         } catch (error: any) {

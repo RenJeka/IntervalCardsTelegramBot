@@ -20,7 +20,7 @@ export interface UserDataAWS {
     status: UserStatus;
 }
 
-export interface UserWordAWS {
+export interface UserItemAWS {
     _id: number;
     user_id: string;
     word: string;

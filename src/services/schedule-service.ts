@@ -1,5 +1,6 @@
 import { CronJob } from 'cron/dist';
 import TelegramBot from "node-telegram-bot-api";
+import {UserItemAWS} from "../common/interfaces/common";
 
 export class ScheduleService {
 
@@ -10,18 +11,21 @@ export class ScheduleService {
 
     startLearnByUserId(
         bot: TelegramBot,
-        userDictionary: string[],
+        userItems: UserItemAWS[],
         userId: number,
         chatId?: number,
     ) {
         try {
             const cronJob: CronJob = new CronJob(
-                '0 9-22 * * *', // Run every hour at minute 0, from 9 to 21
-                // '*/5 * * * * *', // Develop mode. Run every 5 seconds
+                // '0 9-22 * * *', // Run every hour at minute 0, from 9 to 21
+                '*/5 * * * * *', // Develop mode. Run every 5 seconds
                 () => {
-                    const randomIndex = Math.floor(Math.random() * userDictionary.length);
-                    const translation = ` --- ||${userDictionary[randomIndex]}||`; // TODO: change after ICTB-21
-                    const fullMessage = userDictionary[randomIndex] + (translation || '');
+                    const randomIndex = Math.floor(Math.random() * userItems.length);
+                    const word = userItems[randomIndex]?.word?.replace(/\-/gm, '\\-')
+                    const translation = userItems[randomIndex]?.translation ?
+                                        ` \\-\\-\\- ||${userItems[randomIndex]?.translation?.replace(/\-/gm, '\\-')}||`
+                                        : null;
+                    const fullMessage = word + (translation || '');
                     if (chatId) {
                         bot.sendMessage(chatId, fullMessage, { parse_mode: 'MarkdownV2' });
                     }
