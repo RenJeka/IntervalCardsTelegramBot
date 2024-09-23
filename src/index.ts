@@ -1,14 +1,16 @@
 import dotenv from 'dotenv'
-import TelegramBot, { CallbackQuery, Message, Metadata, SendMessageOptions } from 'node-telegram-bot-api'
-import schedule from "node-schedule";
-import { UserData } from "./common/interfaces/common";
-import { MainInlineKeyboardData } from "./common/enums/mainInlineKeyboard";
-import { DbHelper } from "./helpers/db-helper";
-import { ADD_WORD_KEYBOARD_OPTIONS, BASE_INLINE_KEYBOARD_OPTIONS } from "./const/keyboards";
-import { MessageHelper } from "./helpers/message-helper";
+import TelegramBot, { BotCommand, CallbackQuery, Message, Metadata } from 'node-telegram-bot-api'
+import {
+    AddingWordsReplyKeyboardData,
+    MainReplyKeyboardData,
+    RemovingWordsReplyKeyboardData,
+    StartLearningReplyKeyboardData
+} from "./common/enums/mainInlineKeyboard";
+import { DbService } from "./services/db-service";
+import { MessageService } from "./services/message-service";
+import { ScheduleService } from "./services/schedule-service";
 
 dotenv.config();
-
 const TB_TOKEN: string = process.env.TELEGRAM_BOT_TOKEN!;
 const bot = new TelegramBot(TB_TOKEN,
     {
@@ -18,57 +20,86 @@ const bot = new TelegramBot(TB_TOKEN,
         }
     });
 
-console.log('Bot is working!');
-console.log('TB_TOKEN: ', TB_TOKEN);
+const dbService = new DbService();
+const scheduleService = new ScheduleService(dbService);
+const messageService = new MessageService(
+    dbService,
+    scheduleService
+);
+const commands: BotCommand[] = [
+    { command: 'start', description: 'Start the bot'},
+    { command: 'instruction', description: 'Additional information about the bot' }
+];
 
-const userDB: UserData[] = [];
-
-const messageHelper = new MessageHelper(new DbHelper());
+bot.setMyCommands(commands)
+    .then(() => {
+        console.log('Bot commands set successfully!');
+    })
+    .catch((error) => {
+        console.error('Error while setting bot commands: ', error.message);
+    })
 
 bot.on('message', async (msg: Message, metadata: Metadata) => {
     const messageText = msg.text;
 
-
     switch (messageText) {
         case '/start':
-            await messageHelper.startBotMessageHandler(bot, msg, BASE_INLINE_KEYBOARD_OPTIONS);
+            await messageService.startMessageHandler(bot, msg);
             break;
 
-        case '/help':
-            await messageHelper.startBotMessageHandler(bot, msg, BASE_INLINE_KEYBOARD_OPTIONS);
+        case '/instruction':
+            await messageService.instructionMessageHandler(bot, msg);
             break;
+
+        case MainReplyKeyboardData.SHOW_ALL:
+            await messageService.getAllMessagesHandler(bot, msg);
+            break;
+
+        case MainReplyKeyboardData.ADD_WORD:
+            await messageService.addWordMessageHandler(bot, msg);
+            break;
+
+        case MainReplyKeyboardData.REMOVE_WORD:
+            await messageService.removeWordMessageHandler(bot, msg);
+            break;
+
+        case MainReplyKeyboardData.START_LEARN:
+            await messageService.startLearn(bot, msg);
+            break;
+
+        case StartLearningReplyKeyboardData.STOP_LEARN:
+            await messageService.stopLearn(bot, msg);
+            break;
+
+        case AddingWordsReplyKeyboardData.CANCEL:
+            await messageService.goToMainPage(bot, msg);
+            break;
+
+        case AddingWordsReplyKeyboardData.FINISH:
+            await messageService.goToMainPage(bot, msg);
+            break;
+
+        case RemovingWordsReplyKeyboardData.FINISH:
+            await messageService.goToMainPage(bot, msg);
+            break;
+
         default :
-            await messageHelper.startBotMessageHandler(bot, msg, BASE_INLINE_KEYBOARD_OPTIONS);
+            await messageService.generalMessageHandler(bot, msg);
     }
 });
 
 bot.on('callback_query', async (query: CallbackQuery) => {
-
-    console.log('query: ', query);
-
-    switch (query.data) {
-        case MainInlineKeyboardData.SHOW_ALL:
-            // await messageHelper.startBotMessageHandler(bot, query.from.id, BASE_INLINE_KEYBOARD_OPTIONS);
-            break;
-
-        case MainInlineKeyboardData.ADD_WORD:
-            await messageHelper.addWordMessageHandler(bot, query, ADD_WORD_KEYBOARD_OPTIONS);
-            break;
-        default :
-            // await messageHelper.startBotMessageHandler(bot, query.from.id, BASE_INLINE_KEYBOARD_OPTIONS);
-    }
+    await messageService.generalCallbackHandler(bot, query);
 });
 
 bot.on("polling_error", err => console.log('ERROR: ', JSON.stringify(err)));
 
+// TODO: ICTB-5 check node:20-slim
+// TODO: ICTB-6 cut-off version v1.0.0
+// TODO: ICTB-7 .env for dev & for prod. Add schedule for dev '*/10 9-21 * * *' + for prod '0 9-21 * * *'
+// TODO: ICTB-8 add Standard words set #1 (the 30 common usefully words from 3 letters. Ask ChatGPT)
+// TODO: ICTB-10 Implement translation
+// TODO: ICTB-13 add button to check user status (user mode)
+// TODO: ICTB-17 add logging
 
-// TODO: investigate usage info: https://github.com/yagop/node-telegram-bot-api/blob/master/doc/usage.md
-// TODO: investigate API: https://github.com/yagop/node-telegram-bot-api/blob/master/doc/api.md
-// TODO:investigate help from repository's package: https://github.com/yagop/node-telegram-bot-api/blob/master/doc/help.md
-// TODO: redo bot for webhooks: https://github.com/yagop/node-telegram-bot-api/tree/master/examples/webhook
 
-
-//TODO: implement the 'scheduleJob'
-// schedule.scheduleJob('13 * * * *', () => {
-//     bot.sendMessage(chatId, 'Hello! This is a scheduled message.');
-// });
