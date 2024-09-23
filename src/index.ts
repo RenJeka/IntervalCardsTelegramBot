@@ -105,5 +105,6 @@ bot.on("polling_error", (err: any) => console.log('ERROR: ', JSON.stringify(err)
 // TODO: ICTB-10 Implement translation
 // TODO: ICTB-13 add button to check user status (user mode)
 // TODO: ICTB-17 add logging
+// TODO: ICTB-21 add translation of user's word wia separator ('--' OR '/' OR 'brake line (\n)')
 
 
