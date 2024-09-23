@@ -96,15 +96,3 @@ bot.on('callback_query', async (query: CallbackQuery) => {
 });
 
 bot.on("polling_error", (err: any) => console.log('ERROR: ', JSON.stringify(err)));
-
-
-// TODO: ICTB-5 check node:20-slim
-// TODO: ICTB-6 cut-off version v1.0.0
-// TODO: ICTB-7 .env for dev & for prod. Add schedule for dev '*/10 9-21 * * *' + for prod '0 9-21 * * *'
-// TODO: ICTB-8 add Standard words set #1 (the 30 common usefully words from 3 letters. Ask ChatGPT)
-// TODO: ICTB-10 Implement translation
-// TODO: ICTB-13 add button to check user status (user mode)
-// TODO: ICTB-17 add logging
-// TODO: ICTB-21 add translation of user's word wia separator ('--' OR '/' OR 'brake line (\n)')
-
-
