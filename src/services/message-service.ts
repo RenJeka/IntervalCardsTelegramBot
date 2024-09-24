@@ -145,7 +145,9 @@ export class MessageService {
         }
         return bot.sendMessage(
             chatId,
-            'Please, type your word and press \'Enter\' or send button',
+            `
+Please, type your word and press 'Enter' or send button.
+You can add translation via  <code>/</code>  separator`,
             ADD_WORD_KEYBOARD_OPTIONS
         );
     }
@@ -214,8 +216,7 @@ export class MessageService {
             this.scheduleService.startLearnByUserId(bot, userItems, userId, chatId);
             return bot.sendMessage(
                 chatId,
-                `You are in learning. Every hour You will get 1 word. This will continue from 9:00 (9:00 a.m.) to 22:00 (10:00 p.m.).
-                Please, add translation via '/' separator`,
+                `You are in learning. Every hour You will get 1 word. This will continue from 9:00 (9:00 a.m.) to 22:00 (10:00 p.m.)`,
                 START_LEARN_KEYBOARD_OPTIONS
             );
         } catch (error: any) {

@@ -23,7 +23,8 @@ export const ADD_WORD_KEYBOARD_OPTIONS: SendMessageOptions = {
             [{text: AddingWordsReplyKeyboardData.FINISH}, {text: AddingWordsReplyKeyboardData.CANCEL}],
         ],
         resize_keyboard: true
-    }
+    },
+    parse_mode: 'HTML'
 }
 
 export const REMOVE_WORD_KEYBOARD_OPTIONS: SendMessageOptions = {

@@ -1,6 +1,7 @@
 import { CronJob } from 'cron/dist';
 import TelegramBot from "node-telegram-bot-api";
-import {UserItemAWS} from "../common/interfaces/common";
+import { UserItemAWS } from "../common/interfaces/common";
+import { FormatterHelper } from "../helpers/formatter-helper";
 
 export class ScheduleService {
 
@@ -17,13 +18,13 @@ export class ScheduleService {
     ) {
         try {
             const cronJob: CronJob = new CronJob(
-                '0 9-22 * * *', // Run every hour at minute 0, from 9 to 21
-                // '*/5 * * * * *', // Develop mode. Run every 5 seconds
+                // '0 9-22 * * *', // Run every hour at minute 0, from 9 to 21
+                '*/5 * * * * *', // Develop mode. Run every 5 seconds
                 () => {
                     const randomIndex = Math.floor(Math.random() * userItems.length);
-                    const word = userItems[randomIndex]?.word?.replace(/\-/gm, '\\-')
+                    const word = FormatterHelper.escapeMarkdownV2(userItems[randomIndex]?.word);
                     const translation = userItems[randomIndex]?.translation ?
-                                        ` \\-\\-\\- ||${userItems[randomIndex]?.translation?.replace(/\-/gm, '\\-')}||`
+                                        ` \\-\\-\\- ||${FormatterHelper.escapeMarkdownV2(userItems[randomIndex]?.translation || '') }||`
                                         : null;
                     const fullMessage = word + (translation || '');
                     if (chatId) {

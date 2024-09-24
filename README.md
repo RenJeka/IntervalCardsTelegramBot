@@ -17,6 +17,7 @@ Instruction links. that is bot's code from: [[Medium] Creating a Simple Telegram
 * API: https://github.com/yagop/node-telegram-bot-api/blob/master/doc/api.md
 * help: https://github.com/yagop/node-telegram-bot-api/blob/master/doc/help.md
 * webhooks: https://github.com/yagop/node-telegram-bot-api/tree/master/examples/webhook
+* formatting options: https://core.telegram.org/bots/api#formatting-options
 
 
 ####Versioning

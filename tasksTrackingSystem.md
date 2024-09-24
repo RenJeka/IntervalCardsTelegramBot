@@ -7,14 +7,12 @@ TODO: ICTB-7 .env for dev & for prod. Add schedule for dev '*/10 9-21 * * *' + f
 TODO: ICTB-10 Implement translation
 TODO: ICTB-13 add button to check user status (user mode)
 TODO: ICTB-17 add logging
-TODO: ICTB-22 make ideal regExp for escaping Characters such as '!'... e.t.c. (src\services\schedule-service.ts
- → startLearnByUserId())
 ```
 
 ---
 ##### 9/23/2024
-TODO: ICTB-22 make ideal regExp for escaping Characters such as '!'... e.t.c. (src\services\schedule-service.ts
- → startLearnByUserId())
+~~TODO: ICTB-22 make ideal regExp for escaping Characters such as '!'... e.t.c. (src\services\schedule-service.ts
+ → startLearnByUserId())~~
  
 ~~TODO: ICTB-21 add translation of user's word wia separator ('--' OR '/' OR 'brake line (\n)')~~
 
