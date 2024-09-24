@@ -7,7 +7,15 @@ TODO: ICTB-7 .env for dev & for prod. Add schedule for dev '*/10 9-21 * * *' + f
 TODO: ICTB-10 Implement translation
 TODO: ICTB-13 add button to check user status (user mode)
 TODO: ICTB-17 add logging
+TODO: ICTB-24 add logo to bot
 ```
+
+
+---
+##### 9/24/2024
+TODO: ICTB-24 add logo to bot
+
+~~TODO: ICTB-23 fix return message when user add word with translation. And test brakeline separator~~
 
 ---
 ##### 9/23/2024

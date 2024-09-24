@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as util from "node:util";
-import {UserData, UserDb, UserItemAWS} from "../common/interfaces/common";
+import {UserData, UserDb, UserItemAWS, UserRawItemAWS} from "../common/interfaces/common";
 import {UserStatus} from "../common/enums/userStatus";
 import {DbResponse, DbResponseStatus} from "../common/interfaces/dbResponse";
 import {writeFileSync} from "fs";
@@ -24,6 +24,8 @@ import {
     DeleteItemCommandOutput
 } from "@aws-sdk/client-dynamodb";
 import {marshall, unmarshall} from "@aws-sdk/util-dynamodb";
+import {ADD_USER_ITEM_SEPARATOR} from "../const/common";
+import {CommonHelper} from "../helpers/common-helper";
 
 //TODO: 1. Implement managing users and its statuses via DynamoDB table ↓↓↓
 //TODO: 1.1 implement checkIsUserExist
@@ -53,30 +55,27 @@ export class DbAwsService implements IDbService {
     }
 
     async writeWordByUserId(userId: number, message: string): Promise<DbResponse> {
-        const separator: string = '/'
-
         try {
             const currentUser: UserData | null = this.getUserById(userId);
             if (!currentUser) {
                 throw new Error(`❌️Can't find user by id: ${userId}`)
             }
 
-            const parsedItem: string[] = message.split(separator).map(item => item.trim().toLowerCase())
+            const parsedRawItem: UserRawItemAWS = CommonHelper.parseUserRawItem(message);
 
-            if (await this.checkDuplicate(userId, message)) {
+            if (await this.checkDuplicate(userId, parsedRawItem.word)) {
                 return {
                     success: false,
                     status: DbResponseStatus.DUPLICATE_WORD,
-                    message: `Duplicate word:  '${message}'`
+                    message: `Duplicate word: '${message}'`
                 }
             }
 
             const currentUserWord: UserItemAWS = {
                 _id: new Date().getTime(),
                 user_id: userId.toString(),
-                word: parsedItem[0],
-                translation: parsedItem[1] || ''
-            }
+                ...parsedRawItem
+            };
 
             const putItemParams: PutItemCommandInput = {
                 TableName: this.dynamoDbWordsTableName,
@@ -329,7 +328,6 @@ export class DbAwsService implements IDbService {
         try {
             const command = new ScanCommand(scanInput);
             const response: ScanCommandOutput = await this.client.send(command);
-
 
             return response?.Count!! > 0
         } catch (error) {

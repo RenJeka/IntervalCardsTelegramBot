@@ -20,11 +20,14 @@ export interface UserDataAWS {
     status: UserStatus;
 }
 
-export interface UserItemAWS {
-    _id: number;
-    user_id: string;
+export interface UserRawItemAWS {
     word: string;
     translation?: string;
     example?: string;
     comment?: string;
+}
+
+export interface UserItemAWS extends UserRawItemAWS{
+    _id: number;
+    user_id: string;
 }

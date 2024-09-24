@@ -12,6 +12,7 @@ import { ScheduleService } from "./schedule-service";
 import { MainReplyKeyboardData } from "../common/enums/mainInlineKeyboard";
 import { IDbService } from "../common/interfaces/iDbService";
 import {UserWord, UserItemAWS} from "../common/interfaces/common";
+import {CommonHelper} from "../helpers/common-helper";
 
 export class MessageService {
 
@@ -27,7 +28,7 @@ export class MessageService {
 
         return bot.sendMessage(
             chatId,
-            `Welcome to the IntervalCards Telegram Bot! \n  Here you will can add words and receive messages with random word from your words periodically.\n  Please, use '☰ Menu' ➼ '/instruction' for more information`,
+            `Welcome to the IntervalCards Telegram Bot! \n  Here you will can add words and receive messages with random word from your words periodically.\n  Please, use '☰ Menu' ➼ '/instruction' for more information \n  If you wish to add word — please go to 'Add word' menu.`,
             REPLY_KEYBOARD_OPTIONS
         );
     }
@@ -76,7 +77,7 @@ export class MessageService {
                   bot,
                   userId,
                   chatId,
-                  message
+                  message.text
                 );
 
             case UserStatus.START_LEARN:
@@ -253,20 +254,29 @@ You can add translation via  <code>/</code>  separator`,
         bot: TelegramBot,
         userId: number,
         chatId: number,
-        message:Message
+        message: string
     ):  Promise<TelegramBot.Message> {
-        const dbResponse: DbResponse = await this.dbService.writeWordByUserId(userId, message.text || '');
-        let responseMessageText = `The word '${message.text}' has been added. You can add more!`;
+        const dbResponse: DbResponse = await this.dbService.writeWordByUserId(userId, message || '');
+        const parsedRawItem = CommonHelper.parseUserRawItem(message);
+        let responseMessageText = `✅ The word <code>${parsedRawItem.word}</code> has been added. You can add more!`;
+
+        if (parsedRawItem.translation) {
+            responseMessageText = `✅ The word <b> <u>${parsedRawItem.word}</u></b> with translation <b> <u>${parsedRawItem.translation}</u></b> has been added. You can add more!`;
+        }
 
         if (!dbResponse.success) {
             if (dbResponse.status === DbResponseStatus.DUPLICATE_WORD) {
-                responseMessageText = `The word '${message.text}' already exist in your dictionary. Please, send other word.`;
+                responseMessageText = `🚫 The word <b> <u>${parsedRawItem.word}</u></b> already exist. Please, send other word.`;
+            } else {
+                responseMessageText = dbResponse.message || '🚫 Something went wrong! Please, try again.'
             }
-            responseMessageText = dbResponse.message || 'Something went wrong! Please, try again.'
         }
         return bot.sendMessage(
             chatId,
             responseMessageText,
+            {
+                parse_mode: "HTML"
+            }
         );
     }
 
@@ -287,13 +297,13 @@ You can add translation via  <code>/</code>  separator`,
         }
 
         const dbResponse: DbResponse = await this.dbService.removeWordById(userId, wordId);
-        let responseMessageText = `The word has been deleted successfully. You can delete more!`;
+        let responseMessageText = `✅ The word has been deleted successfully. You can delete more!`;
 
         if (!dbResponse.success) {
             if (dbResponse.status === DbResponseStatus.WRONG_INPUT) {
-                responseMessageText = `The word with number hasn't been find. Please, try again`;
+                responseMessageText = `🚫 The word with number hasn't been find. Please, try again`;
             }
-            responseMessageText = dbResponse.message || 'Something went wrong! Please, try again.'
+            responseMessageText = dbResponse.message || '🚫 Something went wrong! Please, try again.'
         }
         return bot.sendMessage(
             chatId,
