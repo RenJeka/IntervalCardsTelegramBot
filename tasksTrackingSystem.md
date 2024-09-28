@@ -10,6 +10,10 @@ TODO: ICTB-17 add logging
 TODO: ICTB-24 add logo to bot
 ```
 
+---
+##### 9/27/2024
+~~TODO: ICTB-25 bugfix user run multiple schedules (when start other one more schedule — other schedule for that user~~
+ should be stopped)
 
 ---
 ##### 9/24/2024

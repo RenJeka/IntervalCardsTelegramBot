@@ -16,6 +16,12 @@ export class ScheduleService {
         userId: number,
         chatId?: number,
     ) {
+
+        if (this.userJobs.has(userId)){
+            this.userJobs.get(userId)!.start()
+            return;
+        }
+
         try {
             const cronJob: CronJob = new CronJob(
                 '0 9-22 * * *', // Run every hour at minute 0, from 9 to 21

@@ -109,9 +109,6 @@ export class MessageService {
 
         switch (currentUserStatus) {
             case UserStatus.REMOVE_WORD:
-
-                console.log('query.data', query.data);
-
                 return await this.removeParticularWordHandler(
                     bot,
                     userId,
@@ -184,10 +181,8 @@ You can add translation via  <code>/</code>  separator`,
 
     async getAllMessagesHandler(bot: TelegramBot,  message: Message): Promise<TelegramBot.Message | undefined> {
         const {chatId, userId} = this.getIdsFromMessage(message);
-
         const userDictionary: string[] = await this.dbService.getFlatUserDictionary(userId);
 
-        console.log('getAllMessagesHandler');
         if (!userDictionary || !userDictionary.length) {
             return bot.sendMessage(
                 chatId,
@@ -258,7 +253,7 @@ You can add translation via  <code>/</code>  separator`,
     ):  Promise<TelegramBot.Message> {
         const dbResponse: DbResponse = await this.dbService.writeWordByUserId(userId, message || '');
         const parsedRawItem = CommonHelper.parseUserRawItem(message);
-        let responseMessageText = `✅ The word <code>${parsedRawItem.word}</code> has been added. You can add more!`;
+        let responseMessageText = `✅ The word <b> <u>${parsedRawItem.word}</u></b> has been added. You can add more!`;
 
         if (parsedRawItem.translation) {
             responseMessageText = `✅ The word <b> <u>${parsedRawItem.word}</u></b> with translation <b> <u>${parsedRawItem.translation}</u></b> has been added. You can add more!`;
@@ -288,7 +283,6 @@ You can add translation via  <code>/</code>  separator`,
         wordId: string
     ):  Promise<TelegramBot.Message> {
 
-        console.log('removeParticularWordHandler. wordId: ', wordId);
         if (!wordId) {
             return bot.sendMessage(
                 chatId,
