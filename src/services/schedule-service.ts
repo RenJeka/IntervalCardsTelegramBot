@@ -19,8 +19,7 @@ export class ScheduleService {
     ) {
 
         if (this.userJobs.has(userId)){
-            this.userJobs.get(userId)!.start()
-            return;
+            this.stopLearnByUserId(userId)
         }
 
         try {
@@ -40,7 +39,6 @@ export class ScheduleService {
                                         ` \\-\\-\\- ||${FormatterHelper.escapeMarkdownV2(userItems[randomIndex]?.translation || '') }||`
                                         : null;
                     const fullMessage = word + (translation || '');
-                    console.log('nodeEnv:', this.nodeEnv);
 
                     if (chatId) {
                         bot.sendMessage(chatId, fullMessage, { parse_mode: 'MarkdownV2' });
@@ -64,6 +62,7 @@ export class ScheduleService {
         try {
             if (this.userJobs.has(userId)) {
                 this.userJobs.get(userId)!.stop();
+                this.userJobs.delete(userId);
             }
         } catch (err) {
             throw err;
