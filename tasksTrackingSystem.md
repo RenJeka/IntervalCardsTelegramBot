@@ -8,12 +8,26 @@ TODO: ICTB-10 Implement translation
 TODO: ICTB-13 add button to check user status (user mode)
 TODO: ICTB-17 add logging
 TODO: ICTB-24 add logo to bot
+TODO: ICTB-26 open user menu after user add new word
+TODO: ICTB-27 add thanslations to 'Show all words'
+TODO: ICTB-28 ICTB-25 check if new words appears after adding new words and start learn again (Start learn → stop learn → add words → start learn)
+TODO: ICTB-29 install in docker container only packages for production 
 ```
 
 ---
+##### 10/2/2024
+TODO: ICTB-29 install in docker container only packages for production 
+
+---
+##### 10/1/2024
+TODO: ICTB-26 open user menu after user add new word (✅ The word  ... with translation ... has been added. You can add more!)
+
+TODO: ICTB-27 add thanslations to 'Show all words'
+TODO: ICTB-28 ICTB-25 check if new words appears after adding new words and start learn again (Start learn → stop learn → add words → start learn)
+---
 ##### 9/27/2024
-~~TODO: ICTB-25 bugfix user run multiple schedules (when start other one more schedule — other schedule for that user~~
- should be stopped)
+~~TODO: ICTB-25 bugfix user run multiple schedules (when start other one more schedule — other schedule for that user
+ should be stopped)~~
 
 ---
 ##### 9/24/2024

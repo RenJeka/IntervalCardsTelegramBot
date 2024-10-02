@@ -1,4 +1,5 @@
 import { config as dotEnvConfig } from 'dotenv'
+import chalk from 'chalk';
 import TelegramBot, { BotCommand, CallbackQuery, Message, Metadata } from 'node-telegram-bot-api'
 import {
     AddingWordsReplyKeyboardData,
@@ -10,9 +11,9 @@ import { DbAwsService } from "./services/db-aws-service";
 import { MessageService } from "./services/message-service";
 import { ScheduleService } from "./services/schedule-service";
 
-
-dotEnvConfig();
+dotEnvConfig({path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env'});
 const TB_TOKEN: string = process.env.TELEGRAM_BOT_TOKEN!;
+const nodeEnv: string = process.env.NODE_ENV!;
 
 console.log('TB_TOKEN: ', TB_TOKEN);
 const bot = new TelegramBot(TB_TOKEN,
@@ -37,6 +38,11 @@ const commands: BotCommand[] = [
 bot.setMyCommands(commands)
     .then(() => {
         console.log('Bot commands set successfully!');
+        if (nodeEnv === 'production') {
+            console.log(chalk.red(`===[${nodeEnv.toUpperCase()} MODE]===`));
+        } else {
+            console.log(chalk.white.bgBlue.bold(`===[${nodeEnv.toUpperCase()} MODE]===`));
+        }
     })
     .catch((error: { message: any; }) => {
         console.error('Error while setting bot commands: ', error.message);

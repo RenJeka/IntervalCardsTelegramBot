@@ -7,6 +7,7 @@ export class ScheduleService {
 
     private userJobs: Map<number, CronJob> = new Map;
     private timeZone: string = 'Europe/Kyiv';
+    private nodeEnv: string = process.env.NODE_ENV!;
 
     constructor() { }
 
@@ -23,16 +24,24 @@ export class ScheduleService {
         }
 
         try {
+            /**
+             * production:  Run every hour at minute 0, from 9 to 21
+             *
+             * development: Run every 5 seconds
+             * */
+            const cronTime = this.nodeEnv === 'production' ? '0 9-22 * * *' : '*/5 * * * * *'
+
             const cronJob: CronJob = new CronJob(
-                '0 9-22 * * *', // Run every hour at minute 0, from 9 to 21
-                // '*/5 * * * * *', // Develop mode. Run every 5 seconds
+                cronTime,
                 () => {
                     const randomIndex = Math.floor(Math.random() * userItems.length);
-                    const word = FormatterHelper.escapeMarkdownV2(userItems[randomIndex]?.word);
+                    const word = FormatterHelper.escapeMarkdownV2(userItems[randomIndex]?.word!);
                     const translation = userItems[randomIndex]?.translation ?
                                         ` \\-\\-\\- ||${FormatterHelper.escapeMarkdownV2(userItems[randomIndex]?.translation || '') }||`
                                         : null;
                     const fullMessage = word + (translation || '');
+                    console.log('nodeEnv:', this.nodeEnv);
+
                     if (chatId) {
                         bot.sendMessage(chatId, fullMessage, { parse_mode: 'MarkdownV2' });
                     }
