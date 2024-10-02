@@ -13,6 +13,7 @@ import { MainReplyKeyboardData } from "../common/enums/mainInlineKeyboard";
 import { IDbService } from "../common/interfaces/iDbService";
 import {UserWord, UserItemAWS} from "../common/interfaces/common";
 import {CommonHelper} from "../helpers/common-helper";
+import { FormatterHelper } from "../helpers/formatter-helper";
 
 export class MessageService {
 
@@ -181,7 +182,12 @@ You can add translation via  <code>/</code>  separator`,
 
     async getAllMessagesHandler(bot: TelegramBot,  message: Message): Promise<TelegramBot.Message | undefined> {
         const {chatId, userId} = this.getIdsFromMessage(message);
-        const userDictionary: string[] = await this.dbService.getFlatUserDictionary(userId);
+        const userDictionary: UserItemAWS[] = await this.dbService.getUserDictionary(userId);
+        const userWordsWithTranslations: string[] = userDictionary.map((userItem: UserItemAWS) => {
+            return userItem.translation
+                ? `${FormatterHelper.escapeMarkdownV2(userItem.word)} \\-\\-\\- ||${FormatterHelper.escapeMarkdownV2(userItem.translation)}||`
+                : `${FormatterHelper.escapeMarkdownV2(userItem.word)}`
+        })
 
         if (!userDictionary || !userDictionary.length) {
             return bot.sendMessage(
@@ -191,7 +197,8 @@ You can add translation via  <code>/</code>  separator`,
         }
         return bot.sendMessage(
             chatId,
-            `Your words:\n ${userDictionary.join(', \n')}`,
+            `Your words:\n ${userWordsWithTranslations.join(', \n')}`,
+            { parse_mode: 'MarkdownV2' }
         );
     }
 
