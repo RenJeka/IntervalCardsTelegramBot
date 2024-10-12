@@ -276,9 +276,7 @@ You can add translation via  <code>/</code>  separator`,
         return bot.sendMessage(
             chatId,
             responseMessageText,
-            {
-                parse_mode: "HTML"
-            }
+            ADD_WORD_KEYBOARD_OPTIONS
         );
     }
 
