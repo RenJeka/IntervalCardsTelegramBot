@@ -8,6 +8,10 @@ Instruction links. that is bot's code from: [[Medium] Creating a Simple Telegram
 * copy `.env.example` to `.env` in same folder
 * Ask an appropriate telegram bot token specially to this bot. Paste the token to `TELEGRAM_BOT_TOKEN` variable in `.env` file
 * run `node index.ts` (Terminal should turn into waiting mode).
+
+    `npm start` / `npm run dev` — run development mode (bot sends message every *x* seconds)
+    
+    `npm prod dev` — run production mode (bot sends message every hour or so)
 * open the [**IntervalCardsBot**](https://t.me/IntervalCardsBot) from telegram
 * press "*Start*" button or type `/start`.
 * bot should return a message

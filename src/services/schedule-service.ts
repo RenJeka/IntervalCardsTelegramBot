@@ -2,6 +2,7 @@ import { CronJob } from 'cron/dist';
 import TelegramBot from "node-telegram-bot-api";
 import { UserItemAWS } from "../common/interfaces/common";
 import { FormatterHelper } from "../helpers/formatter-helper";
+import { DEVELOPER_MODE_BOT_SENDS_MESSAGE_SEC } from "../const/common";
 
 export class ScheduleService {
 
@@ -28,7 +29,7 @@ export class ScheduleService {
              *
              * development: Run every 5 seconds
              * */
-            const cronTime = this.nodeEnv === 'production' ? '0 9-22 * * *' : '*/5 * * * * *'
+            const cronTime = this.nodeEnv === 'production' ? '0 9-22 * * *' : `*/${DEVELOPER_MODE_BOT_SENDS_MESSAGE_SEC} * * * * *`
 
             const cronJob: CronJob = new CronJob(
                 cronTime,

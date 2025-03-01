@@ -24,8 +24,8 @@ import {
     DeleteItemCommandOutput
 } from "@aws-sdk/client-dynamodb";
 import {marshall, unmarshall} from "@aws-sdk/util-dynamodb";
-import {ADD_USER_ITEM_SEPARATOR} from "../const/common";
 import {CommonHelper} from "../helpers/common-helper";
+import chalk from 'chalk';
 
 //TODO: 1. Implement managing users and its statuses via DynamoDB table ↓↓↓
 //TODO: 1.1 implement checkIsUserExist
@@ -84,7 +84,7 @@ export class DbAwsService implements IDbService {
             };
 
             const command = new PutItemCommand(putItemParams)
-            const response: PutItemCommandOutput = await this.client.send(command) as  PutItemCommandOutput;
+            const response: PutItemCommandOutput = await this.client.send(command) as PutItemCommandOutput;
             if (response?.$metadata?.httpStatusCode !== 200) {
                 throw new Error(`❌️Something went wrong while writing word to DB: ${JSON.stringify(response)}`)
             }
@@ -131,7 +131,7 @@ export class DbAwsService implements IDbService {
                 }
             }
 
-            console.log('getItemResponse:', JSON.stringify(getItemResponse));
+            console.log(`${chalk.blue.bold.underline('getItemResponse:')} ${JSON.stringify(getItemResponse, null, 2)}`);
             console.log('unmarshall(getItemResponse.Item):', unmarshall(getItemResponse.Item));
 
             deletingItem = unmarshall(getItemResponse.Item) as UserItemAWS
@@ -225,7 +225,7 @@ export class DbAwsService implements IDbService {
     }
 
     private initDb() {
-        fs.exists (this.DB_PATH, (isDbExist: boolean) => {
+        fs.exists(this.DB_PATH, (isDbExist: boolean) => {
             if (!isDbExist) {
                 if (!fs.existsSync(this.DB_DIRECTORY_NAME)) {
                     fs.mkdirSync(this.DB_DIRECTORY_NAME);
@@ -305,7 +305,7 @@ export class DbAwsService implements IDbService {
             console.log('ListTablesCommand:', response);
 
         } catch (error) {
-            console.log('Error while list tables: ', JSON.stringify(error))
+            console.log(chalk.red`Error while list tables: ${JSON.stringify(error)}`)
         }
     }
 
@@ -319,15 +319,16 @@ export class DbAwsService implements IDbService {
         const scanInput: ScanCommandInput = {
             TableName: this.dynamoDbWordsTableName,
             ReturnConsumedCapacity: "INDEXES",
-            FilterExpression: "word = :w",
+            FilterExpression: "word = :w AND user_id = :uid",
             ExpressionAttributeValues: {
-                ':w': {S: word}
+                ':w': {S: String(word)},
+                ':uid': { S: String(userId) }
             }
-        }
+        };
 
         try {
             const command = new ScanCommand(scanInput);
-            const response: ScanCommandOutput = await this.client.send(command);
+            const response: ScanCommandOutput = await this.client.send(command) as ScanCommandOutput;
 
             return response?.Count!! > 0
         } catch (error) {

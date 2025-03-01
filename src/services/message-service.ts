@@ -1,5 +1,5 @@
-import TelegramBot, { CallbackQuery, Message } from "node-telegram-bot-api";
-import { UserStatus } from "../common/enums/userStatus";
+import TelegramBot, {CallbackQuery, Message} from "node-telegram-bot-api";
+import {UserStatus} from "../common/enums/userStatus";
 import {
     ADD_WORD_KEYBOARD_OPTIONS,
     REMOVE_WORD_KEYBOARD_OPTIONS,
@@ -7,20 +7,21 @@ import {
     START_LEARN_KEYBOARD_OPTIONS,
     getRemoveWordsKeyboard,
 } from "../const/keyboards";
-import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
-import { ScheduleService } from "./schedule-service";
-import { MainReplyKeyboardData } from "../common/enums/mainInlineKeyboard";
-import { IDbService } from "../common/interfaces/iDbService";
+import {DbResponse, DbResponseStatus} from "../common/interfaces/dbResponse";
+import {ScheduleService} from "./schedule-service";
+import {MainReplyKeyboardData} from "../common/enums/mainInlineKeyboard";
+import {IDbService} from "../common/interfaces/iDbService";
 import {UserWord, UserItemAWS} from "../common/interfaces/common";
 import {CommonHelper} from "../helpers/common-helper";
-import { FormatterHelper } from "../helpers/formatter-helper";
+import {FormatterHelper} from "../helpers/formatter-helper";
 
 export class MessageService {
 
     constructor(
         private dbService: IDbService,
         private scheduleService: ScheduleService,
-    ) { }
+    ) {
+    }
 
     async startMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
         const {chatId, userId} = this.getIdsFromMessage(message);
@@ -75,10 +76,10 @@ export class MessageService {
         switch (currentUserStatus) {
             case UserStatus.ADD_WORD:
                 return await this.addParticularWordHandler(
-                  bot,
-                  userId,
-                  chatId,
-                  message.text
+                    bot,
+                    userId,
+                    chatId,
+                    message.text
                 );
 
             case UserStatus.START_LEARN:
@@ -125,7 +126,7 @@ export class MessageService {
     async goToMainPage(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
 
         const {chatId, userId} = this.getIdsFromMessage(message);
-        this.dbService.setUserStatus(userId, UserStatus.DEFAULT)
+        this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
 
         return bot.sendMessage(
             chatId,
@@ -137,7 +138,7 @@ export class MessageService {
     async addWordMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
 
         const {chatId, userId} = this.getIdsFromMessage(message);
-        this.dbService.setUserStatus(userId, UserStatus.ADD_WORD)
+        this.dbService.setUserStatus(userId, UserStatus.ADD_WORD);
 
         if (!chatId) {
             return;
@@ -180,7 +181,7 @@ You can add translation via  <code>/</code>  separator`,
         }
     }
 
-    async getAllMessagesHandler(bot: TelegramBot,  message: Message): Promise<TelegramBot.Message | undefined> {
+    async getAllMessagesHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
         const {chatId, userId} = this.getIdsFromMessage(message);
         const userDictionary: UserItemAWS[] = await this.dbService.getUserDictionary(userId);
         const userWordsWithTranslations: string[] = userDictionary.map((userItem: UserItemAWS) => {
@@ -198,11 +199,11 @@ You can add translation via  <code>/</code>  separator`,
         return bot.sendMessage(
             chatId,
             `Your words:\n ${userWordsWithTranslations.join(', \n')}`,
-            { parse_mode: 'MarkdownV2' }
+            {parse_mode: 'MarkdownV2'}
         );
     }
 
-    async startLearn(bot: TelegramBot,  message: Message): Promise<TelegramBot.Message | undefined> {
+    async startLearn(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
         const {chatId, userId} = this.getIdsFromMessage(message);
         try {
 
@@ -231,7 +232,7 @@ You can add translation via  <code>/</code>  separator`,
         }
     }
 
-    async stopLearn(bot: TelegramBot,  message: Message): Promise<TelegramBot.Message | undefined> {
+    async stopLearn(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
         const {chatId, userId} = this.getIdsFromMessage(message);
         try {
             this.scheduleService.stopLearnByUserId(userId);
@@ -256,8 +257,8 @@ You can add translation via  <code>/</code>  separator`,
         bot: TelegramBot,
         userId: number,
         chatId: number,
-        message: string
-    ):  Promise<TelegramBot.Message> {
+        message: string = ''
+    ): Promise<TelegramBot.Message> {
         const dbResponse: DbResponse = await this.dbService.writeWordByUserId(userId, message || '');
         const parsedRawItem = CommonHelper.parseUserRawItem(message);
         let responseMessageText = `✅ The word <b> <u>${parsedRawItem.word}</u></b> has been added. You can add more!`;
@@ -286,7 +287,7 @@ You can add translation via  <code>/</code>  separator`,
         userId: number,
         chatId: number,
         wordId: string
-    ):  Promise<TelegramBot.Message> {
+    ): Promise<TelegramBot.Message> {
 
         if (!wordId) {
             return bot.sendMessage(
@@ -310,7 +311,7 @@ You can add translation via  <code>/</code>  separator`,
         );
     }
 
-    private getIdsFromMessage(message: Message): {chatId: number, userId: number} {
+    private getIdsFromMessage(message: Message): { chatId: number, userId: number } {
         if (!message) {
             throw new Error(`getIdsFromMessage: Can't extract ids from message. Message not found.`)
         }
@@ -327,7 +328,7 @@ You can add translation via  <code>/</code>  separator`,
         return {chatId, userId}
     }
 
-    private getIdsFromCallbackQuery(query: CallbackQuery): {chatId: number, userId: number} {
+    private getIdsFromCallbackQuery(query: CallbackQuery): { chatId: number, userId: number } {
         if (!query) {
             throw new Error(`getIdsFromMessage: Can't extract ids from query. Query not found.`)
         }

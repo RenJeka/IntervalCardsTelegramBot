@@ -15,7 +15,7 @@ dotEnvConfig({path: process.env.NODE_ENV === 'production' ? '.env.production' : 
 const TB_TOKEN: string = process.env.TELEGRAM_BOT_TOKEN!;
 const nodeEnv: string = process.env.NODE_ENV!;
 
-console.log('TB_TOKEN: ', TB_TOKEN);
+console.log(`TB_TOKEN:  ${chalk.gray(TB_TOKEN)}`);
 const bot = new TelegramBot(TB_TOKEN,
     {
         polling: {
@@ -37,7 +37,7 @@ const commands: BotCommand[] = [
 
 bot.setMyCommands(commands)
     .then(() => {
-        console.log('Bot commands set successfully!');
+        console.log(chalk.green.bold(`✔ Bot commands set successfully!`));
         if (nodeEnv === 'production') {
             console.log(chalk.red(`===[${nodeEnv.toUpperCase()} MODE]===`));
         } else {
@@ -46,7 +46,7 @@ bot.setMyCommands(commands)
     })
     .catch((error: { message: any; }) => {
         console.error('Error while setting bot commands: ', error.message);
-    })
+    });
 
 bot.on('message', async (msg: Message, metadata: Metadata) => {
     const messageText = msg.text;
@@ -101,4 +101,4 @@ bot.on('callback_query', async (query: CallbackQuery) => {
     await messageService.generalCallbackHandler(bot, query);
 });
 
-bot.on("polling_error", (err: any) => console.log('ERROR: ', JSON.stringify(err)));
+bot.on("polling_error", (err: any) => console.log(chalk.red(`❌ ERROR: ${JSON.stringify(err)}`)));
