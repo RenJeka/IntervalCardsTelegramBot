@@ -9,14 +9,13 @@ TODO: ICTB-17 add logging
 TODO: ICTB-24 add logo to bot
 TODO: ICTB-29 'Finish and continue learning' button (when we add word)
 TODO: ICTB-30 check add word for code injection (threat check)
-TODO: ICTB-31 fix bug when user can't add theirs words. (duplicate issue). Probably app  don't ckeck words from DB by
- userID.
 ```
 
 ---
 ##### 03/01/2025
-TODO: ICTB-31 fix bug when user can't add theirs words. (duplicate issue). Probably app  don't ckeck words from DB by
- userID.
+~~TODO: ICTB-31 fix bug when user can't add theirs words. (duplicate issue). Probably app  don't ckeck words from DB by
+ userID.~~
+~~TODO: ICTB-32 Sort alphabetically for outputting and removing words~~
 
 ---
 ##### 10/17/2024

@@ -1,10 +1,10 @@
-import { InlineKeyboardButton, SendMessageOptions } from "node-telegram-bot-api";
+import {InlineKeyboardButton, SendMessageOptions} from "node-telegram-bot-api";
 import {
     AddingWordsReplyKeyboardData,
     MainReplyKeyboardData,
     RemovingWordsReplyKeyboardData, StartLearningReplyKeyboardData
 } from "../common/enums/mainInlineKeyboard";
-import {UserWord, UserItemAWS} from "../common/interfaces/common";
+import {UserItemAWS} from "../common/interfaces/common";
 
 export const REPLY_KEYBOARD_OPTIONS: SendMessageOptions = {
     reply_markup: {
@@ -52,10 +52,10 @@ export function getRemoveWordsKeyboard(userDictionary: UserItemAWS[]): SendMessa
         return [{text: userWord.word, callback_data: userWord._id.toString()}]
     })
 
-   return {
-       reply_markup: {
-           inline_keyboard: keyboard,
-           resize_keyboard: true
-       }
-   }
+    return {
+        reply_markup: {
+            inline_keyboard: keyboard,
+            resize_keyboard: true
+        }
+    }
 }

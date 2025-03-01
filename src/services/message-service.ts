@@ -188,7 +188,7 @@ You can add translation via  <code>/</code>  separator`,
             return userItem.translation
                 ? `${FormatterHelper.escapeMarkdownV2(userItem.word)} \\-\\-\\- ||${FormatterHelper.escapeMarkdownV2(userItem.translation)}||`
                 : `${FormatterHelper.escapeMarkdownV2(userItem.word)}`
-        })
+        });
 
         if (!userDictionary || !userDictionary.length) {
             return bot.sendMessage(
@@ -308,6 +308,7 @@ You can add translation via  <code>/</code>  separator`,
         return bot.sendMessage(
             chatId,
             dbResponse.message || responseMessageText,
+            {parse_mode: 'MarkdownV2'}
         );
     }
 

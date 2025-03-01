@@ -146,7 +146,7 @@ export class DbAwsService implements IDbService {
             return {
                 success: true,
                 status: DbResponseStatus.OK,
-                message: `✔️ Word '${deletingItem.word}' has been deleting successfully`
+                message: `✔️ Word __*${deletingItem.word}*__ has been deleting successfully`
             }
 
         } catch (error: any) {
@@ -203,6 +203,8 @@ export class DbAwsService implements IDbService {
             const command = new ScanCommand(scanInput);
             const response: ScanCommandOutput = await this.client.send(command) as ScanCommandOutput;
             const items: UserItemAWS[] = response.Items?.map(item => unmarshall(item)) as UserItemAWS[];
+
+            items.sort((prev: UserItemAWS, next: UserItemAWS) => prev.word.localeCompare(next.word));
             return items
         } catch (error) {
             throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
