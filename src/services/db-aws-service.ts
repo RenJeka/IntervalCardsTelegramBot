@@ -160,37 +160,7 @@ export class DbAwsService implements IDbService {
         }
     }
 
-    setUserStatus(userId: number, userStatus: UserStatus = UserStatus.DEFAULT) {
-        if (!this.checkIsUserExist(userId)) {
-            this.initUser(userId);
-        }
-
-        const userDb: UserDb = this.getUserDb();
-        const currentUser = userDb.userData.find((userData: UserData) => {
-            return userData.id === userId;
-        });
-
-        if (currentUser) {
-            currentUser.status = userStatus;
-            this.addUserDataToDb(currentUser);
-        } else {
-            console.error(`setUserStatus: no user with id '${userId}' found`)
-        }
-    }
-
-    getUserStatus(userId?: number): UserStatus | null {
-        if (!userId) {
-            return null;
-        }
-        const userDb: UserDb = this.getUserDb();
-        const currentUserData = userDb.userData.find((userData: UserData) => userData.id === userId)
-        if (!currentUserData) {
-            return null;
-        }
-        return currentUserData.status
-    }
-
-    async setAWSUserStatus(userId: number, userStatus: UserStatus): Promise<DbResponse> {
+    async setUserStatus(userId: number, userStatus: UserStatus = UserStatus.DEFAULT): Promise<DbResponse> {
         const putItemParams: PutItemCommandInput = {
             TableName: this.dynamoDbUsersTableName,
             Item: marshall({_id: userId.toString(), status: userStatus}),
@@ -211,7 +181,7 @@ export class DbAwsService implements IDbService {
         }
     }
 
-    async getAWSUserStatus(userId?: number): Promise<UserStatus | null> {
+    async getUserStatus(userId?: number): Promise<UserStatus | null> {
         if (!userId) {
             return null;
         }
