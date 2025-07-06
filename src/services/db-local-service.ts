@@ -9,6 +9,9 @@ import { writeFileSync } from "fs";
 import { randomUUID } from "crypto";
 import {IDbService} from "../common/interfaces/iDbService";
 
+/**
+ * @deprecated
+ */
 export class DbLocalService{
 
     constructor() {

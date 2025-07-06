@@ -21,7 +21,8 @@ import {
     ScanCommandOutput,
     GetItemCommandOutput,
     PutItemCommandOutput,
-    DeleteItemCommandOutput
+    DeleteItemCommandOutput,
+    GetItemCommandInput
 } from "@aws-sdk/client-dynamodb";
 import {marshall, unmarshall} from "@aws-sdk/util-dynamodb";
 import {CommonHelper} from "../helpers/common-helper";
@@ -39,6 +40,7 @@ export class DbAwsService implements IDbService {
     private DB_PATH = path.join('./', this.DB_DIRECTORY_NAME, this.DB_NAME);
     private dynamoDbRegion: string = process.env.AWS_REGION!;
     private dynamoDbWordsTableName: string = process.env.AWS_WORDS_TABLE_NAME!;
+    private dynamoDbUsersTableName: string = process.env.AWS_USERS_TABLE_NAME!; 
 
     private config: DynamoDBClientConfig = {
         region: this.dynamoDbRegion,
@@ -186,6 +188,111 @@ export class DbAwsService implements IDbService {
             return null;
         }
         return currentUserData.status
+    }
+
+    async setAWSUserStatus(userId: number, userStatus: UserStatus): Promise<DbResponse> {
+        const putItemParams: PutItemCommandInput = {
+            TableName: this.dynamoDbUsersTableName,
+            Item: marshall({_id: userId.toString(), status: userStatus}),
+            ReturnConsumedCapacity: 'INDEXES',
+        };
+
+        const command = new PutItemCommand(putItemParams)
+        const response: PutItemCommandOutput = await this.client.send(command) as PutItemCommandOutput;
+
+        console.log('[setAWSUserStatus] response?.$metadata?.httpStatusCode', response?.$metadata?.httpStatusCode);
+        if (response?.$metadata?.httpStatusCode !== 200) {
+            throw new Error(`❌️Something went wrong while writing word to DB: ${JSON.stringify(response)}`)
+        }
+
+        return {
+            success: true,
+            status: DbResponseStatus.OK,
+            message: `✔️ User status has been written successfully`
+        }
+    }
+
+    async getAWSUserStatus(userId?: number): Promise<UserStatus | null> {
+        if (!userId) {
+            return null;
+        }
+
+        const scanInput: ScanCommandInput = {
+            TableName: this.dynamoDbUsersTableName,
+            ReturnConsumedCapacity: "INDEXES",
+            FilterExpression: "#id = :uid",
+            ExpressionAttributeNames: { '#id': '_id' },
+            ExpressionAttributeValues: { ':uid': { S: userId.toString() } }
+        }
+
+        try {
+            const command = new ScanCommand(scanInput);
+            const response: ScanCommandOutput = await this.client.send(command) as ScanCommandOutput;
+
+            if (!response || !response?.Items || response?.Items?.length === 0) {
+                return null;
+            }
+
+            return unmarshall(response.Items[0])?.status ?? null;
+            
+        } catch (error) {
+            throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
+        }
+            
+    }
+
+    setUserInterval(userId: number, interval: number) {
+        const userDb: UserDb = this.getUserDb();
+
+        console.log('userDb', userDb);
+  
+
+        // const currentUser = userDb.userData.find((userData: UserData) => userData.id === userId);
+        // if (currentUser) {
+        //     currentUser.interval = interval;
+        //     this.addUserDataToDb(currentUser);
+        // }
+    }
+
+    async getUserInterval(userId: number): Promise<number | null> {
+
+        if (!userId) {
+            return null;
+        }
+
+        const scanInput: ScanCommandInput = {
+            TableName: this.dynamoDbUsersTableName,
+            ReturnConsumedCapacity: "INDEXES",
+            FilterExpression: "#id = :uid",
+            ExpressionAttributeNames: { '#id': '_id' },
+            ExpressionAttributeValues: { ':uid': { S: userId.toString() } }
+        }
+
+        try {
+            const command = new ScanCommand(scanInput);
+            const response: ScanCommandOutput = await this.client.send(command) as ScanCommandOutput;
+
+            console.log('response', response);
+
+            return null;
+            // const items: UserItemAWS[] = response.Items?.map(item => unmarshall(item)) as UserItemAWS[];
+
+            // items.sort((prev: UserItemAWS, next: UserItemAWS) => prev.word.localeCompare(next.word));
+            // return items
+        } catch (error) {
+            throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
+        }
+
+
+        // if (!userId) {
+        //     return null;
+        // }
+        // const userDb: UserDb = this.getUserDb();
+        // const currentUserData = userDb.userData.find((userData: UserData) => userData.id === userId)
+        // if (!currentUserData) {
+        //     return null;
+        // }
+        // return currentUserData.interval;
     }
 
     async getUserDictionary(userId: number): Promise<UserItemAWS[]> {

@@ -18,6 +18,7 @@ export interface UserWord {
 export interface UserDataAWS {
     _id: number;
     status: UserStatus;
+    interval?: number;
 }
 
 export interface UserRawItemAWS {
