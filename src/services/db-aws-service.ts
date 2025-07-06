@@ -200,7 +200,6 @@ export class DbAwsService implements IDbService {
         const command = new PutItemCommand(putItemParams)
         const response: PutItemCommandOutput = await this.client.send(command) as PutItemCommandOutput;
 
-        console.log('[setAWSUserStatus] response?.$metadata?.httpStatusCode', response?.$metadata?.httpStatusCode);
         if (response?.$metadata?.httpStatusCode !== 200) {
             throw new Error(`❌️Something went wrong while writing word to DB: ${JSON.stringify(response)}`)
         }

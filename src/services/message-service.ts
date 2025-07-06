@@ -26,19 +26,14 @@ export class MessageService {
     async startMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
         const {chatId, userId} = this.getIdsFromMessage(message);
 
-        console.log('userId', userId);
-        console.log('chatId', chatId);
-
         this.dbService.setUserInterval(userId, 1);
 
         const userInterval: number | null = await this.dbService.getUserInterval(userId);
 
         // console.log('userInterval', userInterval);
 
-        this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
         await this.dbService.setAWSUserStatus(userId, UserStatus.DEFAULT);
-        const userStatus: UserStatus | null = await this.dbService.getAWSUserStatus(userId);
-        console.log('[startMessageHandler] userStatus', userStatus);
+        await this.dbService.setAWSUserStatus(userId, UserStatus.DEFAULT);
 
         return bot.sendMessage(
             chatId,
@@ -50,7 +45,7 @@ export class MessageService {
     async instructionMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
         const {chatId, userId} = this.getIdsFromMessage(message);
 
-        this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
+        await this.dbService.setAWSUserStatus(userId, UserStatus.DEFAULT);
 
         return bot.sendMessage(
             chatId,
@@ -79,10 +74,10 @@ export class MessageService {
             );
         }
 
-        const currentUserStatus: UserStatus | null = this.dbService.getUserStatus(userId);
+        const currentUserStatus: UserStatus | null = await this.dbService.getAWSUserStatus(userId);
 
         if (!currentUserStatus) {
-            this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
+            await this.dbService.setAWSUserStatus(userId, UserStatus.DEFAULT);
         }
 
         switch (currentUserStatus) {
@@ -115,10 +110,10 @@ export class MessageService {
             );
         }
 
-        const currentUserStatus: UserStatus | null = this.dbService.getUserStatus(userId);
+        const currentUserStatus: UserStatus | null = await this.dbService.getAWSUserStatus(userId);
 
         if (!currentUserStatus) {
-            this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
+            await this.dbService.setAWSUserStatus(userId, UserStatus.DEFAULT);
         }
 
         switch (currentUserStatus) {
@@ -138,7 +133,7 @@ export class MessageService {
     async goToMainPage(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
 
         const {chatId, userId} = this.getIdsFromMessage(message);
-        this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
+        await this.dbService.setAWSUserStatus(userId, UserStatus.DEFAULT);
 
         return bot.sendMessage(
             chatId,
@@ -150,7 +145,7 @@ export class MessageService {
     async addWordMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
 
         const {chatId, userId} = this.getIdsFromMessage(message);
-        this.dbService.setUserStatus(userId, UserStatus.ADD_WORD);
+        await this.dbService.setAWSUserStatus(userId, UserStatus.ADD_WORD);
 
         if (!chatId) {
             return;
@@ -168,7 +163,7 @@ You can add translation via  <code>/</code>  separator`,
 
         const {chatId, userId} = this.getIdsFromMessage(message);
 
-        this.dbService.setUserStatus(userId, UserStatus.REMOVE_WORD)
+        await this.dbService.setAWSUserStatus(userId, UserStatus.REMOVE_WORD)
 
         try {
 
@@ -227,7 +222,7 @@ You can add translation via  <code>/</code>  separator`,
                     REPLY_KEYBOARD_OPTIONS
                 );
             }
-            this.dbService.setUserStatus(userId, UserStatus.START_LEARN);
+            await this.dbService.setAWSUserStatus(userId, UserStatus.START_LEARN);
 
             this.scheduleService.startLearnByUserId(bot, userItems, userId, chatId);
             return bot.sendMessage(
@@ -249,7 +244,7 @@ You can add translation via  <code>/</code>  separator`,
         try {
             this.scheduleService.stopLearnByUserId(userId);
 
-            this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
+            await this.dbService.setAWSUserStatus(userId, UserStatus.DEFAULT);
 
             return bot.sendMessage(
                 chatId,
