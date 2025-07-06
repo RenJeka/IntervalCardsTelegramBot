@@ -14,6 +14,7 @@ import {IDbService} from "../common/interfaces/iDbService";
 import {UserWord, UserItemAWS} from "../common/interfaces/common";
 import {CommonHelper} from "../helpers/common-helper";
 import {FormatterHelper} from "../helpers/formatter-helper";
+import { DEFAULT_USER_INTERVAL } from "../const/common";
 
 export class MessageService {
 
@@ -33,7 +34,7 @@ export class MessageService {
         // console.log('userInterval', userInterval);
 
         await this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
-        await this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
+        await this.dbService.setUserInterval(userId, DEFAULT_USER_INTERVAL);
 
         return bot.sendMessage(
             chatId,
@@ -224,10 +225,12 @@ You can add translation via  <code>/</code>  separator`,
             }
             await this.dbService.setUserStatus(userId, UserStatus.START_LEARN);
 
-            this.scheduleService.startLearnByUserId(bot, userItems, userId, chatId);
+            const userInterval: number | null = await this.dbService.getUserInterval(userId) ?? DEFAULT_USER_INTERVAL;
+
+            await this.scheduleService.startLearnByUserId(bot, userItems, userId, userInterval, chatId);
             return bot.sendMessage(
                 chatId,
-                `You are in learning. Every hour You will get 1 word. This will continue from 9:00 (9:00 a.m.) to 22:00 (10:00 p.m.)`,
+                `You are in learning. Every ${userInterval} hour You will get 1 word. This will continue from 9:00 (9:00 a.m.) to 22:00 (10:00 p.m.)`,
                 START_LEARN_KEYBOARD_OPTIONS
             );
         } catch (error: any) {

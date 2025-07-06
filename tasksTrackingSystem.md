@@ -1,4 +1,6 @@
-###CURRENT WORK:
+# CURRENT WORK:
+
+#### BACKLOG:
 
 ```
 TODO: ICTB-5 check node:20-slim
@@ -7,18 +9,16 @@ TODO: ICTB-13 add button to check user status (user mode)
 TODO: ICTB-17 add logging
 TODO: ICTB-29 'Finish and continue learning' button (when we add word)
 TODO: ICTB-30 check add word for code injection (threat check)
-TODO: ICTB-33 Create interface for users data in users AWS table
+TODO: ICTB-34 Add user interval to users AWS table
 ```
 
 ---
 
 ##### 06/07/2025
 
-TODO: ICTB-33 Create interface for users data in users AWS table
+TODO: ICTB-34 Add user interval to users AWS table
 
-When we get userID: add user setting in DynamoDB table
-
-Every time we 'setUserStatus' — write it to DB
+~~TODO: ICTB-33 Create interface for users data in users AWS table~~
 
 ---
 
@@ -172,10 +172,9 @@ TODO: ICTB-17 add logging
 ~~TODO: redo inline keyboard to reply keaboard~~
 
 ~~TODO: implement the 'scheduleJob'~~
-`    schedule.scheduleJob('13 * * * *', () => {
+` schedule.scheduleJob('13 * * * *', () => {
          bot.sendMessage(chatId, 'Hello! This is a scheduled message.');
-     });
-  `
+     });`
 
 ---
 

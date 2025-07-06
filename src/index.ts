@@ -25,7 +25,7 @@ const bot = new TelegramBot(TB_TOKEN,
     });
 
 const dbAwsService = new DbAwsService();
-const scheduleService = new ScheduleService();
+const scheduleService = new ScheduleService(dbAwsService);
 const messageService = new MessageService(
     dbAwsService,
     scheduleService

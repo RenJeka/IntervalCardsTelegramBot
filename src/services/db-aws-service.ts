@@ -22,16 +22,14 @@ import {
     GetItemCommandOutput,
     PutItemCommandOutput,
     DeleteItemCommandOutput,
-    GetItemCommandInput
+    GetItemCommandInput,
+    UpdateItemCommandInput,
+    UpdateItemCommand,
+    UpdateItemCommandOutput
 } from "@aws-sdk/client-dynamodb";
 import {marshall, unmarshall} from "@aws-sdk/util-dynamodb";
 import {CommonHelper} from "../helpers/common-helper";
 import chalk from 'chalk';
-
-//TODO: 1. Implement managing users and its statuses via DynamoDB table ↓↓↓
-//TODO: 1.1 implement checkIsUserExist
-//TODO: 1.2 implement getUserStatus
-//TODO: 1.3 implement setUserStatus
 
 export class DbAwsService implements IDbService {
 
@@ -210,17 +208,43 @@ export class DbAwsService implements IDbService {
             
     }
 
-    setUserInterval(userId: number, interval: number) {
-        const userDb: UserDb = this.getUserDb();
+    /**
+     * Set user interval
+     * @param userId
+     * @param interval  integer from 1 to 12
+     * @returns
+     */
+    async setUserInterval(userId: number, interval: number): Promise<DbResponse> {
 
-        console.log('userDb', userDb);
-  
+        if (interval < 1 || interval > 12) {
+            return {
+                success: false,
+                status: DbResponseStatus.WRONG_INPUT,
+                message: `❌️Incorrect interval`
+            }
+        }
 
-        // const currentUser = userDb.userData.find((userData: UserData) => userData.id === userId);
-        // if (currentUser) {
-        //     currentUser.interval = interval;
-        //     this.addUserDataToDb(currentUser);
-        // }
+        const updateItemParams: UpdateItemCommandInput = {
+            TableName: this.dynamoDbUsersTableName,
+            Key: { '_id': { S: userId.toString() } },
+            UpdateExpression: 'SET #interval = :interval',
+            ExpressionAttributeNames: { '#interval': 'interval' },
+            ExpressionAttributeValues: { ':interval': { N: interval.toString() } },
+            ReturnConsumedCapacity: 'INDEXES'
+        };
+
+        const command = new UpdateItemCommand(updateItemParams)
+        const response: UpdateItemCommandOutput = await this.client.send(command) as UpdateItemCommandOutput;
+
+        if (response?.$metadata?.httpStatusCode !== 200) {
+            throw new Error(`❌️Something went wrong while writing word to DB: ${JSON.stringify(response)}`)
+        }
+
+        return {
+            success: true,
+            status: DbResponseStatus.OK,
+            message: `✔️ User interval has been written successfully`
+        }
     }
 
     async getUserInterval(userId: number): Promise<number | null> {
@@ -241,27 +265,15 @@ export class DbAwsService implements IDbService {
             const command = new ScanCommand(scanInput);
             const response: ScanCommandOutput = await this.client.send(command) as ScanCommandOutput;
 
-            console.log('response', response);
+            if (!response || !response?.Items || response?.Items?.length === 0) {
+                return null;
+            }
 
-            return null;
-            // const items: UserItemAWS[] = response.Items?.map(item => unmarshall(item)) as UserItemAWS[];
-
-            // items.sort((prev: UserItemAWS, next: UserItemAWS) => prev.word.localeCompare(next.word));
-            // return items
+            return unmarshall(response.Items[0])?.interval ?? null;
+            
         } catch (error) {
             throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
         }
-
-
-        // if (!userId) {
-        //     return null;
-        // }
-        // const userDb: UserDb = this.getUserDb();
-        // const currentUserData = userDb.userData.find((userData: UserData) => userData.id === userId)
-        // if (!currentUserData) {
-        //     return null;
-        // }
-        // return currentUserData.interval;
     }
 
     async getUserDictionary(userId: number): Promise<UserItemAWS[]> {

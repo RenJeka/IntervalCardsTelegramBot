@@ -2,7 +2,8 @@ import { CronJob } from 'cron/dist';
 import TelegramBot from "node-telegram-bot-api";
 import { UserItemAWS } from "../common/interfaces/common";
 import { FormatterHelper } from "../helpers/formatter-helper";
-import { DEVELOPER_MODE_BOT_SENDS_MESSAGE_SEC } from "../const/common";
+import { DEFAULT_USER_INTERVAL, DEVELOPER_MODE_BOT_SENDS_MESSAGE_SEC } from "../const/common";
+import { IDbService } from '../common/interfaces/iDbService';
 
 export class ScheduleService {
 
@@ -10,12 +11,15 @@ export class ScheduleService {
     private timeZone: string = 'Europe/Kyiv';
     private nodeEnv: string = process.env.NODE_ENV!;
 
-    constructor() { }
+    constructor(
+        private dbService: IDbService
+    ) { }
 
-    startLearnByUserId(
+    async startLearnByUserId(
         bot: TelegramBot,
         userItems: UserItemAWS[],
         userId: number,
+        interval: number = DEFAULT_USER_INTERVAL,
         chatId?: number,
     ) {
 
@@ -25,11 +29,12 @@ export class ScheduleService {
 
         try {
             /**
-             * production:  Run every hour at minute 0, from 9 to 21
+             * production:  Run every 'interval' hours
              *
-             * development: Run every 5 seconds
+             * development: Run every DEVELOPER_MODE_BOT_SENDS_MESSAGE_SEC seconds
              * */
-            const cronTime = this.nodeEnv === 'production' ? '0 9-22 * * *' : `*/${DEVELOPER_MODE_BOT_SENDS_MESSAGE_SEC} * * * * *`
+            const cronTime = this.nodeEnv === 'production' ? `0 */${interval} * * *` : `*/${DEVELOPER_MODE_BOT_SENDS_MESSAGE_SEC} * * * * *`
+
 
             const cronJob: CronJob = new CronJob(
                 cronTime,
