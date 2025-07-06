@@ -160,14 +160,17 @@ export class DbAwsService implements IDbService {
 
     async setUserStatus(userId: number, userStatus: UserStatus = UserStatus.DEFAULT): Promise<DbResponse> {
         
-        const putItemParams: PutItemCommandInput = {
+        const updateItemParams: UpdateItemCommandInput = {
             TableName: this.dynamoDbUsersTableName,
-            Item: marshall({_id: userId.toString(), status: userStatus}),
+            Key: {_id: {S: userId.toString()}},
+            UpdateExpression: 'SET #status = :status',
+            ExpressionAttributeNames: { '#status': 'status' },
+            ExpressionAttributeValues: { ':status': { S: userStatus } },
             ReturnConsumedCapacity: 'INDEXES',
         };
 
-        const command = new PutItemCommand(putItemParams)
-        const response: PutItemCommandOutput = await this.client.send(command) as PutItemCommandOutput;
+        const command = new UpdateItemCommand(updateItemParams)
+        const response: UpdateItemCommandOutput = await this.client.send(command) as UpdateItemCommandOutput;
 
         if (response?.$metadata?.httpStatusCode !== 200) {
             throw new Error(`❌️Something went wrong while writing word to DB: ${JSON.stringify(response)}`)

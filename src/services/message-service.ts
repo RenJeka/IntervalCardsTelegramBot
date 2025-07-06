@@ -71,12 +71,16 @@ export class MessageService {
 
         await this.dbService.setUserStatus(userId, UserStatus.SET_INTERVAL);
 
+        const currentUserInterval: number | null = await this.dbService.getUserInterval(userId);
+
         return bot.sendMessage(
             chatId,
             `
-            Here You can set interval for learning.
-            Please, chose the interval you want to set.
-            `,
+                You have already set interval to ${currentUserInterval ?? DEFAULT_USER_INTERVAL} hours.
+
+Here You can set interval for learning.
+Please, chose the interval you want to set.
+`,
             SET_INTERVAL_KEYBOARD_OPTIONS
         );
     }
@@ -351,7 +355,7 @@ You can add translation via  <code>/</code>  separator`,
                 );
             }
 
-            // await this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
+            await this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
 
             return bot.sendMessage(
                 chatId,
