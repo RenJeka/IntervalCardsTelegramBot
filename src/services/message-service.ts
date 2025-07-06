@@ -4,6 +4,7 @@ import {
     ADD_WORD_KEYBOARD_OPTIONS,
     REMOVE_WORD_KEYBOARD_OPTIONS,
     REPLY_KEYBOARD_OPTIONS,
+    SET_INTERVAL_KEYBOARD_OPTIONS,
     START_LEARN_KEYBOARD_OPTIONS,
     getRemoveWordsKeyboard,
 } from "../const/keyboards";
@@ -65,6 +66,21 @@ export class MessageService {
         );
     }
 
+    async setIntervalMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
+        const {chatId, userId} = this.getIdsFromMessage(message);
+
+        await this.dbService.setUserStatus(userId, UserStatus.SET_INTERVAL);
+
+        return bot.sendMessage(
+            chatId,
+            `
+            Here You can set interval for learning.
+            Please, chose the interval you want to set.
+            `,
+            SET_INTERVAL_KEYBOARD_OPTIONS
+        );
+    }
+
     async generalMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
         const {chatId, userId} = this.getIdsFromMessage(message);
 
@@ -81,8 +97,9 @@ export class MessageService {
             await this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
         }
 
+
         switch (currentUserStatus) {
-            case UserStatus.ADD_WORD:
+               case UserStatus.ADD_WORD:
                 return await this.addParticularWordHandler(
                     bot,
                     userId,
@@ -125,6 +142,9 @@ export class MessageService {
                     chatId,
                     query.data
                 );
+
+            case UserStatus.SET_INTERVAL:
+                return await this.setParticularIntervalHandler(bot, userId, chatId, query.data);
 
             default:
                 return await this.startMessageHandler(bot, query.message!);
@@ -289,6 +309,62 @@ You can add translation via  <code>/</code>  separator`,
             responseMessageText,
             ADD_WORD_KEYBOARD_OPTIONS
         );
+    }
+
+    private async setParticularIntervalHandler(
+        bot: TelegramBot,
+        userId: number,
+        chatId: number,
+        message: string = ''
+    ): Promise<TelegramBot.Message> {
+
+        if (!message) {
+            return bot.sendMessage(
+                chatId,
+                'I did not receive any message from You, Please, try again.',
+            );
+        }
+
+        const parsedRawItem = parseInt(message);
+
+        if (isNaN(parsedRawItem)) {
+            return bot.sendMessage(
+                chatId,
+                'I did not receive any interval number from You, Please, try again.',
+            );
+        }
+
+        if (parsedRawItem < 1 || parsedRawItem > 12) {
+            return bot.sendMessage(
+                chatId,
+                'Interval must be from 1 to 12. Please, try again.',
+            );
+        }
+
+        try {
+            const dbResponse: DbResponse = await this.dbService.setUserInterval(userId, parsedRawItem);
+
+            if (!dbResponse.success) {
+                return bot.sendMessage(
+                    chatId,
+                    dbResponse.message || '🚫 Something went wrong! Please, try again.',
+                );
+            }
+
+            // await this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
+
+            return bot.sendMessage(
+                chatId,
+                `You have set interval to ${parsedRawItem} hours.`,
+                REPLY_KEYBOARD_OPTIONS
+            );
+
+        } catch (error: any) {
+            return bot.sendMessage(
+                chatId,
+                `Something went wrong. Please, try again`,
+            );
+        }
     }
 
 

@@ -159,6 +159,7 @@ export class DbAwsService implements IDbService {
     }
 
     async setUserStatus(userId: number, userStatus: UserStatus = UserStatus.DEFAULT): Promise<DbResponse> {
+        
         const putItemParams: PutItemCommandInput = {
             TableName: this.dynamoDbUsersTableName,
             Item: marshall({_id: userId.toString(), status: userStatus}),
@@ -215,14 +216,6 @@ export class DbAwsService implements IDbService {
      * @returns
      */
     async setUserInterval(userId: number, interval: number): Promise<DbResponse> {
-
-        if (interval < 1 || interval > 12) {
-            return {
-                success: false,
-                status: DbResponseStatus.WRONG_INPUT,
-                message: `❌️Incorrect interval`
-            }
-        }
 
         const updateItemParams: UpdateItemCommandInput = {
             TableName: this.dynamoDbUsersTableName,

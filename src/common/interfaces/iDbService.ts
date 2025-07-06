@@ -7,7 +7,7 @@ export interface IDbService {
     removeWordById(userId: number, wordId: string): Promise<DbResponse>;
     setUserStatus(userId: number, userStatus: UserStatus): Promise<DbResponse>;
     getUserStatus(userId?: number): Promise<UserStatus | null>;
-    setUserInterval(userId: number, interval: number): void;
+    setUserInterval(userId: number, interval: number): Promise<DbResponse>;
     getUserInterval(userId: number): Promise<number | null>;
     getUserDictionary(userId: number): Promise<UserItemAWS[]>;
     getFlatUserDictionary(userId: number): Promise<string[]>;
