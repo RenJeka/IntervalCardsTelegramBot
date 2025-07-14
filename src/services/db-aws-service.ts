@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as util from "node:util";
 import {UserData, UserDb, UserItemAWS, UserRawItemAWS} from "../common/interfaces/common";
+import {UserDataAWS} from "../common/interfaces/common";
 import {UserStatus} from "../common/enums/userStatus";
 import {DbResponse, DbResponseStatus} from "../common/interfaces/dbResponse";
 import {writeFileSync} from "fs";
@@ -300,6 +301,34 @@ export class DbAwsService implements IDbService {
             return [];
         }
         return (await this.getUserDictionary(userId)).map((word: UserItemAWS) => word.word);
+    }
+
+    /**
+     * Returns all users with the specified status
+     */
+    async getAllUsersWithStatus(userStatus: UserStatus = UserStatus.START_LEARN): Promise<UserDataAWS[]> {
+        const scanInput: ScanCommandInput = {
+            TableName: this.dynamoDbUsersTableName,
+            ReturnConsumedCapacity: "INDEXES",
+            FilterExpression: "#status = :st",
+            ExpressionAttributeNames: { "#status": "status" },
+            ExpressionAttributeValues: { ":st": { S: userStatus } }
+        };
+
+        try {
+            const command = new ScanCommand(scanInput);
+            const response: ScanCommandOutput = await this.client.send(command) as ScanCommandOutput;
+
+            if (!response?.Items || !response.Items.length) {
+                return [];
+            }
+
+            return response.Items.map(item => unmarshall(item) as UserDataAWS);
+
+        } catch (error) {
+            console.error('❌️ Error while scanning active learners:', error);
+            throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`);
+        }
     }
 
     checkIsUserExist(userId: number): boolean {

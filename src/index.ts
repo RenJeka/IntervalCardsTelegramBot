@@ -37,13 +37,15 @@ const commands: BotCommand[] = [
 ];
 
 bot.setMyCommands(commands)
-    .then(() => {
+    .then(async () => {
         console.log(chalk.green.bold(`✔ Bot commands set successfully!`));
         if (nodeEnv === 'production') {
             console.log(chalk.red(`===[${nodeEnv.toUpperCase()} MODE]===`));
         } else {
             console.log(chalk.white.bgBlue.bold(`===[${nodeEnv.toUpperCase()} MODE]===`));
         }
+
+        await scheduleService.resumeAllStartLearning(bot);
     })
     .catch((error: { message: any; }) => {
         console.error('Error while setting bot commands: ', error.message);

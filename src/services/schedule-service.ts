@@ -1,9 +1,10 @@
 import { CronJob } from 'cron/dist';
 import TelegramBot from "node-telegram-bot-api";
-import { UserItemAWS } from "../common/interfaces/common";
+import { UserDataAWS, UserItemAWS } from "../common/interfaces/common";
 import { FormatterHelper } from "../helpers/formatter-helper";
 import { DEFAULT_USER_INTERVAL, DEVELOPER_MODE_BOT_SENDS_MESSAGE_SEC } from "../const/common";
 import { IDbService } from '../common/interfaces/iDbService';
+import { UserStatus } from '../common/enums/userStatus';
 
 export class ScheduleService {
 
@@ -71,6 +72,30 @@ export class ScheduleService {
                 this.userJobs.delete(userId);
             }
         } catch (err) {
+            throw err;
+        }
+    }
+
+    async resumeAllStartLearning(bot: TelegramBot): Promise<void> {
+        try {
+            const activeUsers: UserDataAWS[] = await this.dbService.getAllUsersWithStatus(UserStatus.START_LEARN);
+
+            for (const user of activeUsers) {
+                const userId: number = typeof user._id === 'string' ? parseInt(user._id, 10) : user._id;
+
+                const interval: number = user.interval ? Number(user.interval) : DEFAULT_USER_INTERVAL;
+
+                const userItems: UserItemAWS[] = await this.dbService.getUserDictionary(userId);
+
+                if (!userItems || !userItems.length) {
+                    continue;
+                }
+
+                await this.startLearnByUserId(bot, userItems, userId, interval, userId);
+                console.log(`✔ Resumed learning session for userId=${userId} (interval=${interval}h)`);
+            }
+        } catch (err) {
+            console.error('❌️ Error while resuming active learners:', err);
             throw err;
         }
     }
