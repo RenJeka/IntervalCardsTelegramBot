@@ -295,7 +295,7 @@ You can add translation via  <code>/</code>  separator`,
     ): Promise<TelegramBot.Message> {
         const dbResponse: DbResponse = await this.dbService.writeWordByUserId(userId, message || '');
         const parsedRawItem = CommonHelper.parseUserRawItem(message);
-        let responseMessageText = `✅ The word <b> <u>${parsedRawItem.word}</u></b> has been added. You can add more!`;
+        let responseMessageText = `✅ The word <b> <u>${FormatterHelper.escapeMarkdownV2(parsedRawItem.word)  }</u></b> has been added. You can add more!`;
 
         if (parsedRawItem.translation) {
             responseMessageText = `✅ The word <b> <u>${parsedRawItem.word}</u></b> with translation <b> <u>${parsedRawItem.translation}</u></b> has been added. You can add more!`;

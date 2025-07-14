@@ -31,6 +31,7 @@ import {
 import {marshall, unmarshall} from "@aws-sdk/util-dynamodb";
 import {CommonHelper} from "../helpers/common-helper";
 import chalk from 'chalk';
+import { FormatterHelper } from "../helpers/formatter-helper";
 
 export class DbAwsService implements IDbService {
 
@@ -132,9 +133,6 @@ export class DbAwsService implements IDbService {
                 }
             }
 
-            console.log(`${chalk.blue.bold.underline('getItemResponse:')} ${JSON.stringify(getItemResponse, null, 2)}`);
-            console.log('unmarshall(getItemResponse.Item):', unmarshall(getItemResponse.Item));
-
             deletingItem = unmarshall(getItemResponse.Item) as UserItemAWS
 
             //deleteItem
@@ -147,7 +145,7 @@ export class DbAwsService implements IDbService {
             return {
                 success: true,
                 status: DbResponseStatus.OK,
-                message: `✔️ Word __*${deletingItem.word}*__ has been deleting successfully`
+                message: `✔️ Word __*${FormatterHelper.escapeMarkdownV2(deletingItem.word)}*__ has been deleting successfully`
             }
 
         } catch (error: any) {
