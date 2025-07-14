@@ -1,12 +1,8 @@
-import * as fs from "fs";
-import * as util from "node:util";
-import {UserData, UserDb, UserItemAWS, UserRawItemAWS} from "../common/interfaces/common";
+import { UserItemAWS, UserRawItemAWS} from "../common/interfaces/common";
 import {UserDataAWS} from "../common/interfaces/common";
 import {UserStatus} from "../common/enums/userStatus";
 import {DbResponse, DbResponseStatus} from "../common/interfaces/dbResponse";
-import {writeFileSync} from "fs";
 import {IDbService} from "../common/interfaces/iDbService";
-import path from "path";
 import {
     DynamoDBClient,
     ListTablesCommand,
@@ -23,7 +19,6 @@ import {
     GetItemCommandOutput,
     PutItemCommandOutput,
     DeleteItemCommandOutput,
-    GetItemCommandInput,
     UpdateItemCommandInput,
     UpdateItemCommand,
     UpdateItemCommandOutput
@@ -32,15 +27,15 @@ import {marshall, unmarshall} from "@aws-sdk/util-dynamodb";
 import {CommonHelper} from "../helpers/common-helper";
 import chalk from 'chalk';
 import { FormatterHelper } from "../helpers/formatter-helper";
+import { DEFAULT_USER_INTERVAL } from "../const/common";
 
 export class DbAwsService implements IDbService {
 
-    private DB_DIRECTORY_NAME = 'db';
-    private DB_NAME = 'userDb.json';
-    private DB_PATH = path.join('./', this.DB_DIRECTORY_NAME, this.DB_NAME);
     private dynamoDbRegion: string = process.env.AWS_REGION!;
-    private dynamoDbWordsTableName: string = process.env.AWS_WORDS_TABLE_NAME!;
-    private dynamoDbUsersTableName: string = process.env.AWS_USERS_TABLE_NAME!; 
+    private tableNames = {
+        words: process.env.AWS_WORDS_TABLE_NAME!,
+        users: process.env.AWS_USERS_TABLE_NAME!
+    };
 
     private config: DynamoDBClientConfig = {
         region: this.dynamoDbRegion,
@@ -49,7 +44,7 @@ export class DbAwsService implements IDbService {
 
     constructor() {
         // this.listTables()
-        if (!this.dynamoDbRegion || !this.dynamoDbWordsTableName) {
+        if (!this.dynamoDbRegion || !this.tableNames.words) {
             throw new Error('AWS_REGION or AWS_WORDS_TABLE_NAME are not defined')
         }
 
@@ -58,11 +53,6 @@ export class DbAwsService implements IDbService {
 
     async writeWordByUserId(userId: number, message: string): Promise<DbResponse> {
         try {
-            const currentUser: UserData | null = this.getUserById(userId);
-            if (!currentUser) {
-                throw new Error(`❌️Can't find user by id: ${userId}`)
-            }
-
             const parsedRawItem: UserRawItemAWS = CommonHelper.parseUserRawItem(message);
 
             if (await this.checkDuplicate(userId, parsedRawItem.word)) {
@@ -80,7 +70,7 @@ export class DbAwsService implements IDbService {
             };
 
             const putItemParams: PutItemCommandInput = {
-                TableName: this.dynamoDbWordsTableName,
+                TableName: this.tableNames.words,
                 Item: marshall(currentUserWord),
                 ReturnConsumedCapacity: 'INDEXES',
             };
@@ -109,19 +99,13 @@ export class DbAwsService implements IDbService {
 
     async removeWordById(userId: number, wordId: string): Promise<DbResponse> {
         const itemInput: GetItemInput | DeleteItemCommandInput = {
-            TableName: this.dynamoDbWordsTableName,
+            TableName: this.tableNames.words,
             ReturnConsumedCapacity: "INDEXES",
             Key: {'_id': {N: wordId}, 'user_id': {S: userId.toString()}}
         }
         let deletingItem: UserItemAWS;
 
         try {
-            // Check if current User exist
-            const currentUser: UserData | null = this.getUserById(userId);
-            if (!currentUser) {
-                throw new Error(`❌️Can't find user by id: ${userId}`)
-            }
-
             // Check if word exist for user
             const getItemCommand = new GetItemCommand(itemInput);
             const getItemResponse: GetItemCommandOutput = await this.client.send(getItemCommand) as GetItemCommandOutput;
@@ -160,7 +144,7 @@ export class DbAwsService implements IDbService {
     async setUserStatus(userId: number, userStatus: UserStatus = UserStatus.DEFAULT): Promise<DbResponse> {
         
         const updateItemParams: UpdateItemCommandInput = {
-            TableName: this.dynamoDbUsersTableName,
+            TableName: this.tableNames.users,
             Key: {_id: {S: userId.toString()}},
             UpdateExpression: 'SET #status = :status',
             ExpressionAttributeNames: { '#status': 'status' },
@@ -188,7 +172,7 @@ export class DbAwsService implements IDbService {
         }
 
         const scanInput: ScanCommandInput = {
-            TableName: this.dynamoDbUsersTableName,
+            TableName: this.tableNames.users,
             ReturnConsumedCapacity: "INDEXES",
             FilterExpression: "#id = :uid",
             ExpressionAttributeNames: { '#id': '_id' },
@@ -220,7 +204,7 @@ export class DbAwsService implements IDbService {
     async setUserInterval(userId: number, interval: number): Promise<DbResponse> {
 
         const updateItemParams: UpdateItemCommandInput = {
-            TableName: this.dynamoDbUsersTableName,
+            TableName: this.tableNames.users,
             Key: { '_id': { S: userId.toString() } },
             UpdateExpression: 'SET #interval = :interval',
             ExpressionAttributeNames: { '#interval': 'interval' },
@@ -249,7 +233,7 @@ export class DbAwsService implements IDbService {
         }
 
         const scanInput: ScanCommandInput = {
-            TableName: this.dynamoDbUsersTableName,
+            TableName: this.tableNames.users,
             ReturnConsumedCapacity: "INDEXES",
             FilterExpression: "#id = :uid",
             ExpressionAttributeNames: { '#id': '_id' },
@@ -273,7 +257,7 @@ export class DbAwsService implements IDbService {
 
     async getUserDictionary(userId: number): Promise<UserItemAWS[]> {
         const scanInput: ScanCommandInput = {
-            TableName: this.dynamoDbWordsTableName,
+            TableName: this.tableNames.words,
             ReturnConsumedCapacity: "INDEXES",
             FilterExpression: "user_id = :uid",
             ExpressionAttributeValues: {
@@ -306,7 +290,7 @@ export class DbAwsService implements IDbService {
      */
     async getAllUsersWithStatus(userStatus: UserStatus = UserStatus.START_LEARN): Promise<UserDataAWS[]> {
         const scanInput: ScanCommandInput = {
-            TableName: this.dynamoDbUsersTableName,
+            TableName: this.tableNames.users,
             ReturnConsumedCapacity: "INDEXES",
             FilterExpression: "#status = :st",
             ExpressionAttributeNames: { "#status": "status" },
@@ -329,78 +313,58 @@ export class DbAwsService implements IDbService {
         }
     }
 
-    checkIsUserExist(userId: number): boolean {
+    async checkIsUserExist(userId: number): Promise<boolean> {
         if (typeof userId !== 'number') {
             return false;
         }
-        const currentUser = this.getUserById(userId);
-        return !!currentUser;
+        const scanInput: ScanCommandInput = {
+            TableName: this.tableNames.users,
+            ReturnConsumedCapacity: "INDEXES",
+            FilterExpression: "#id = :uid",
+            ExpressionAttributeNames: { '#id': '_id' },
+            ExpressionAttributeValues: { ':uid': { S: userId.toString() } }
+        };
+        try {
+            const command = new ScanCommand(scanInput);
+            const response: ScanCommandOutput = await this.client.send(command) as ScanCommandOutput;
+            return !!(response?.Items && response.Items.length > 0);
+        } catch (error) {
+            throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
+        }
     }
 
-    private initDb() {
-        fs.exists(this.DB_PATH, (isDbExist: boolean) => {
-            if (!isDbExist) {
-                if (!fs.existsSync(this.DB_DIRECTORY_NAME)) {
-                    fs.mkdirSync(this.DB_DIRECTORY_NAME);
+    private async initDb(): Promise<void> {
+        try {
+            const command = new ListTablesCommand({});
+            const response = await this.client.send(command);
+            const tables = response.TableNames || [];
+            for (const tableKey in this.tableNames) {
+                const tableName = this.tableNames[tableKey as keyof typeof this.tableNames];
+                if (!tables.includes(tableName)) {
+                    throw new Error(`Table ${tableName} not found in DynamoDB`);
                 }
-
-                const userDB: UserDb = {
-                    userData: []
-                }
-                this.writeJSON(userDB);
             }
-        })
+        } catch (error) {
+            throw new Error(`Failed to connect to DynamoDB or find required tables: ${error}`);
+        }
     }
 
-    private initUser(userId: number) {
-        if (this.checkIsUserExist(userId)) {
-            return
+    async initUser(userId: number): Promise<void> {
+        if (await this.checkIsUserExist(userId)) {
+            return;
         }
-        this.addUserDataToDb({
-            id: userId,
+        const newUser: UserDataAWS = {
+            _id: userId,
             status: UserStatus.DEFAULT,
-            dictionary: []
-        })
-    }
-
-    private writeJSON(userDb: UserDb) {
-        try {
-            writeFileSync(this.DB_PATH, util.format('%j', userDb), {flag: 'w+'})
-        } catch (err) {
-            throw err
-        }
-    }
-
-    private getUserDb(): UserDb {
-        try {
-            const data = fs.readFileSync(this.DB_PATH, {encoding: 'utf-8'});
-            return JSON.parse(data) as UserDb
-        } catch (error) {
-            throw new Error(`Something wrong while reading file. Error: ${JSON.stringify(error)}`)
-        }
-    }
-
-    private getUserById(userId: number): UserData | null {
-        try {
-            const db: UserDb = this.getUserDb();
-            return db.userData.find(user => user.id === userId) || null
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    private addUserDataToDb(currentUser: UserData) {
-        const db: UserDb = this.getUserDb();
-        const currentUserCopy: UserData = JSON.parse(JSON.stringify(currentUser));
-        const currentUserIndex = db.userData.findIndex(user => user.id === currentUser.id);
-
-        if (currentUserIndex < 0) {
-            db.userData.push(currentUserCopy);
-        } else {
-            db.userData[currentUserIndex] = currentUserCopy;
-        }
-
-        this.writeJSON(db);
+            interval: DEFAULT_USER_INTERVAL
+        };
+        const putItemParams: PutItemCommandInput = {
+            TableName: this.tableNames.users,
+            Item: marshall(newUser),
+            ReturnConsumedCapacity: 'INDEXES',
+        };
+        const command = new PutItemCommand(putItemParams);
+        await this.client.send(command);
     }
 
     /**
@@ -408,7 +372,7 @@ export class DbAwsService implements IDbService {
      */
     private async listTables() {
         const input = {
-            ExclusiveStartTableName: this.dynamoDbWordsTableName,
+            ExclusiveStartTableName: this.tableNames.words,
             Limit: Number("int"),
         };
         const listCommandCommand = new ListTablesCommand(input)
@@ -430,7 +394,7 @@ export class DbAwsService implements IDbService {
      */
     private async checkDuplicate(userId: number, word: string): Promise<boolean> {
         const scanInput: ScanCommandInput = {
-            TableName: this.dynamoDbWordsTableName,
+            TableName: this.tableNames.words,
             ReturnConsumedCapacity: "INDEXES",
             FilterExpression: "word = :w AND user_id = :uid",
             ExpressionAttributeValues: {

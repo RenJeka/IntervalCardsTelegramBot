@@ -28,14 +28,7 @@ export class MessageService {
     async startMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
         const {chatId, userId} = this.getIdsFromMessage(message);
 
-        this.dbService.setUserInterval(userId, 1);
-
-        const userInterval: number | null = await this.dbService.getUserInterval(userId);
-
-        // console.log('userInterval', userInterval);
-
-        await this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
-        await this.dbService.setUserInterval(userId, DEFAULT_USER_INTERVAL);
+        await this.dbService.initUser(userId);
 
         return bot.sendMessage(
             chatId,

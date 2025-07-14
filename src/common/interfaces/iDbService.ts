@@ -4,6 +4,7 @@ import {UserStatus} from "../enums/userStatus";
 import {UserDataAWS} from "./common";
 
 export interface IDbService {
+    initUser(userId: number): Promise<void>;
     writeWordByUserId(userId: number, word: string): Promise<DbResponse>;
     removeWordById(userId: number, wordId: string): Promise<DbResponse>;
     setUserStatus(userId: number, userStatus: UserStatus): Promise<DbResponse>;
@@ -13,5 +14,5 @@ export interface IDbService {
     getUserDictionary(userId: number): Promise<UserItemAWS[]>;
     getFlatUserDictionary(userId: number): Promise<string[]>;
     getAllUsersWithStatus(userStatus: UserStatus): Promise<UserDataAWS[]>;
-    checkIsUserExist(userId: number): boolean;
+    checkIsUserExist(userId: number): Promise<boolean>;
 }
