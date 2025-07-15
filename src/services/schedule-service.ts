@@ -34,7 +34,7 @@ export class ScheduleService {
              *
              * development: Run every DEVELOPER_MODE_BOT_SENDS_MESSAGE_SEC seconds
              * */
-            const cronTime = this.nodeEnv === 'production' ? `0 */${interval} * * *` : `*/${DEVELOPER_MODE_BOT_SENDS_MESSAGE_SEC} * * * * *`
+            const cronTime = this.nodeEnv === 'production' ? `0 0 9-22/${interval} * * *` : `*/${DEVELOPER_MODE_BOT_SENDS_MESSAGE_SEC} * * * * *`
 
 
             const cronJob: CronJob = new CronJob(
