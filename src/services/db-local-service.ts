@@ -7,8 +7,12 @@ import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
 import { ValidateHelper } from "../helpers/validate-helper";
 import { writeFileSync } from "fs";
 import { randomUUID } from "crypto";
+import {IDbService} from "../common/interfaces/iDbService";
 
-export class DbService {
+/**
+ * @deprecated
+ */
+export class DbLocalService{
 
     constructor() {
         this.initDb();
@@ -35,7 +39,7 @@ export class DbService {
             }
 
             const currentUserWord: UserWord = {
-                id: randomUUID(),
+                id: randomUUID() as string,
                 text: word
             }
             currentUser.dictionary.push(currentUserWord);

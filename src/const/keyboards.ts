@@ -1,10 +1,10 @@
-import { InlineKeyboardButton, SendMessageOptions } from "node-telegram-bot-api";
+import {InlineKeyboardButton, SendMessageOptions} from "node-telegram-bot-api";
 import {
     AddingWordsReplyKeyboardData,
     MainReplyKeyboardData,
     RemovingWordsReplyKeyboardData, StartLearningReplyKeyboardData
 } from "../common/enums/mainInlineKeyboard";
-import { UserWord } from "../common/interfaces/common";
+import {UserItemAWS} from "../common/interfaces/common";
 
 export const REPLY_KEYBOARD_OPTIONS: SendMessageOptions = {
     reply_markup: {
@@ -16,6 +16,26 @@ export const REPLY_KEYBOARD_OPTIONS: SendMessageOptions = {
     }
 }
 
+export const SET_INTERVAL_KEYBOARD_OPTIONS: SendMessageOptions = {
+    reply_markup: {
+        inline_keyboard: [
+            [{text: 'Every hour', callback_data: '1'}],
+            [{text: 'Every 2 hours', callback_data: '2'}],
+            [{text: 'Every 3 hours', callback_data: '3'}],
+            [{text: 'Every 4 hours', callback_data: '4'}],
+            [{text: 'Every 5 hours', callback_data: '5'}],
+            [{text: 'Every 6 hours', callback_data: '6'}],
+            [{text: 'Every 7 hours', callback_data: '7'}],
+            [{text: 'Every 8 hours', callback_data: '8'}],
+            [{text: 'Every 9 hours', callback_data: '9'}],
+            [{text: 'Every 10 hours', callback_data: '10'}],
+            [{text: 'Every 11 hours', callback_data: '11'}],
+            [{text: 'Every 12 hours', callback_data: '12'}]
+        ],
+        resize_keyboard: true
+    }
+}
+
 export const ADD_WORD_KEYBOARD_OPTIONS: SendMessageOptions = {
     reply_markup: {
         keyboard: [
@@ -23,7 +43,8 @@ export const ADD_WORD_KEYBOARD_OPTIONS: SendMessageOptions = {
             [{text: AddingWordsReplyKeyboardData.FINISH}, {text: AddingWordsReplyKeyboardData.CANCEL}],
         ],
         resize_keyboard: true
-    }
+    },
+    parse_mode: 'HTML'
 }
 
 export const REMOVE_WORD_KEYBOARD_OPTIONS: SendMessageOptions = {
@@ -46,15 +67,15 @@ export const START_LEARN_KEYBOARD_OPTIONS: SendMessageOptions = {
 }
 
 
-export function getRemoveWordsKeyboard(userDictionary: UserWord[]): SendMessageOptions {
-    const keyboard: InlineKeyboardButton[][] = userDictionary.map((userWord: UserWord) => {
-        return [{text: userWord.text, callback_data: userWord.id}]
+export function getRemoveWordsKeyboard(userDictionary: UserItemAWS[]): SendMessageOptions {
+    const keyboard: InlineKeyboardButton[][] = userDictionary.map((userWord: UserItemAWS) => {
+        return [{text: userWord.word, callback_data: userWord._id.toString()}]
     })
 
-   return {
-       reply_markup: {
-           inline_keyboard: keyboard,
-           resize_keyboard: true
-       }
-   }
+    return {
+        reply_markup: {
+            inline_keyboard: keyboard,
+            resize_keyboard: true
+        }
+    }
 }

@@ -14,3 +14,21 @@ export interface UserWord {
     id: string;
     text: string;
 }
+
+export interface UserDataAWS {
+    _id: number;
+    status: UserStatus;
+    interval?: number;
+}
+
+export interface UserRawItemAWS {
+    word: string;
+    translation?: string;
+    example?: string;
+    comment?: string;
+}
+
+export interface UserItemAWS extends UserRawItemAWS{
+    _id: number;
+    user_id: string;
+}

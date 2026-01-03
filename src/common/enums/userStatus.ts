@@ -4,4 +4,5 @@ export enum UserStatus {
     REMOVE_WORD = 'remove_word',
     START_LEARN = 'start_learn',
     STOP_LEARN = 'stop_learn',
+    SET_INTERVAL = 'set_interval',
 }

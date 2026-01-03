@@ -2,6 +2,7 @@ export interface DbResponse {
     success: boolean;
     status: DbResponseStatus;
     message?: string;
+    consumedCapacity?: string;
 }
 
 export enum DbResponseStatus {

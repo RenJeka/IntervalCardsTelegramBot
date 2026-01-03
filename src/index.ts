@@ -1,4 +1,5 @@
-import dotenv from 'dotenv'
+import { config as dotEnvConfig } from 'dotenv'
+import chalk from 'chalk';
 import TelegramBot, { BotCommand, CallbackQuery, Message, Metadata } from 'node-telegram-bot-api'
 import {
     AddingWordsReplyKeyboardData,
@@ -6,12 +7,15 @@ import {
     RemovingWordsReplyKeyboardData,
     StartLearningReplyKeyboardData
 } from "./common/enums/mainInlineKeyboard";
-import { DbService } from "./services/db-service";
+import { DbAwsService } from "./services/db-aws-service";
 import { MessageService } from "./services/message-service";
 import { ScheduleService } from "./services/schedule-service";
 
-dotenv.config();
+dotEnvConfig({path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env'});
 const TB_TOKEN: string = process.env.TELEGRAM_BOT_TOKEN!;
+const nodeEnv: string = process.env.NODE_ENV!;
+
+console.log(`TB_TOKEN:  ${chalk.gray(TB_TOKEN)}`);
 const bot = new TelegramBot(TB_TOKEN,
     {
         polling: {
@@ -20,24 +24,32 @@ const bot = new TelegramBot(TB_TOKEN,
         }
     });
 
-const dbService = new DbService();
-const scheduleService = new ScheduleService(dbService);
+const dbAwsService = new DbAwsService();
+const scheduleService = new ScheduleService(dbAwsService);
 const messageService = new MessageService(
-    dbService,
+    dbAwsService,
     scheduleService
 );
 const commands: BotCommand[] = [
     { command: 'start', description: 'Start the bot'},
-    { command: 'instruction', description: 'Additional information about the bot' }
+    { command: 'instruction', description: 'Additional information about the bot' },
+    { command: 'set_interval', description: 'Set the time interval for learning' }
 ];
 
 bot.setMyCommands(commands)
-    .then(() => {
-        console.log('Bot commands set successfully!');
+    .then(async () => {
+        console.log(chalk.green.bold(`✔ Bot commands set successfully!`));
+        if (nodeEnv === 'production') {
+            console.log(chalk.red(`===[${nodeEnv.toUpperCase()} MODE]===`));
+        } else {
+            console.log(chalk.white.bgBlue.bold(`===[${nodeEnv.toUpperCase()} MODE]===`));
+        }
+
+        await scheduleService.resumeAllStartLearning(bot);
     })
-    .catch((error) => {
+    .catch((error: { message: any; }) => {
         console.error('Error while setting bot commands: ', error.message);
-    })
+    });
 
 bot.on('message', async (msg: Message, metadata: Metadata) => {
     const messageText = msg.text;
@@ -49,6 +61,10 @@ bot.on('message', async (msg: Message, metadata: Metadata) => {
 
         case '/instruction':
             await messageService.instructionMessageHandler(bot, msg);
+            break;
+
+        case '/set_interval':
+            await messageService.setIntervalMessageHandler(bot, msg);
             break;
 
         case MainReplyKeyboardData.SHOW_ALL:
@@ -92,14 +108,4 @@ bot.on('callback_query', async (query: CallbackQuery) => {
     await messageService.generalCallbackHandler(bot, query);
 });
 
-bot.on("polling_error", err => console.log('ERROR: ', JSON.stringify(err)));
-
-// TODO: ICTB-5 check node:20-slim
-// TODO: ICTB-6 cut-off version v1.0.0
-// TODO: ICTB-7 .env for dev & for prod. Add schedule for dev '*/10 9-21 * * *' + for prod '0 9-21 * * *'
-// TODO: ICTB-8 add Standard words set #1 (the 30 common usefully words from 3 letters. Ask ChatGPT)
-// TODO: ICTB-10 Implement translation
-// TODO: ICTB-13 add button to check user status (user mode)
-// TODO: ICTB-17 add logging
-
-
+bot.on("polling_error", (err: any) => console.log(chalk.red(`❌ ERROR: ${JSON.stringify(err)}`)));
