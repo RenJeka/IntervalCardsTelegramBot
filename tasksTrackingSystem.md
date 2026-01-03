@@ -9,9 +9,14 @@ TODO: ICTB-13 add button to check user status (user mode)
 TODO: ICTB-17 add logging
 TODO: ICTB-29 'Finish and continue learning' button (when we add word)
 TODO: ICTB-30 check add word for code injection (threat check)
+TODO: ICTB-36 add Trello as a task tracking system (realize what account we can use for it)
 ```
 
 ---
+
+##### 14/07/2025
+
+## TODO: ICTB-36 add Trello as a task tracking system (realize what account we can use for it)
 
 ##### 14/07/2025
 
