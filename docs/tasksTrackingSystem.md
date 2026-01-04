@@ -5,11 +5,12 @@
 ```
 TODO: ICTB-10 Implement translation
 TODO: ICTB-13 add button to check user status (user mode)
-TODO: ICTB-17 add logging
+TODO: ICTB-17 add logging. - Ask ChatGPT and analyze where to display logs and which option is best.
 TODO: ICTB-29 'Finish and continue learning' button (when we add word)
 TODO: ICTB-30 check add word for code injection (threat check)
 TODO: ICTB-36 add Trello as a task tracking system (realize what account we can use for it) (low priority)
 TODO: ICTB-39 add AI connections to implement examples using AI APIs via Open Router (https://openrouter.ai/).
+
 
 ```
 
@@ -22,6 +23,8 @@ TODO: ICTB-39 add AI connections to implement examples using AI APIs via Open Ro
 ## TODO: ICTB-41 Preset words (e.g. 100 random words).
 ## TODO: ICTB-42 Categories"favorite" in settings. (add in the user settings the ability to add favorite words-categories, on the basis of which examples from LLM and 100 random words will be formed)
 ## TODO: ICTB-43 add to the settings the language that the user is currently learning or leave this field as undefined.
+## TODO: ICTB-44 - Add 15, 30, and 45 minutes to the interval settings in the settings menu.
+## TODO: ICTB-45  Code refactoring, for example, take out a 'switch case' for 'messageText' in a 'index.ts' file. Find more places for refactor.
 
 ##### 03/01/2026
 
@@ -126,7 +129,7 @@ TODO: ICTB-10 Implement translation
 
 TODO: ICTB-13 add button to check user status (user mode)
 
-TODO: ICTB-17 add logging
+TODO: ICTB-17 add logging. - Ask ChatGPT and analyze where to display logs and which option is best.
 
 ~~TODO: ICTB-3 make deleting operations by inline keyboard~~
 
