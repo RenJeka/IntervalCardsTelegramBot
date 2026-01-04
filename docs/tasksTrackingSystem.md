@@ -3,20 +3,29 @@
 #### CURRENT TASKS:
 
 ```
-TODO: ICTB-5 check node:20-slim
 TODO: ICTB-10 Implement translation
 TODO: ICTB-13 add button to check user status (user mode)
 TODO: ICTB-17 add logging
 TODO: ICTB-29 'Finish and continue learning' button (when we add word)
 TODO: ICTB-30 check add word for code injection (threat check)
-TODO: ICTB-36 add Trello as a task tracking system (realize what account we can use for it)
+TODO: ICTB-36 add Trello as a task tracking system (realize what account we can use for it) (low priority)
+TODO: ICTB-37 Fix error "Unhandled rejection Error: ETELEGRAM: 400 Bad Request: chat not found" for developer mode (npm run dev with '@IntervalCardsDevBot' bot)
+TODO: ICTB-38 add documentations (/docs folder) for project setup and usage: (arch-rules.md, architecture.md, requirements.md) + AGENTS.md (medium priority)
 ```
 
 ---
 
-##### 14/07/2025
+##### 04/01/2026
+
+## TODO: ICTB-39 add AI connections to implement examples using AI APIs via Open Router (https://openrouter.ai/).
+
+##### 03/01/2026
 
 ## TODO: ICTB-36 add Trello as a task tracking system (realize what account we can use for it)
+
+## TODO: ICTB-37 Fix error "Unhandled rejection Error: ETELEGRAM: 400 Bad Request: chat not found" for developer mode (npm run dev with '@IntervalCardsDevBot' bot)
+
+## TODO: ICTB-38 add documentations (/docs folder) for project setup and usage: (arch-rules.md, architecture.md, requirements.md) + AGENTS.md (medium priority)
 
 ##### 14/07/2025
 
@@ -93,7 +102,7 @@ should be stopped)~~
 
 ##### 2/11/2024
 
-TODO: ICTB-5 check node:20-slim
+~~TODO: ICTB-5 check node:20-slim~~
 
 ~~TODO: ICTB-7 .env for dev & for prod. Add schedule for dev '_/10 9-21 _ \* _' + for prod '0 9-21 _ \* \*'~~
 
