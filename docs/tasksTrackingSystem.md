@@ -9,7 +9,9 @@ TODO: ICTB-13 add button to check user status (user mode)
 TODO: ICTB-17 add logging
 TODO: ICTB-29 'Finish and continue learning' button (when we add word)
 TODO: ICTB-30 check add word for code injection (threat check)
-TODO: ICTB-36 add Trello as a task tracking system (realize what account we can use for it)
+TODO: ICTB-36 add Trello as a task tracking system (realize what account we can use for it) (low priority)
+TODO: ICTB-37 Fix error "Unhandled rejection Error: ETELEGRAM: 400 Bad Request: chat not found" for developer mode (npm run dev with '@IntervalCardsDevBot' bot)
+TODO: ICTB-38 add documentations (/docs folder) for project setup and usage: (arch-rules.md, architecture.md, requirements.md) + AGENTS.md (medium priority)
 ```
 
 ---
