@@ -344,6 +344,8 @@ export class DbAwsService implements IDbService {
                     throw new Error(`Table ${tableName} not found in DynamoDB`);
                 }
             }
+            console.log(chalk.green.bold(`✔ connecting to DynamoDB is successfully!`));
+
         } catch (error) {
             throw new Error(`Failed to connect to DynamoDB or find required tables: ${error}`);
         }
@@ -354,7 +356,7 @@ export class DbAwsService implements IDbService {
             return;
         }
         const newUser: UserDataAWS = {
-            _id: userId,
+            _id: userId.toString(),
             status: UserStatus.DEFAULT,
             interval: DEFAULT_USER_INTERVAL
         };

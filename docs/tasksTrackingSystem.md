@@ -18,6 +18,8 @@ TODO: ICTB-38 add documentations (/docs folder) for project setup and usage: (ar
 ##### 04/01/2026
 
 ## TODO: ICTB-39 add AI connections to implement examples using AI APIs via Open Router (https://openrouter.ai/).
+## TODO: ICTB-40 in development mode env file should be named .env.development
+
 
 ##### 03/01/2026
 

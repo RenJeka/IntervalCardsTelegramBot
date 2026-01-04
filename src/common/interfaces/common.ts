@@ -16,7 +16,7 @@ export interface UserWord {
 }
 
 export interface UserDataAWS {
-    _id: number;
+    _id: string;
     status: UserStatus;
     interval?: number;
 }
