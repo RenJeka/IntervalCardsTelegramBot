@@ -172,7 +172,7 @@ Please, chose the interval you want to set.
             chatId,
             `
 Please, type your word and press 'Enter' or send button.
-You can add translation via  <code>/</code>  separator`,
+You can add translation via  <code>/</code>  separator. For example: <code>my word / my translation</code>`,
             ADD_WORD_KEYBOARD_OPTIONS
         );
     }

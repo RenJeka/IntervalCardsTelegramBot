@@ -9,8 +9,8 @@ TODO: ICTB-17 add logging
 TODO: ICTB-29 'Finish and continue learning' button (when we add word)
 TODO: ICTB-30 check add word for code injection (threat check)
 TODO: ICTB-36 add Trello as a task tracking system (realize what account we can use for it) (low priority)
-TODO: ICTB-37 Fix error "Unhandled rejection Error: ETELEGRAM: 400 Bad Request: chat not found" for developer mode (npm run dev with '@IntervalCardsDevBot' bot)
-TODO: ICTB-38 add documentations (/docs folder) for project setup and usage: (arch-rules.md, architecture.md, requirements.md) + AGENTS.md (medium priority)
+TODO: ICTB-39 add AI connections to implement examples using AI APIs via Open Router (https://openrouter.ai/).
+
 ```
 
 ---
@@ -19,15 +19,17 @@ TODO: ICTB-38 add documentations (/docs folder) for project setup and usage: (ar
 
 ## TODO: ICTB-39 add AI connections to implement examples using AI APIs via Open Router (https://openrouter.ai/).
 ## TODO: ICTB-40 in development mode env file should be named .env.development
-
+## TODO: ICTB-41 Preset words (e.g. 100 random words).
+## TODO: ICTB-42 Categories"favorite" in settings. (add in the user settings the ability to add favorite words-categories, on the basis of which examples from LLM and 100 random words will be formed)
+## TODO: ICTB-43 add to the settings the language that the user is currently learning or leave this field as undefined.
 
 ##### 03/01/2026
 
 ## TODO: ICTB-36 add Trello as a task tracking system (realize what account we can use for it)
 
-## TODO: ICTB-37 Fix error "Unhandled rejection Error: ETELEGRAM: 400 Bad Request: chat not found" for developer mode (npm run dev with '@IntervalCardsDevBot' bot)
+~~## TODO: ICTB-37 Fix error "Unhandled rejection Error: ETELEGRAM: 400 Bad Request: chat not found" for developer mode (npm run dev with '@IntervalCardsDevBot' bot)~~
 
-## TODO: ICTB-38 add documentations (/docs folder) for project setup and usage: (arch-rules.md, architecture.md, requirements.md) + AGENTS.md (medium priority)
+~~## TODO: ICTB-38 add documentations (/docs folder) for project setup and usage: (arch-rules.md, architecture.md, requirements.md) + AGENTS.md (medium priority)~~
 
 ##### 14/07/2025
 
