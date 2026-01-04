@@ -33,7 +33,8 @@ const messageService = new MessageService(
 const commands: BotCommand[] = [
     { command: 'start', description: 'Start the bot'},
     { command: 'instruction', description: 'Additional information about the bot' },
-    { command: 'set_interval', description: 'Set the time interval for learning' }
+    { command: 'set_interval', description: 'Set the time interval for learning' },
+    { command: 'my_status', description: 'Show your current status and settings' }
 ];
 
 bot.setMyCommands(commands)
@@ -65,6 +66,10 @@ bot.on('message', async (msg: Message, metadata: Metadata) => {
 
         case '/set_interval':
             await messageService.setIntervalMessageHandler(bot, msg);
+            break;
+
+        case '/my_status':
+            await messageService.myStatusMessageHandler(bot, msg);
             break;
 
         case MainReplyKeyboardData.SHOW_ALL:

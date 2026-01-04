@@ -12,7 +12,7 @@ import {DbResponse, DbResponseStatus} from "../common/interfaces/dbResponse";
 import {ScheduleService} from "./schedule-service";
 import {MainReplyKeyboardData} from "../common/enums/mainInlineKeyboard";
 import {IDbService} from "../common/interfaces/iDbService";
-import {UserWord, UserItemAWS} from "../common/interfaces/common";
+import {UserItemAWS, UserStatusSnapshot, UserWord} from "../common/interfaces/common";
 import {CommonHelper} from "../helpers/common-helper";
 import {FormatterHelper} from "../helpers/formatter-helper";
 import { DEFAULT_USER_INTERVAL } from "../const/common";
@@ -76,6 +76,40 @@ Please, chose the interval you want to set.
 `,
             SET_INTERVAL_KEYBOARD_OPTIONS
         );
+    }
+
+    async myStatusMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
+        const {chatId, userId} = this.getIdsFromMessage(message);
+
+        try {
+            const [userDictionary, currentUserStatus, userInterval] = await Promise.all([
+                this.dbService.getUserDictionary(userId),
+                this.dbService.getUserStatus(userId),
+                this.dbService.getUserInterval(userId),
+            ]);
+
+            const snapshot: UserStatusSnapshot = {
+                status: currentUserStatus,
+                wordsCount: userDictionary?.length ?? 0,
+                intervalHours: userInterval ?? null,
+                learningLanguage: null,
+                favoriteCategories: null,
+            };
+
+            const messageText = FormatterHelper.formatUserStatusSnapshot(snapshot);
+
+            return bot.sendMessage(
+                chatId,
+                messageText,
+                {parse_mode: 'MarkdownV2'}
+            );
+        } catch (error: any) {
+            return bot.sendMessage(
+                chatId,
+                `Something went wrong: ${error?.message || ''}. Please, try again`,
+                REPLY_KEYBOARD_OPTIONS
+            );
+        }
     }
 
     async generalMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {

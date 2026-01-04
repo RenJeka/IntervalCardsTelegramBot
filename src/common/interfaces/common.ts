@@ -21,6 +21,14 @@ export interface UserDataAWS {
     interval?: number;
 }
 
+export interface UserStatusSnapshot {
+    status: UserStatus | null;
+    wordsCount: number;
+    intervalHours: number | null;
+    learningLanguage?: string | null;
+    favoriteCategories?: string[] | null;
+}
+
 export interface UserRawItemAWS {
     word: string;
     translation?: string;
