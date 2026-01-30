@@ -278,6 +278,28 @@ export class DbAwsService implements IDbService {
             message: '✔️ Favorite categories have been updated successfully'
         }
     }
+
+    async removeUserFavoriteCategory(userId: number, category: string): Promise<DbResponse> {
+        const updateItemParams: UpdateItemCommandInput = {
+            TableName: this.tableNames.users,
+            Key: { '_id': { S: userId.toString() } },
+            UpdateExpression: 'DELETE #favoriteCategories :favoriteCategory',
+            ExpressionAttributeNames: { '#favoriteCategories': 'favoriteCategories' },
+            ExpressionAttributeValues: { ':favoriteCategory': { SS: [category] } },
+            ReturnConsumedCapacity: 'INDEXES'
+        };
+        const command = new UpdateItemCommand(updateItemParams);
+        const response: UpdateItemCommandOutput = await this.client.send(command) as UpdateItemCommandOutput;
+        if (response?.$metadata?.httpStatusCode !== 200) {
+            throw new Error(`❌️Something went wrong while removing favorite category to DB: ${LogService.safeStringify(response)}`)
+        }
+        return {
+            success: true,
+            status: DbResponseStatus.OK,
+            message: '✔️ Favorite category has been removed successfully'
+        }
+    }
+
     async getUserFavoriteCategories(userId: number): Promise<string[]> {
         if (!userId) {
             return [];
