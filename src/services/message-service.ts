@@ -18,6 +18,7 @@ import { CommonHelper } from "../helpers/common-helper";
 import { FormatterHelper } from "../helpers/formatter-helper";
 import { DEFAULT_USER_INTERVAL } from "../const/common";
 import { FAVORITE_CATEGORIES, FAVORITE_CATEGORY_CALLBACK_PREFIX } from "../const/favoriteCategories";
+import { LogService } from "./log.service";
 
 export class MessageService {
 
@@ -487,6 +488,7 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
                 getFavoriteCategoriesKeyboard(selectedCategories)
             );
         } catch (error: any) {
+            LogService.error(`Error adding favorite category for user ${userId}:`, error);
             return bot.sendMessage(
                 chatId,
                 `Something went wrong: ${error?.message || ''}. Please, try again.`,
