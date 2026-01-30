@@ -39,7 +39,7 @@
 
 ## 5. Команди та UX
 
-1. **Команди/кнопки:** `/start`, `/instruction`, `/set_interval` + кнопки меню (`Show all words`, `Add word`, `Remove word`, `Start learning`, `Stop learn`).
+1. **Команди/кнопки:** `/start`, `/instruction`, `/set_interval`, `/set_favorite_categories`, `/my_status` + кнопки меню (`Show all words`, `Add word`, `Remove word`, `Start learning`, `Stop learn`).
 2. **Inline‑клавіатури:**
     - вибір інтервалу
     - видалення слова (натискання по слову)
