@@ -5,6 +5,7 @@ import { FormatterHelper } from "../helpers/formatter-helper";
 import { DEFAULT_USER_INTERVAL, DEVELOPER_MODE_BOT_SENDS_MESSAGE_SEC } from "../const/common";
 import { IDbService } from '../common/interfaces/iDbService';
 import { UserStatus } from '../common/enums/userStatus';
+import { LogService } from "./log.service";
 
 export class ScheduleService {
 
@@ -24,7 +25,7 @@ export class ScheduleService {
         chatId?: number,
     ) {
 
-        if (this.userJobs.has(userId)){
+        if (this.userJobs.has(userId)) {
             this.stopLearnByUserId(userId)
         }
 
@@ -43,8 +44,8 @@ export class ScheduleService {
                     const randomIndex = Math.floor(Math.random() * userItems.length);
                     const word = FormatterHelper.escapeMarkdownV2(userItems[randomIndex]?.word!);
                     const translation = userItems[randomIndex]?.translation ?
-                                        ` \\-\\-\\- ||${FormatterHelper.escapeMarkdownV2(userItems[randomIndex]?.translation || '') }||`
-                                        : null;
+                        ` \\-\\-\\- ||${FormatterHelper.escapeMarkdownV2(userItems[randomIndex]?.translation || '')}||`
+                        : null;
                     const fullMessage = word + (translation || '');
 
                     if (chatId) {
@@ -92,10 +93,10 @@ export class ScheduleService {
                 }
 
                 await this.startLearnByUserId(bot, userItems, userId, interval, userId);
-                console.log(`✔ Resumed learning session for userId=${userId} (interval=${interval}h)`);
+                LogService.info(`✔ Resumed learning session for userId=${userId} (interval=${interval}h)`);
             }
         } catch (err) {
-            console.error('❌️ Error while resuming active learners:', err);
+            LogService.error('❌️ Error while resuming active learners:', err);
             throw err;
         }
     }
