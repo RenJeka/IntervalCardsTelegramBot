@@ -1,13 +1,19 @@
-# detailed step-by-step TODO plan for ICTB-46
+# detailed step-by-step TODO plan for ICTB-42
 
-- [x] Create `src/services/log.service.ts`
-    - [x] Implement `safeStringify` helper function to limit depth (max 3 levels) and handle circular references.
-    - [x] Create `LogService` class with static methods: `error`, `warn`, `info`, `debug`.
-    - [x] Ensure `error` method uses `safeStringify` for the error object/details.
-- [x] Refactor `src/index.ts` to use `LogService`.
-- [x] Refactor `src/services/db-local-service.ts` to use `LogService`.
-- [x] Refactor `src/services/db-aws-service.ts` to use `LogService`.
-- [x] Refactor `src/services/schedule-service.ts` to use `LogService` (if applicable).
-- [ ] Verify functionality:
-    - [ ] Start app and check standard logs.
-    - [ ] Simulate an error with nested/circular data and verify log output is clean and limited.
+- [x] Modify `IDbService` interface
+    - [x] Add `removeUserFavoriteCategory(userId: number, category: string): Promise<DbResponse>`
+- [x] Update `DbAwsService`
+    - [x] Implement `removeUserFavoriteCategory` using DynamoDB `DELETE` update expression.
+- [x] Refactor `MessageService`
+    - [x] Rename `addFavoriteCategoryHandler` to `toggleFavoriteCategoryHandler`.
+    - [x] In `toggleFavoriteCategoryHandler`:
+        - [x] Get current favorite categories for validation.
+        - [x] Check if the clicked category is already in the list.
+        - [x] If present: Call `removeUserFavoriteCategory`.
+        - [x] If absent: Call `addUserFavoriteCategory`.
+        - [x] Update the message with the new list of categories.
+        - [x] Handle errors gracefully using `LogService`.
+- [ ] Verify functionality
+    - [ ] Add a category.
+    - [ ] Remove the same category.
+    - [ ] Verify persistence.
