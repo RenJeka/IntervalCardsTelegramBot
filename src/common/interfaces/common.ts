@@ -16,9 +16,18 @@ export interface UserWord {
 }
 
 export interface UserDataAWS {
-    _id: number;
+    _id: string;
     status: UserStatus;
     interval?: number;
+    favoriteCategories?: string[];
+}
+
+export interface UserStatusSnapshot {
+    status: UserStatus | null;
+    wordsCount: number;
+    intervalHours: number | null;
+    learningLanguage?: string | null;
+    favoriteCategories?: string[] | null;
 }
 
 export interface UserRawItemAWS {
@@ -28,7 +37,7 @@ export interface UserRawItemAWS {
     comment?: string;
 }
 
-export interface UserItemAWS extends UserRawItemAWS{
+export interface UserItemAWS extends UserRawItemAWS {
     _id: number;
     user_id: string;
 }

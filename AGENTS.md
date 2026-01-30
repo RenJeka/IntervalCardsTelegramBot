@@ -48,3 +48,9 @@ Configuration comes from `.env` or `.env.production` (see `.env.example`). Never
 `docs/architecture-rules.md` – architecture rules;
 `docs/tasksTrackingSystem.md` – task tracking;
 `docs/requirements.md` – project requirements.
+
+## TODOs Plans & Future Work
+
+See `docs/tasksTrackingSystem.md` Look for tasks with TODO that are not crossed out. (Crossed out tasks are done.).
+
+Before completing the task, analyze the project and ask me clarifying questions (1-5 questions). After I answer them, create a detailed plan with points and sub-points. Add this plan to the file "docs/plans.md" with the specified ICTB number with "TODO". Refer to this plan each time and update it as you complete the task.

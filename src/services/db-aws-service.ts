@@ -1,8 +1,8 @@
-import { UserItemAWS, UserRawItemAWS} from "../common/interfaces/common";
-import {UserDataAWS} from "../common/interfaces/common";
-import {UserStatus} from "../common/enums/userStatus";
-import {DbResponse, DbResponseStatus} from "../common/interfaces/dbResponse";
-import {IDbService} from "../common/interfaces/iDbService";
+import { UserItemAWS, UserRawItemAWS } from "../common/interfaces/common";
+import { UserDataAWS } from "../common/interfaces/common";
+import { UserStatus } from "../common/enums/userStatus";
+import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
+import { IDbService } from "../common/interfaces/iDbService";
 import {
     DynamoDBClient,
     ListTablesCommand,
@@ -23,8 +23,8 @@ import {
     UpdateItemCommand,
     UpdateItemCommandOutput
 } from "@aws-sdk/client-dynamodb";
-import {marshall, unmarshall} from "@aws-sdk/util-dynamodb";
-import {CommonHelper} from "../helpers/common-helper";
+import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
+import { CommonHelper } from "../helpers/common-helper";
 import chalk from 'chalk';
 import { FormatterHelper } from "../helpers/formatter-helper";
 import { DEFAULT_USER_INTERVAL } from "../const/common";
@@ -101,7 +101,7 @@ export class DbAwsService implements IDbService {
         const itemInput: GetItemInput | DeleteItemCommandInput = {
             TableName: this.tableNames.words,
             ReturnConsumedCapacity: "INDEXES",
-            Key: {'_id': {N: wordId}, 'user_id': {S: userId.toString()}}
+            Key: { '_id': { N: wordId }, 'user_id': { S: userId.toString() } }
         }
         let deletingItem: UserItemAWS;
 
@@ -142,10 +142,10 @@ export class DbAwsService implements IDbService {
     }
 
     async setUserStatus(userId: number, userStatus: UserStatus = UserStatus.DEFAULT): Promise<DbResponse> {
-        
+
         const updateItemParams: UpdateItemCommandInput = {
             TableName: this.tableNames.users,
-            Key: {_id: {S: userId.toString()}},
+            Key: { _id: { S: userId.toString() } },
             UpdateExpression: 'SET #status = :status',
             ExpressionAttributeNames: { '#status': 'status' },
             ExpressionAttributeValues: { ':status': { S: userStatus } },
@@ -188,11 +188,11 @@ export class DbAwsService implements IDbService {
             }
 
             return unmarshall(response.Items[0])?.status ?? null;
-            
+
         } catch (error) {
             throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
         }
-            
+
     }
 
     /**
@@ -249,7 +249,51 @@ export class DbAwsService implements IDbService {
             }
 
             return unmarshall(response.Items[0])?.interval ?? null;
-            
+
+        } catch (error) {
+            throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
+        }
+    }
+
+    async addUserFavoriteCategory(userId: number, category: string): Promise<DbResponse> {
+        const updateItemParams: UpdateItemCommandInput = {
+            TableName: this.tableNames.users,
+            Key: { '_id': { S: userId.toString() } },
+            UpdateExpression: 'ADD #favoriteCategories :favoriteCategory',
+            ExpressionAttributeNames: { '#favoriteCategories': 'favoriteCategories' },
+            ExpressionAttributeValues: { ':favoriteCategory': { SS: [category] } },
+            ReturnConsumedCapacity: 'INDEXES'
+        };
+        const command = new UpdateItemCommand(updateItemParams);
+        const response: UpdateItemCommandOutput = await this.client.send(command) as UpdateItemCommandOutput;
+        if (response?.$metadata?.httpStatusCode !== 200) {
+            throw new Error(`❌️Something went wrong while writing favorite category to DB: ${JSON.stringify(response)}`)
+        }
+        return {
+            success: true,
+            status: DbResponseStatus.OK,
+            message: '✔️ Favorite categories have been updated successfully'
+        }
+    }
+    async getUserFavoriteCategories(userId: number): Promise<string[]> {
+        if (!userId) {
+            return [];
+        }
+        const scanInput: ScanCommandInput = {
+            TableName: this.tableNames.users,
+            ReturnConsumedCapacity: "INDEXES",
+            FilterExpression: "#id = :uid",
+            ExpressionAttributeNames: { '#id': '_id' },
+            ExpressionAttributeValues: { ':uid': { S: userId.toString() } }
+        }
+        try {
+            const command = new ScanCommand(scanInput);
+            const response: ScanCommandOutput = await this.client.send(command) as ScanCommandOutput;
+            if (!response || !response?.Items || response?.Items?.length === 0) {
+                return [];
+            }
+
+            return Array.from(unmarshall(response.Items[0])?.favoriteCategories) ?? [];
         } catch (error) {
             throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
         }
@@ -261,7 +305,7 @@ export class DbAwsService implements IDbService {
             ReturnConsumedCapacity: "INDEXES",
             FilterExpression: "user_id = :uid",
             ExpressionAttributeValues: {
-                ':uid': {S: userId.toString()}
+                ':uid': { S: userId.toString() }
                 // ':uid': { S: '0' } // for general words
             }
         }
@@ -344,6 +388,8 @@ export class DbAwsService implements IDbService {
                     throw new Error(`Table ${tableName} not found in DynamoDB`);
                 }
             }
+            console.log(chalk.green.bold(`✔ connecting to DynamoDB is successfully!`));
+
         } catch (error) {
             throw new Error(`Failed to connect to DynamoDB or find required tables: ${error}`);
         }
@@ -354,7 +400,7 @@ export class DbAwsService implements IDbService {
             return;
         }
         const newUser: UserDataAWS = {
-            _id: userId,
+            _id: userId.toString(),
             status: UserStatus.DEFAULT,
             interval: DEFAULT_USER_INTERVAL
         };
@@ -398,7 +444,7 @@ export class DbAwsService implements IDbService {
             ReturnConsumedCapacity: "INDEXES",
             FilterExpression: "word = :w AND user_id = :uid",
             ExpressionAttributeValues: {
-                ':w': {S: String(word)},
+                ':w': { S: String(word) },
                 ':uid': { S: String(userId) }
             }
         };
