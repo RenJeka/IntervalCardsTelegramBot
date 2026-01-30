@@ -318,7 +318,8 @@ export class DbAwsService implements IDbService {
                 return [];
             }
 
-            return Array.from(unmarshall(response.Items[0])?.favoriteCategories) ?? [];
+            const item = unmarshall(response.Items[0]);
+            return item.favoriteCategories ? Array.from(item.favoriteCategories) : [];
         } catch (error) {
             throw new Error(`Something wrong while scanning DynamoDB: ${LogService.safeStringify(error)}`)
         }

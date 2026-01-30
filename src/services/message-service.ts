@@ -500,7 +500,7 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
             LogService.error(`Error toggling favorite category for user ${userId}:`, error);
             return bot.sendMessage(
                 chatId,
-                `Something went wrong: ${error?.message || ''}. Please, try again.`,
+                `Something went wrong while toggling favorite category. Please, try again.`,
             );
         }
     }
