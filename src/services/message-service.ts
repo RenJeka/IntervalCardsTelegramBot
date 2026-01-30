@@ -84,11 +84,10 @@ Please, chose the interval you want to set.
         const { chatId, userId } = this.getIdsFromMessage(message);
         await this.dbService.setUserStatus(userId, UserStatus.FAVORITE_CATEGORIES);
         const selectedCategories = await this.dbService.getUserFavoriteCategories(userId);
-
-        console.log('selectedCategories: ', selectedCategories);
         const selectedCategoriesText = selectedCategories.length
             ? selectedCategories.join(', ')
             : 'No favorite categories selected yet.';
+
         return bot.sendMessage(
             chatId,
             `Your favorite categories:\n${selectedCategoriesText}\n\nChoose categories to add:`,
@@ -100,10 +99,11 @@ Please, chose the interval you want to set.
         const { chatId, userId } = this.getIdsFromMessage(message);
 
         try {
-            const [userDictionary, currentUserStatus, userInterval] = await Promise.all([
+            const [userDictionary, currentUserStatus, userInterval, userFavoriteCategories] = await Promise.all([
                 this.dbService.getUserDictionary(userId),
                 this.dbService.getUserStatus(userId),
                 this.dbService.getUserInterval(userId),
+                this.dbService.getUserFavoriteCategories(userId),
             ]);
 
             const snapshot: UserStatusSnapshot = {
@@ -111,7 +111,7 @@ Please, chose the interval you want to set.
                 wordsCount: userDictionary?.length ?? 0,
                 intervalHours: userInterval ?? null,
                 learningLanguage: null,
-                favoriteCategories: null,
+                favoriteCategories: userFavoriteCategories ?? null,
             };
 
             const messageText = FormatterHelper.formatUserStatusSnapshot(snapshot);

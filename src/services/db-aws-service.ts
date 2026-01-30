@@ -292,7 +292,6 @@ export class DbAwsService implements IDbService {
             if (!response || !response?.Items || response?.Items?.length === 0) {
                 return [];
             }
-            console.log('response.Items[0]: ', unmarshall(response.Items[0]));
 
             return Array.from(unmarshall(response.Items[0])?.favoriteCategories) ?? [];
         } catch (error) {

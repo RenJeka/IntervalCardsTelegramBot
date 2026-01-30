@@ -19,7 +19,7 @@ export class FormatterHelper {
                 label: '⏱️Interval (hours)',
                 value: snapshot.intervalHours !== null ? snapshot.intervalHours.toString() : '–'
             },
-            { label: '🇬🇧Learning language', value: snapshot.learningLanguage ?? '–' },
+            { label: '🇬🇧Learning language', value: snapshot.learningLanguage ?? 'English' },
             {
                 label: '⭐Favorite categories',
                 value: snapshot.favoriteCategories?.length ? snapshot.favoriteCategories.join(', ') : '–'
@@ -30,7 +30,7 @@ export class FormatterHelper {
             `__*${FormatterHelper.escapeMarkdownV2(`Your status`)}*__`,
             ...entries.map((entry) => {
                 const safeLabel = FormatterHelper.escapeMarkdownV2(entry.label);
-                const safeValue = FormatterHelper.escapeMarkdownV2(entry.value);
+                const safeValue = "`" + FormatterHelper.escapeMarkdownV2(entry.value) + "`";
                 return `*${safeLabel}:* ${safeValue}`;
             })
         ];
