@@ -10,3 +10,5 @@ export const ADD_USER_ITEM_SEPARATOR = '/';
 export const DEVELOPER_MODE_BOT_SENDS_MESSAGE_SEC = 5;
 
 export const DEFAULT_USER_INTERVAL = 1;
+
+export const LOG_MAX_DEPTH = 3;

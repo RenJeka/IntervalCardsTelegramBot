@@ -7,12 +7,13 @@ import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
 import { ValidateHelper } from "../helpers/validate-helper";
 import { writeFileSync } from "fs";
 import { randomUUID } from "crypto";
-import {IDbService} from "../common/interfaces/iDbService";
+import { IDbService } from "../common/interfaces/iDbService";
+import { LogService } from "./log.service";
 
 /**
  * @deprecated
  */
-export class DbLocalService{
+export class DbLocalService {
 
     constructor() {
         this.initDb();
@@ -22,7 +23,7 @@ export class DbLocalService{
     private DB_NAME = 'userDb.json';
     private DB_PATH = path.join('./', this.DB_DIRECTORY_NAME, this.DB_NAME);
 
-    writeWordByUserId( userId: number, word: string): DbResponse {
+    writeWordByUserId(userId: number, word: string): DbResponse {
         try {
             const currentUser: UserData | null = this.getUserById(userId);
 
@@ -111,7 +112,7 @@ export class DbLocalService{
             currentUser.status = userStatus;
             this.addUserDataToDb(currentUser);
         } else {
-            console.error(`setUserStatus: no user with id '${userId}' found`)
+            LogService.error(`setUserStatus: no user with id '${userId}' found`)
         }
     }
 
@@ -127,7 +128,7 @@ export class DbLocalService{
         return currentUserData.status
     }
 
-    getUserDictionary(userId: number): UserWord[]{
+    getUserDictionary(userId: number): UserWord[] {
         if (!userId) {
             return [];
         }
@@ -155,7 +156,7 @@ export class DbLocalService{
     }
 
     private initDb() {
-        fs.exists (this.DB_PATH, (isDbExist: boolean) => {
+        fs.exists(this.DB_PATH, (isDbExist: boolean) => {
             if (!isDbExist) {
                 if (!fs.existsSync(this.DB_DIRECTORY_NAME)) {
                     fs.mkdirSync(this.DB_DIRECTORY_NAME);
@@ -171,7 +172,7 @@ export class DbLocalService{
 
     private initUser(userId: number) {
         if (this.checkIsUserExist(userId)) {
-           return
+            return
         }
         this.addUserDataToDb({
             id: userId,
@@ -182,7 +183,7 @@ export class DbLocalService{
 
     private writeJSON(userDb: UserDb) {
         try {
-            writeFileSync(this.DB_PATH,  util.format('%j', userDb), {flag: 'w+'})
+            writeFileSync(this.DB_PATH, util.format('%j', userDb), { flag: 'w+' })
         } catch (err) {
             throw err
         }
@@ -190,10 +191,10 @@ export class DbLocalService{
 
     private getUserDb(): UserDb {
         try {
-            const data = fs.readFileSync(this.DB_PATH, {encoding: 'utf-8'});
+            const data = fs.readFileSync(this.DB_PATH, { encoding: 'utf-8' });
             return JSON.parse(data) as UserDb
-        } catch(error) {
-            throw new Error(`Something wrong while reading file. Error: ${JSON.stringify(error)}`)
+        } catch (error) {
+            throw new Error(`Something wrong while reading file. Error: ${LogService.safeStringify(error)}`)
         }
     }
 
@@ -207,7 +208,7 @@ export class DbLocalService{
     }
 
     private addUserDataToDb(currentUser: UserData) {
-        const db: UserDb  = this.getUserDb();
+        const db: UserDb = this.getUserDb();
         const currentUserCopy: UserData = JSON.parse(JSON.stringify(currentUser));
         const currentUserIndex = db.userData.findIndex(user => user.id === currentUser.id);
 

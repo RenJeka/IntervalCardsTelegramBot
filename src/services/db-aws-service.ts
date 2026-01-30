@@ -28,6 +28,7 @@ import { CommonHelper } from "../helpers/common-helper";
 import chalk from 'chalk';
 import { FormatterHelper } from "../helpers/formatter-helper";
 import { DEFAULT_USER_INTERVAL } from "../const/common";
+import { LogService } from "./log.service";
 
 export class DbAwsService implements IDbService {
 
@@ -78,14 +79,14 @@ export class DbAwsService implements IDbService {
             const command = new PutItemCommand(putItemParams)
             const response: PutItemCommandOutput = await this.client.send(command) as PutItemCommandOutput;
             if (response?.$metadata?.httpStatusCode !== 200) {
-                throw new Error(`❌️Something went wrong while writing word to DB: ${JSON.stringify(response)}`)
+                throw new Error(`❌️Something went wrong while writing word to DB: ${LogService.safeStringify(response)}`)
             }
 
             return {
                 success: true,
                 status: DbResponseStatus.OK,
                 message: `Word '${message}' has been written successfully`,
-                consumedCapacity: JSON.stringify(response.ConsumedCapacity)
+                consumedCapacity: LogService.safeStringify(response.ConsumedCapacity)
             }
 
         } catch (error: any) {
@@ -123,7 +124,7 @@ export class DbAwsService implements IDbService {
             const deleteItemCommand = new DeleteItemCommand(itemInput);
             const deleteItemResponse: DeleteItemCommandOutput = await this.client.send(deleteItemCommand) as DeleteItemCommandOutput;
             if (getItemResponse?.$metadata?.httpStatusCode !== 200) {
-                throw new Error(`❌️Something went wrong while deleting word to DB: ${JSON.stringify(deleteItemResponse)}`)
+                throw new Error(`❌️Something went wrong while deleting word to DB: ${LogService.safeStringify(deleteItemResponse)}`)
             }
 
             return {
@@ -156,7 +157,7 @@ export class DbAwsService implements IDbService {
         const response: UpdateItemCommandOutput = await this.client.send(command) as UpdateItemCommandOutput;
 
         if (response?.$metadata?.httpStatusCode !== 200) {
-            throw new Error(`❌️Something went wrong while writing word to DB: ${JSON.stringify(response)}`)
+            throw new Error(`❌️Something went wrong while writing word to DB: ${LogService.safeStringify(response)}`)
         }
 
         return {
@@ -181,6 +182,8 @@ export class DbAwsService implements IDbService {
 
         try {
             const command = new ScanCommand(scanInput);
+
+            console.log(command)
             const response: ScanCommandOutput = await this.client.send(command) as ScanCommandOutput;
 
             if (!response || !response?.Items || response?.Items?.length === 0) {
@@ -190,7 +193,7 @@ export class DbAwsService implements IDbService {
             return unmarshall(response.Items[0])?.status ?? null;
 
         } catch (error) {
-            throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
+            throw new Error(`Something wrong while scanning DynamoDB: ${LogService.safeStringify(error)}`)
         }
 
     }
@@ -216,7 +219,7 @@ export class DbAwsService implements IDbService {
         const response: UpdateItemCommandOutput = await this.client.send(command) as UpdateItemCommandOutput;
 
         if (response?.$metadata?.httpStatusCode !== 200) {
-            throw new Error(`❌️Something went wrong while writing word to DB: ${JSON.stringify(response)}`)
+            throw new Error(`❌️Something went wrong while writing word to DB: ${LogService.safeStringify(response)}`)
         }
 
         return {
@@ -251,7 +254,7 @@ export class DbAwsService implements IDbService {
             return unmarshall(response.Items[0])?.interval ?? null;
 
         } catch (error) {
-            throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
+            throw new Error(`Something wrong while scanning DynamoDB: ${LogService.safeStringify(error)}`)
         }
     }
 
@@ -267,7 +270,7 @@ export class DbAwsService implements IDbService {
         const command = new UpdateItemCommand(updateItemParams);
         const response: UpdateItemCommandOutput = await this.client.send(command) as UpdateItemCommandOutput;
         if (response?.$metadata?.httpStatusCode !== 200) {
-            throw new Error(`❌️Something went wrong while writing favorite category to DB: ${JSON.stringify(response)}`)
+            throw new Error(`❌️Something went wrong while writing favorite category to DB: ${LogService.safeStringify(response)}`)
         }
         return {
             success: true,
@@ -295,7 +298,7 @@ export class DbAwsService implements IDbService {
 
             return Array.from(unmarshall(response.Items[0])?.favoriteCategories) ?? [];
         } catch (error) {
-            throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
+            throw new Error(`Something wrong while scanning DynamoDB: ${LogService.safeStringify(error)}`)
         }
     }
 
@@ -318,7 +321,7 @@ export class DbAwsService implements IDbService {
             items.sort((prev: UserItemAWS, next: UserItemAWS) => prev.word.localeCompare(next.word));
             return items
         } catch (error) {
-            throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
+            throw new Error(`Something wrong while scanning DynamoDB: ${LogService.safeStringify(error)}`)
         }
     }
 
@@ -352,8 +355,8 @@ export class DbAwsService implements IDbService {
             return response.Items.map(item => unmarshall(item) as UserDataAWS);
 
         } catch (error) {
-            console.error('❌️ Error while scanning active learners:', error);
-            throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`);
+            LogService.error('❌️ Error while scanning active learners:', error);
+            throw new Error(`Something wrong while scanning DynamoDB: ${LogService.safeStringify(error)}`);
         }
     }
 
@@ -373,7 +376,7 @@ export class DbAwsService implements IDbService {
             const response: ScanCommandOutput = await this.client.send(command) as ScanCommandOutput;
             return !!(response?.Items && response.Items.length > 0);
         } catch (error) {
-            throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
+            throw new Error(`Something wrong while scanning DynamoDB: ${LogService.safeStringify(error)}`)
         }
     }
 
@@ -388,7 +391,7 @@ export class DbAwsService implements IDbService {
                     throw new Error(`Table ${tableName} not found in DynamoDB`);
                 }
             }
-            console.log(chalk.green.bold(`✔ connecting to DynamoDB is successfully!`));
+            LogService.info(chalk.green.bold(`✔ connecting to DynamoDB is successfully!`));
 
         } catch (error) {
             throw new Error(`Failed to connect to DynamoDB or find required tables: ${error}`);
@@ -425,10 +428,10 @@ export class DbAwsService implements IDbService {
 
         try {
             const response = await this.client.send(listCommandCommand);
-            console.log('ListTablesCommand:', response);
+            LogService.info('ListTablesCommand:', response);
 
         } catch (error) {
-            console.log(chalk.red`Error while list tables: ${JSON.stringify(error)}`)
+            LogService.error(chalk.red`Error while list tables: ${LogService.safeStringify(error)}`)
         }
     }
 
@@ -455,7 +458,7 @@ export class DbAwsService implements IDbService {
 
             return response?.Count!! > 0
         } catch (error) {
-            throw new Error(`Something wrong while scanning DynamoDB: ${JSON.stringify(error, null, 2)}`)
+            throw new Error(`Something wrong while scanning DynamoDB: ${LogService.safeStringify(error)}`)
         }
     }
 }

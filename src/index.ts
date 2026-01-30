@@ -10,12 +10,13 @@ import {
 import { DbAwsService } from "./services/db-aws-service";
 import { MessageService } from "./services/message-service";
 import { ScheduleService } from "./services/schedule-service";
+import { LogService } from "./services/log.service";
 
 dotEnvConfig({ path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env' });
 const TB_TOKEN: string = process.env.TELEGRAM_BOT_TOKEN!;
 const nodeEnv: string = process.env.NODE_ENV!;
 
-console.log(`TB_TOKEN:  ${chalk.gray(TB_TOKEN)}`);
+LogService.info(`TB_TOKEN:  ${chalk.gray(TB_TOKEN)}`);
 const bot = new TelegramBot(TB_TOKEN,
     {
         polling: {
@@ -40,17 +41,17 @@ const commands: BotCommand[] = [
 
 bot.setMyCommands(commands)
     .then(async () => {
-        console.log(chalk.green.bold(`✔ Bot commands set successfully!`));
+        LogService.info(chalk.green.bold(`✔ Bot commands set successfully!`));
         if (nodeEnv === 'production') {
-            console.log(chalk.red(`===[${nodeEnv.toUpperCase()} MODE]===`));
+            LogService.info(chalk.red(`===[${nodeEnv.toUpperCase()} MODE]===`));
         } else {
-            console.log(chalk.white.bgBlue.bold(`===[${nodeEnv.toUpperCase()} MODE]===`));
+            LogService.info(chalk.white.bgBlue.bold(`===[${nodeEnv.toUpperCase()} MODE]===`));
         }
 
         await scheduleService.resumeAllStartLearning(bot);
     })
     .catch((error: { message: any; }) => {
-        console.error('Error while setting bot commands: ', error.message);
+        LogService.error('Error while setting bot commands: ', error);
     });
 
 bot.on('message', async (msg: Message, metadata: Metadata) => {
@@ -118,4 +119,4 @@ bot.on('callback_query', async (query: CallbackQuery) => {
     await messageService.generalCallbackHandler(bot, query);
 });
 
-bot.on("polling_error", (err: any) => console.log(chalk.red(`❌ ERROR: ${JSON.stringify(err)}`)));
+bot.on("polling_error", (err: any) => LogService.error(chalk.red(`❌ ERROR:`), err));
