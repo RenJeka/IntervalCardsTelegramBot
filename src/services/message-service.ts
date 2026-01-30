@@ -1,21 +1,23 @@
-import TelegramBot, {CallbackQuery, Message} from "node-telegram-bot-api";
-import {UserStatus} from "../common/enums/userStatus";
+import TelegramBot, { CallbackQuery, Message } from "node-telegram-bot-api";
+import { UserStatus } from "../common/enums/userStatus";
 import {
     ADD_WORD_KEYBOARD_OPTIONS,
     REMOVE_WORD_KEYBOARD_OPTIONS,
+    getFavoriteCategoriesKeyboard,
     REPLY_KEYBOARD_OPTIONS,
     SET_INTERVAL_KEYBOARD_OPTIONS,
     START_LEARN_KEYBOARD_OPTIONS,
     getRemoveWordsKeyboard,
 } from "../const/keyboards";
-import {DbResponse, DbResponseStatus} from "../common/interfaces/dbResponse";
-import {ScheduleService} from "./schedule-service";
-import {MainReplyKeyboardData} from "../common/enums/mainInlineKeyboard";
-import {IDbService} from "../common/interfaces/iDbService";
-import {UserItemAWS, UserStatusSnapshot, UserWord} from "../common/interfaces/common";
-import {CommonHelper} from "../helpers/common-helper";
-import {FormatterHelper} from "../helpers/formatter-helper";
+import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
+import { ScheduleService } from "./schedule-service";
+import { MainReplyKeyboardData } from "../common/enums/mainInlineKeyboard";
+import { IDbService } from "../common/interfaces/iDbService";
+import { UserItemAWS, UserStatusSnapshot, UserWord } from "../common/interfaces/common";
+import { CommonHelper } from "../helpers/common-helper";
+import { FormatterHelper } from "../helpers/formatter-helper";
 import { DEFAULT_USER_INTERVAL } from "../const/common";
+import { FAVORITE_CATEGORIES, FAVORITE_CATEGORY_CALLBACK_PREFIX } from "../const/favoriteCategories";
 
 export class MessageService {
 
@@ -26,7 +28,7 @@ export class MessageService {
     }
 
     async startMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
-        const {chatId, userId} = this.getIdsFromMessage(message);
+        const { chatId, userId } = this.getIdsFromMessage(message);
 
         await this.dbService.initUser(userId);
 
@@ -38,7 +40,7 @@ export class MessageService {
     }
 
     async instructionMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
-        const {chatId, userId} = this.getIdsFromMessage(message);
+        const { chatId, userId } = this.getIdsFromMessage(message);
 
         await this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
 
@@ -60,7 +62,7 @@ export class MessageService {
     }
 
     async setIntervalMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
-        const {chatId, userId} = this.getIdsFromMessage(message);
+        const { chatId, userId } = this.getIdsFromMessage(message);
 
         await this.dbService.setUserStatus(userId, UserStatus.SET_INTERVAL);
 
@@ -78,8 +80,24 @@ Please, chose the interval you want to set.
         );
     }
 
+    async favoriteCategoriesMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
+        const { chatId, userId } = this.getIdsFromMessage(message);
+        await this.dbService.setUserStatus(userId, UserStatus.FAVORITE_CATEGORIES);
+        const selectedCategories = await this.dbService.getUserFavoriteCategories(userId);
+
+        console.log('selectedCategories: ', selectedCategories);
+        const selectedCategoriesText = selectedCategories.length
+            ? selectedCategories.join(', ')
+            : 'No favorite categories selected yet.';
+        return bot.sendMessage(
+            chatId,
+            `Your favorite categories:\n${selectedCategoriesText}\n\nChoose categories to add:`,
+            getFavoriteCategoriesKeyboard(selectedCategories)
+        );
+    }
+
     async myStatusMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
-        const {chatId, userId} = this.getIdsFromMessage(message);
+        const { chatId, userId } = this.getIdsFromMessage(message);
 
         try {
             const [userDictionary, currentUserStatus, userInterval] = await Promise.all([
@@ -101,7 +119,7 @@ Please, chose the interval you want to set.
             return bot.sendMessage(
                 chatId,
                 messageText,
-                {parse_mode: 'MarkdownV2'}
+                { parse_mode: 'MarkdownV2' }
             );
         } catch (error: any) {
             return bot.sendMessage(
@@ -113,7 +131,7 @@ Please, chose the interval you want to set.
     }
 
     async generalMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
-        const {chatId, userId} = this.getIdsFromMessage(message);
+        const { chatId, userId } = this.getIdsFromMessage(message);
 
         if (!message.text?.trim()) {
             return bot.sendMessage(
@@ -130,7 +148,7 @@ Please, chose the interval you want to set.
 
 
         switch (currentUserStatus) {
-               case UserStatus.ADD_WORD:
+            case UserStatus.ADD_WORD:
                 return await this.addParticularWordHandler(
                     bot,
                     userId,
@@ -150,7 +168,7 @@ Please, chose the interval you want to set.
     }
 
     async generalCallbackHandler(bot: TelegramBot, query: CallbackQuery): Promise<TelegramBot.Message> {
-        const {chatId, userId} = this.getIdsFromCallbackQuery(query);
+        const { chatId, userId } = this.getIdsFromCallbackQuery(query);
 
         if (!query.data) {
             return bot.sendMessage(
@@ -165,6 +183,11 @@ Please, chose the interval you want to set.
             await this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
         }
 
+
+        if (query.data.startsWith(FAVORITE_CATEGORY_CALLBACK_PREFIX)) {
+            return this.addFavoriteCategoryHandler(bot, userId, chatId, query.data);
+        }
+
         switch (currentUserStatus) {
             case UserStatus.REMOVE_WORD:
                 return await this.removeParticularWordHandler(
@@ -177,6 +200,9 @@ Please, chose the interval you want to set.
             case UserStatus.SET_INTERVAL:
                 return await this.setParticularIntervalHandler(bot, userId, chatId, query.data);
 
+            case UserStatus.FAVORITE_CATEGORIES:
+                return await this.addFavoriteCategoryHandler(bot, userId, chatId, query.data);
+
             default:
                 return await this.startMessageHandler(bot, query.message!);
         }
@@ -184,7 +210,7 @@ Please, chose the interval you want to set.
 
     async goToMainPage(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
 
-        const {chatId, userId} = this.getIdsFromMessage(message);
+        const { chatId, userId } = this.getIdsFromMessage(message);
         await this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
 
         return bot.sendMessage(
@@ -196,7 +222,7 @@ Please, chose the interval you want to set.
 
     async addWordMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
 
-        const {chatId, userId} = this.getIdsFromMessage(message);
+        const { chatId, userId } = this.getIdsFromMessage(message);
         await this.dbService.setUserStatus(userId, UserStatus.ADD_WORD);
 
         if (!chatId) {
@@ -213,7 +239,7 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
 
     async removeWordMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
 
-        const {chatId, userId} = this.getIdsFromMessage(message);
+        const { chatId, userId } = this.getIdsFromMessage(message);
 
         await this.dbService.setUserStatus(userId, UserStatus.REMOVE_WORD)
 
@@ -241,7 +267,7 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
     }
 
     async getAllMessagesHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
-        const {chatId, userId} = this.getIdsFromMessage(message);
+        const { chatId, userId } = this.getIdsFromMessage(message);
         const userDictionary: UserItemAWS[] = await this.dbService.getUserDictionary(userId);
         const userWordsWithTranslations: string[] = userDictionary.map((userItem: UserItemAWS) => {
             return userItem.translation
@@ -258,12 +284,12 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
         return bot.sendMessage(
             chatId,
             `Your words:\n ${userWordsWithTranslations.join(', \n')}`,
-            {parse_mode: 'MarkdownV2'}
+            { parse_mode: 'MarkdownV2' }
         );
     }
 
     async startLearn(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
-        const {chatId, userId} = this.getIdsFromMessage(message);
+        const { chatId, userId } = this.getIdsFromMessage(message);
         try {
 
             const userItems: UserItemAWS[] = await this.dbService.getUserDictionary(userId);
@@ -294,7 +320,7 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
     }
 
     async stopLearn(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
-        const {chatId, userId} = this.getIdsFromMessage(message);
+        const { chatId, userId } = this.getIdsFromMessage(message);
         try {
             this.scheduleService.stopLearnByUserId(userId);
 
@@ -322,7 +348,7 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
     ): Promise<TelegramBot.Message> {
         const dbResponse: DbResponse = await this.dbService.writeWordByUserId(userId, message || '');
         const parsedRawItem = CommonHelper.parseUserRawItem(message);
-        let responseMessageText = `✅ The word <b> <u>${FormatterHelper.escapeMarkdownV2(parsedRawItem.word)  }</u></b> has been added. You can add more!`;
+        let responseMessageText = `✅ The word <b> <u>${FormatterHelper.escapeMarkdownV2(parsedRawItem.word)}</u></b> has been added. You can add more!`;
 
         if (parsedRawItem.translation) {
             responseMessageText = `✅ The word <b> <u>${parsedRawItem.word}</u></b> with translation <b> <u>${parsedRawItem.translation}</u></b> has been added. You can add more!`;
@@ -425,8 +451,47 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
         return bot.sendMessage(
             chatId,
             dbResponse.message || responseMessageText,
-            {parse_mode: 'MarkdownV2'}
+            { parse_mode: 'MarkdownV2' }
         );
+    }
+
+    private async addFavoriteCategoryHandler(
+        bot: TelegramBot,
+        userId: number,
+        chatId: number,
+        callbackData: string
+    ): Promise<TelegramBot.Message> {
+        if (!callbackData.startsWith(FAVORITE_CATEGORY_CALLBACK_PREFIX)) {
+            return bot.sendMessage(
+                chatId,
+                'Unknown category. Please, try again.',
+            );
+        }
+        const categoryIndex = parseInt(callbackData.replace(FAVORITE_CATEGORY_CALLBACK_PREFIX, ''), 10);
+        const category = FAVORITE_CATEGORIES[categoryIndex];
+        if (!category) {
+            return bot.sendMessage(
+                chatId,
+                'Unknown category. Please, try again.',
+            );
+        }
+        try {
+            await this.dbService.addUserFavoriteCategory(userId, category);
+            const selectedCategories = await this.dbService.getUserFavoriteCategories(userId);
+            const selectedCategoriesText = selectedCategories.length
+                ? selectedCategories.join(', ')
+                : 'No favorite categories selected yet.';
+            return bot.sendMessage(
+                chatId,
+                `Updated favorite categories:\n${selectedCategoriesText}`,
+                getFavoriteCategoriesKeyboard(selectedCategories)
+            );
+        } catch (error: any) {
+            return bot.sendMessage(
+                chatId,
+                `Something went wrong: ${error?.message || ''}. Please, try again.`,
+            );
+        }
     }
 
     private getIdsFromMessage(message: Message): { chatId: number, userId: number } {
@@ -443,7 +508,7 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
             throw new Error(`getIdsFromMessage: userId not found.`)
         }
 
-        return {chatId, userId}
+        return { chatId, userId }
     }
 
     private getIdsFromCallbackQuery(query: CallbackQuery): { chatId: number, userId: number } {
@@ -460,6 +525,6 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
             throw new Error(`getIdsFromMessage: userId not found.`)
         }
 
-        return {chatId, userId}
+        return { chatId, userId }
     }
 }

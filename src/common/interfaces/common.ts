@@ -19,6 +19,7 @@ export interface UserDataAWS {
     _id: string;
     status: UserStatus;
     interval?: number;
+    favoriteCategories?: string[];
 }
 
 export interface UserStatusSnapshot {
@@ -36,7 +37,7 @@ export interface UserRawItemAWS {
     comment?: string;
 }
 
-export interface UserItemAWS extends UserRawItemAWS{
+export interface UserItemAWS extends UserRawItemAWS {
     _id: number;
     user_id: string;
 }
