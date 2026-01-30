@@ -1,8 +1,9 @@
+import { LOG_MAX_DEPTH } from "../const/common";
+
 export class LogService {
-    private static MAX_DEPTH = 3;
 
     private static clean(obj: any, depth: number = 0, seen: WeakSet<any> = new WeakSet()): any {
-        if (depth > this.MAX_DEPTH) {
+        if (depth > LOG_MAX_DEPTH) {
             return '[DepthLimit]';
         }
         if (typeof obj !== 'object' || obj === null) {
