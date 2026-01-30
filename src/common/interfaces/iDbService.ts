@@ -12,6 +12,7 @@ export interface IDbService {
     setUserInterval(userId: number, interval: number): Promise<DbResponse>;
     getUserInterval(userId: number): Promise<number | null>;
     addUserFavoriteCategory(userId: number, category: string): Promise<DbResponse>;
+    removeUserFavoriteCategory(userId: number, category: string): Promise<DbResponse>;
     getUserFavoriteCategories(userId: number): Promise<string[]>;
     getUserDictionary(userId: number): Promise<UserItemAWS[]>;
     getFlatUserDictionary(userId: number): Promise<string[]>;

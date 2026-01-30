@@ -18,6 +18,7 @@ import { CommonHelper } from "../helpers/common-helper";
 import { FormatterHelper } from "../helpers/formatter-helper";
 import { DEFAULT_USER_INTERVAL } from "../const/common";
 import { FAVORITE_CATEGORIES, FAVORITE_CATEGORY_CALLBACK_PREFIX } from "../const/favoriteCategories";
+import { LogService } from "./log.service";
 
 export class MessageService {
 
@@ -185,7 +186,7 @@ Please, chose the interval you want to set.
 
 
         if (query.data.startsWith(FAVORITE_CATEGORY_CALLBACK_PREFIX)) {
-            return this.addFavoriteCategoryHandler(bot, userId, chatId, query.data);
+            return this.toggleFavoriteCategoryHandler(bot, userId, chatId, query.data);
         }
 
         switch (currentUserStatus) {
@@ -201,7 +202,7 @@ Please, chose the interval you want to set.
                 return await this.setParticularIntervalHandler(bot, userId, chatId, query.data);
 
             case UserStatus.FAVORITE_CATEGORIES:
-                return await this.addFavoriteCategoryHandler(bot, userId, chatId, query.data);
+                return await this.toggleFavoriteCategoryHandler(bot, userId, chatId, query.data);
 
             default:
                 return await this.startMessageHandler(bot, query.message!);
@@ -455,7 +456,7 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
         );
     }
 
-    private async addFavoriteCategoryHandler(
+    private async toggleFavoriteCategoryHandler(
         bot: TelegramBot,
         userId: number,
         chatId: number,
@@ -475,21 +476,31 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
                 'Unknown category. Please, try again.',
             );
         }
+
         try {
-            await this.dbService.addUserFavoriteCategory(userId, category);
-            const selectedCategories = await this.dbService.getUserFavoriteCategories(userId);
-            const selectedCategoriesText = selectedCategories.length
-                ? selectedCategories.join(', ')
+            const currentFavorites = await this.dbService.getUserFavoriteCategories(userId);
+
+            if (currentFavorites.includes(category)) {
+                await this.dbService.removeUserFavoriteCategory(userId, category);
+            } else {
+                await this.dbService.addUserFavoriteCategory(userId, category);
+            }
+
+            const updatedFavorites = await this.dbService.getUserFavoriteCategories(userId);
+            const selectedCategoriesText = updatedFavorites.length
+                ? updatedFavorites.join(', ')
                 : 'No favorite categories selected yet.';
+
             return bot.sendMessage(
                 chatId,
                 `Updated favorite categories:\n${selectedCategoriesText}`,
-                getFavoriteCategoriesKeyboard(selectedCategories)
+                getFavoriteCategoriesKeyboard(updatedFavorites)
             );
         } catch (error: any) {
+            LogService.error(`Error toggling favorite category for user ${userId}:`, error);
             return bot.sendMessage(
                 chatId,
-                `Something went wrong: ${error?.message || ''}. Please, try again.`,
+                `Something went wrong while toggling favorite category. Please, try again.`,
             );
         }
     }
