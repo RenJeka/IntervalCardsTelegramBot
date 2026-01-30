@@ -11,7 +11,7 @@ import { DbAwsService } from "./services/db-aws-service";
 import { MessageService } from "./services/message-service";
 import { ScheduleService } from "./services/schedule-service";
 
-dotEnvConfig({path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env'});
+dotEnvConfig({ path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env' });
 const TB_TOKEN: string = process.env.TELEGRAM_BOT_TOKEN!;
 const nodeEnv: string = process.env.NODE_ENV!;
 
@@ -31,9 +31,10 @@ const messageService = new MessageService(
     scheduleService
 );
 const commands: BotCommand[] = [
-    { command: 'start', description: 'Start the bot'},
+    { command: 'start', description: 'Start the bot' },
     { command: 'instruction', description: 'Additional information about the bot' },
     { command: 'set_interval', description: 'Set the time interval for learning' },
+    { command: 'set_favorite_categories', description: 'Select the favorite categories for learning' },
     { command: 'my_status', description: 'Show your current status and settings' }
 ];
 
@@ -66,6 +67,10 @@ bot.on('message', async (msg: Message, metadata: Metadata) => {
 
         case '/set_interval':
             await messageService.setIntervalMessageHandler(bot, msg);
+            break;
+
+        case '/set_favorite_categories':
+            await messageService.favoriteCategoriesMessageHandler(bot, msg);
             break;
 
         case '/my_status':
@@ -104,7 +109,7 @@ bot.on('message', async (msg: Message, metadata: Metadata) => {
             await messageService.goToMainPage(bot, msg);
             break;
 
-        default :
+        default:
             await messageService.generalMessageHandler(bot, msg);
     }
 });
