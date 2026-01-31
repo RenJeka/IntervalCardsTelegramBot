@@ -258,6 +258,63 @@ export class DbAwsService implements IDbService {
         }
     }
 
+    /**
+     * Set user language preference
+     * @param userId
+     * @param language Language code ('en' or 'uk')
+     */
+    async setUserLanguage(userId: number, language: string): Promise<DbResponse> {
+        const updateItemParams: UpdateItemCommandInput = {
+            TableName: this.tableNames.users,
+            Key: { '_id': { S: userId.toString() } },
+            UpdateExpression: 'SET #language = :language',
+            ExpressionAttributeNames: { '#language': 'language' },
+            ExpressionAttributeValues: { ':language': { S: language } },
+            ReturnConsumedCapacity: 'INDEXES'
+        };
+
+        const command = new UpdateItemCommand(updateItemParams);
+        const response: UpdateItemCommandOutput = await this.client.send(command) as UpdateItemCommandOutput;
+
+        if (response?.$metadata?.httpStatusCode !== 200) {
+            throw new Error(`❌️Something went wrong while writing language to DB: ${LogService.safeStringify(response)}`);
+        }
+
+        return {
+            success: true,
+            status: DbResponseStatus.OK,
+            message: `✔️ User language has been written successfully`
+        };
+    }
+
+    async getUserLanguage(userId: number): Promise<string | null> {
+        if (!userId) {
+            return null;
+        }
+
+        const scanInput: ScanCommandInput = {
+            TableName: this.tableNames.users,
+            ReturnConsumedCapacity: "INDEXES",
+            FilterExpression: "#id = :uid",
+            ExpressionAttributeNames: { '#id': '_id' },
+            ExpressionAttributeValues: { ':uid': { S: userId.toString() } }
+        };
+
+        try {
+            const command = new ScanCommand(scanInput);
+            const response: ScanCommandOutput = await this.client.send(command) as ScanCommandOutput;
+
+            if (!response || !response?.Items || response?.Items?.length === 0) {
+                return null;
+            }
+
+            return unmarshall(response.Items[0])?.language ?? null;
+
+        } catch (error) {
+            throw new Error(`Something wrong while scanning DynamoDB: ${LogService.safeStringify(error)}`);
+        }
+    }
+
     async addUserFavoriteCategory(userId: number, category: string): Promise<DbResponse> {
         const updateItemParams: UpdateItemCommandInput = {
             TableName: this.tableNames.users,
@@ -421,14 +478,15 @@ export class DbAwsService implements IDbService {
         }
     }
 
-    async initUser(userId: number): Promise<void> {
+    async initUser(userId: number, languageCode?: string): Promise<void> {
         if (await this.checkIsUserExist(userId)) {
             return;
         }
         const newUser: UserDataAWS = {
             _id: userId.toString(),
             status: UserStatus.DEFAULT,
-            interval: DEFAULT_USER_INTERVAL
+            interval: DEFAULT_USER_INTERVAL,
+            language: languageCode || 'en'
         };
         const putItemParams: PutItemCommandInput = {
             TableName: this.tableNames.users,

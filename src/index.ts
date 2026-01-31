@@ -36,6 +36,7 @@ const commands: BotCommand[] = [
     { command: 'instruction', description: 'Additional information about the bot' },
     { command: 'set_interval', description: 'Set the time interval for learning' },
     { command: 'set_favorite_categories', description: 'Select the favorite categories for learning' },
+    { command: 'language', description: 'Change interface language' },
     { command: 'my_status', description: 'Show your current status and settings' }
 ];
 
@@ -76,6 +77,10 @@ bot.on('message', async (msg: Message, metadata: Metadata) => {
 
         case '/my_status':
             await messageService.myStatusMessageHandler(bot, msg);
+            break;
+
+        case '/language':
+            await messageService.languageMessageHandler(bot, msg);
             break;
 
         case MainReplyKeyboardData.SHOW_ALL:

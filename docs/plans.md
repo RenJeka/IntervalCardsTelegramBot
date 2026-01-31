@@ -181,6 +181,14 @@ Add i18n-related rules:
 
 ---
 
+### 8. Refactor code
+
+check implemented changes for refactoring code. Check. can we extract any logic from message-service.ts to other services?
+
+
+
+---
+
 ## Implementation Order
 
 1. [ ] Install i18next

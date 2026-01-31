@@ -113,3 +113,16 @@ export function getFavoriteCategoriesKeyboard(selectedCategories: string[]): Sen
         }
     };
 }
+
+// Language callback prefix
+export const LANGUAGE_CALLBACK_PREFIX = 'lang_';
+
+export const LANGUAGE_KEYBOARD_OPTIONS: SendMessageOptions = {
+    reply_markup: {
+        inline_keyboard: [
+            [{ text: '🇬🇧 English', callback_data: `${LANGUAGE_CALLBACK_PREFIX}en` }],
+            [{ text: '🇺🇦 Українська', callback_data: `${LANGUAGE_CALLBACK_PREFIX}uk` }]
+        ],
+        resize_keyboard: true
+    }
+};

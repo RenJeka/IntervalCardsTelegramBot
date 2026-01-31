@@ -20,6 +20,7 @@ export interface UserDataAWS {
     status: UserStatus;
     interval?: number;
     favoriteCategories?: string[];
+    language?: string;
 }
 
 export interface UserStatusSnapshot {

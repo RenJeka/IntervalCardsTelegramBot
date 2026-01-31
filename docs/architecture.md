@@ -72,11 +72,21 @@ IntervalCardsTelegramBot — це проєкт на Node.js/TypeScript, який
 
 - **Enums:**
   - `MainReplyKeyboardData` — підписи кнопок меню
-  - `UserStatus` — стани FSM: `DEFAULT`, `ADD_WORD`, `REMOVE_WORD`, `START_LEARN`, `STOP_LEARN`, `SET_INTERVAL`
+  - `UserStatus` — стани FSM: `DEFAULT`, `ADD_WORD`, `REMOVE_WORD`, `START_LEARN`, `STOP_LEARN`, `SET_INTERVAL`, `SET_LANGUAGE`, `FAVORITE_CATEGORIES`
 - **Helpers:**
   - `CommonHelper.parseUserRawItem` парсить введення користувача по роздільнику `/` на `word`, `translation`, `example`, `comment`
   - `FormatterHelper.escapeMarkdownV2` екранує спецсимволи MarkdownV2
 - **Константи:** `ADD_USER_ITEM_SEPARATOR`, `DEFAULT_USER_INTERVAL`, `DEVELOPER_MODE_BOT_SENDS_MESSAGE_SEC`.
+
+### 4.5 `i18n.service` (Internationalization)
+
+- **Роль:** надає інтернаціоналізацію для всіх текстів інтерфейсу користувача за допомогою бібліотеки `i18next`.
+- **Підтримувані мови:** English (`en`), Ukrainian (`uk`).
+- **Функції:**
+  - `t(key, lang, params?)` — повертає локалізований рядок
+  - `detectLanguage(telegramLangCode)` — визначає мову з Telegram settings
+  - `getLanguageDisplayName(lang)` — повертає назву мови для відображення
+- **Файли перекладів:** `src/locales/en.json`, `src/locales/uk.json`
 
 ## 5. FSM (машина станів)
 
@@ -92,7 +102,7 @@ FSM базується на `UserStatus`, який зберігається в `
 
 ## 6. Модель даних
 
-- **User:** `_id` (Telegram user id), `status` (`UserStatus`), `interval` (години). Створюється ліниво через `initUser` з дефолтами: `DEFAULT` і `1 год`.
+- **User:** `_id` (Telegram user id), `status` (`UserStatus`), `interval` (години), `language` (код мови, опційно), `favoriteCategories` (масив категорій, опційно). Створюється ліниво через `initUser` з дефолтами: `DEFAULT`, `1 год`, мова визначається з Telegram settings.
 - **Word:** `_id` (timestamp), `user_id` (string), `word`, опційно `translation`, `example`, `comment`. Видалення виконується по ключу (`_id`, `user_id`).
 
 ## 7. Потік планування
