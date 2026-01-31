@@ -153,6 +153,34 @@ In `startMessageHandler()`:
 
 ---
 
+### 8. Update Documentation
+
+#### [MODIFY] [architecture.md](file:///c:/GIT/IntervalCardsTelegramBot/docs/architecture.md)
+
+- Add `I18nService` to the services section
+- Document translation file structure (`src/locales/`)
+- Update data flow diagrams to include language handling
+
+#### [MODIFY] [architecture-rules.md](file:///c:/GIT/IntervalCardsTelegramBot/docs/architecture-rules.md)
+
+Add i18n-related rules:
+- All user-facing text must use translation keys via `t()` function
+- New UI text requires entries in both `en.json` and `uk.json`
+- Keyboard functions must accept `language` parameter
+
+#### [MODIFY] [requirements.md](file:///c:/GIT/IntervalCardsTelegramBot/docs/requirements.md)
+
+- Add ICTB-10 feature requirements
+- Document supported languages (en, uk)
+- Document `/language` command behavior
+- Document auto-detection behavior
+
+#### [MODIFY] [tasksTrackingSystem.md](file:///c:/GIT/IntervalCardsTelegramBot/docs/tasksTrackingSystem.md)
+
+- Update ICTB-10 task status to "Completed" after implementation
+
+---
+
 ## Implementation Order
 
 1. [ ] Install i18next
@@ -168,6 +196,7 @@ In `startMessageHandler()`:
 11. [ ] Refactor keyboards to be language-aware
 12. [ ] Update `formatter-helper.ts`
 13. [ ] Auto-detect language in `startMessageHandler()`
+14. [ ] Update documentation (`architecture.md`, `architecture-rules.md`, `requirements.md`, `tasksTrackingSystem.md`)
 
 ---
 
