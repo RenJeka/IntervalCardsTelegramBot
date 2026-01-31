@@ -1,3 +1,4 @@
+import { SUPPORTED_LANGUAGES } from "../../const/common";
 import { UserStatus } from "../enums/userStatus";
 
 export interface UserDb {
@@ -42,3 +43,5 @@ export interface UserItemAWS extends UserRawItemAWS {
     _id: number;
     user_id: string;
 }
+
+export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number];

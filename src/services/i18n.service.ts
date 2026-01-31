@@ -1,13 +1,10 @@
 import i18next, { TFunction } from 'i18next';
 import en from '../locales/en.json';
 import uk from '../locales/uk.json';
+import { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES } from '../const/common';
 
-export const SUPPORTED_LANGUAGES = ['en', 'uk'] as const;
 export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number];
-export const DEFAULT_LANGUAGE: SupportedLanguage = 'en';
 
-// Language callback prefix for inline keyboard
-export const LANGUAGE_CALLBACK_PREFIX = 'lang_';
 
 /**
  * Initialize i18next with English and Ukrainian translations

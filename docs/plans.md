@@ -191,16 +191,16 @@ check implemented changes for refactoring code. Check. can we extract any logic 
 
 ## Implementation Order
 
-1. [ ] Install i18next
-2. [ ] Create translation files (`src/locales/en.json`, `src/locales/uk.json`)
-3. [ ] Create `I18nService`
-4. [ ] Update `UserDataAWS` interface and `IDbService`
-5. [ ] Implement `setUserLanguage()` / `getUserLanguage()` in `DbAwsService`
-6. [ ] Add `UserStatus.SET_LANGUAGE`
-7. [ ] Add `/language` command in `index.ts`
-8. [ ] Create `LANGUAGE_KEYBOARD_OPTIONS`
-9. [ ] Add `languageMessageHandler()` and `setLanguageHandler()`
-10. [ ] Refactor `message-service.ts` to use translations
+1. [x] Install i18next
+2. [x] Create translation files (`src/locales/en.json`, `src/locales/uk.json`)
+3. [x] Create `I18nService`
+4. [x] Update `UserDataAWS` interface and `IDbService`
+5. [x] Implement `setUserLanguage()` / `getUserLanguage()` in `DbAwsService`
+6. [x] Add `UserStatus.SET_LANGUAGE`
+7. [x] Add `/language` command in `index.ts`
+8. [x] Create `LANGUAGE_KEYBOARD_OPTIONS`
+9. [x] Add `languageMessageHandler()` and `setLanguageHandler()`
+10. [x] Refactor `message-service.ts` to use translations
 11. [ ] Refactor keyboards to be language-aware
 12. [ ] Update `formatter-helper.ts`
 13. [ ] Auto-detect language in `startMessageHandler()`
