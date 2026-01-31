@@ -1,15 +1,14 @@
 import TelegramBot, { CallbackQuery, Message } from "node-telegram-bot-api";
 import { UserStatus } from "../common/enums/userStatus";
 import {
-    ADD_WORD_KEYBOARD_OPTIONS,
-    REMOVE_WORD_KEYBOARD_OPTIONS,
+    getAddWordKeyboardOptions,
+    getRemoveWordKeyboardOptions,
     getFavoriteCategoriesKeyboard,
-    REPLY_KEYBOARD_OPTIONS,
-    SET_INTERVAL_KEYBOARD_OPTIONS,
-    START_LEARN_KEYBOARD_OPTIONS,
+    getReplyKeyboardOptions,
+    getSetIntervalKeyboardOptions,
+    getStartLearnKeyboardOptions,
     getRemoveWordsKeyboard,
     LANGUAGE_KEYBOARD_OPTIONS,
-    LANGUAGE_CALLBACK_PREFIX,
 } from "../const/keyboards";
 import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
 import { ScheduleService } from "./schedule-service";
@@ -18,10 +17,11 @@ import { IDbService } from "../common/interfaces/iDbService";
 import { UserItemAWS, UserStatusSnapshot, UserWord } from "../common/interfaces/common";
 import { CommonHelper } from "../helpers/common-helper";
 import { FormatterHelper } from "../helpers/formatter-helper";
-import { DEFAULT_USER_INTERVAL } from "../const/common";
+import { DEFAULT_USER_INTERVAL, LANGUAGE_CALLBACK_PREFIX, DEFAULT_LANGUAGE } from "../const/common";
 import { FAVORITE_CATEGORIES, FAVORITE_CATEGORY_CALLBACK_PREFIX } from "../const/favoriteCategories";
 import { LogService } from "./log.service";
-import { t, detectLanguage, getLanguageDisplayName, SupportedLanguage, DEFAULT_LANGUAGE } from "./i18n.service";
+import { t, detectLanguage, getLanguageDisplayName } from "./i18n.service";
+import { SupportedLanguage } from "../common/interfaces/common";
 
 export class MessageService {
 
@@ -46,7 +46,7 @@ export class MessageService {
         return bot.sendMessage(
             chatId,
             t('welcome', userLanguage),
-            REPLY_KEYBOARD_OPTIONS
+            getReplyKeyboardOptions(userLanguage)
         );
     }
 
@@ -71,7 +71,7 @@ export class MessageService {
         return bot.sendMessage(
             chatId,
             instructionText,
-            REPLY_KEYBOARD_OPTIONS
+            getReplyKeyboardOptions(userLanguage)
         );
     }
 
@@ -89,7 +89,7 @@ export class MessageService {
         return bot.sendMessage(
             chatId,
             messageText,
-            SET_INTERVAL_KEYBOARD_OPTIONS
+            getSetIntervalKeyboardOptions(userLanguage)
         );
     }
 
@@ -105,12 +105,14 @@ export class MessageService {
         return bot.sendMessage(
             chatId,
             t('favoriteCategories.prompt', userLanguage, { categories: selectedCategoriesText }),
-            getFavoriteCategoriesKeyboard(selectedCategories)
+            getFavoriteCategoriesKeyboard(selectedCategories, userLanguage)
         );
     }
 
     async myStatusMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
         const { chatId, userId } = this.getIdsFromMessage(message);
+
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
 
         try {
             const [userDictionary, currentUserStatus, userInterval, userFavoriteCategories] = await Promise.all([
@@ -128,7 +130,7 @@ export class MessageService {
                 favoriteCategories: userFavoriteCategories ?? null,
             };
 
-            const messageText = FormatterHelper.formatUserStatusSnapshot(snapshot);
+            const messageText = FormatterHelper.formatUserStatusSnapshot(snapshot, userLanguage);
 
             return bot.sendMessage(
                 chatId,
@@ -138,8 +140,8 @@ export class MessageService {
         } catch (error: any) {
             return bot.sendMessage(
                 chatId,
-                `Something went wrong: ${error?.message || ''}. Please, try again`,
-                REPLY_KEYBOARD_OPTIONS
+                t('errors.generic', userLanguage, { error: error?.message || '' }),
+                getReplyKeyboardOptions(userLanguage)
             );
         }
     }
@@ -252,7 +254,7 @@ export class MessageService {
         return bot.sendMessage(
             chatId,
             t('navigation.home', userLanguage),
-            REPLY_KEYBOARD_OPTIONS
+            getReplyKeyboardOptions(userLanguage)
         );
     }
 
@@ -267,7 +269,7 @@ export class MessageService {
         return bot.sendMessage(
             chatId,
             t('addWord.prompt', userLanguage),
-            ADD_WORD_KEYBOARD_OPTIONS
+            getAddWordKeyboardOptions(userLanguage)
         );
     }
 
@@ -280,21 +282,21 @@ export class MessageService {
         try {
             await bot.sendMessage(
                 chatId,
-                t('removeWord.prompt', userLanguage) + '\n ⬇️⬇️⬇️',
+                t('removeWord.prompt', userLanguage),
                 getRemoveWordsKeyboard((await this.dbService.getUserDictionary(userId)) as unknown as UserItemAWS[])
             );
 
             // We can't pass empty message in 'bot.sendMessage' method
             return bot.sendMessage(
                 chatId,
-                '⬆️⬆️⬆️\n ' + t('removeWord.promptBottom', userLanguage),
-                REMOVE_WORD_KEYBOARD_OPTIONS
+                t('removeWord.promptBottom', userLanguage),
+                getRemoveWordKeyboardOptions(userLanguage)
             );
         } catch (error: any) {
             return bot.sendMessage(
                 chatId,
                 t('errors.generic', userLanguage, { error: error?.message || '' }),
-                REMOVE_WORD_KEYBOARD_OPTIONS
+                getRemoveWordKeyboardOptions(userLanguage)
             );
         }
     }
@@ -335,7 +337,7 @@ export class MessageService {
                 return bot.sendMessage(
                     chatId,
                     t('learn.noWords', userLanguage),
-                    REPLY_KEYBOARD_OPTIONS
+                    getReplyKeyboardOptions(userLanguage)
                 );
             }
             await this.dbService.setUserStatus(userId, UserStatus.START_LEARN);
@@ -346,13 +348,13 @@ export class MessageService {
             return bot.sendMessage(
                 chatId,
                 t('learn.started', userLanguage, { interval: userInterval }),
-                START_LEARN_KEYBOARD_OPTIONS
+                getStartLearnKeyboardOptions(userLanguage)
             );
         } catch (error: any) {
             return bot.sendMessage(
                 chatId,
                 t('errors.generic', userLanguage, { error: error?.message || '' }),
-                REPLY_KEYBOARD_OPTIONS
+                getReplyKeyboardOptions(userLanguage)
             );
         }
     }
@@ -368,13 +370,13 @@ export class MessageService {
             return bot.sendMessage(
                 chatId,
                 t('learn.stopped', userLanguage),
-                REPLY_KEYBOARD_OPTIONS
+                getReplyKeyboardOptions(userLanguage)
             );
         } catch (error: any) {
             return bot.sendMessage(
                 chatId,
                 t('errors.generic', userLanguage, { error: error?.message || '' }),
-                REPLY_KEYBOARD_OPTIONS
+                getReplyKeyboardOptions(userLanguage)
             );
         }
     }
@@ -385,25 +387,29 @@ export class MessageService {
         chatId: number,
         message: string = ''
     ): Promise<TelegramBot.Message> {
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
         const dbResponse: DbResponse = await this.dbService.writeWordByUserId(userId, message || '');
         const parsedRawItem = CommonHelper.parseUserRawItem(message);
-        let responseMessageText = `✅ The word <b> <u>${FormatterHelper.escapeMarkdownV2(parsedRawItem.word)}</u></b> has been added. You can add more!`;
+        let responseMessageText = t('addWord.success', userLanguage, { word: FormatterHelper.escapeMarkdownV2(parsedRawItem.word) });
 
         if (parsedRawItem.translation) {
-            responseMessageText = `✅ The word <b> <u>${parsedRawItem.word}</u></b> with translation <b> <u>${parsedRawItem.translation}</u></b> has been added. You can add more!`;
+            responseMessageText = t('addWord.successWithTranslation', userLanguage, {
+                word: parsedRawItem.word,
+                translation: parsedRawItem.translation
+            });
         }
 
         if (!dbResponse.success) {
             if (dbResponse.status === DbResponseStatus.DUPLICATE_WORD) {
-                responseMessageText = `🚫 The word <b> <u>${parsedRawItem.word}</u></b> already exist. Please, send other word.`;
+                responseMessageText = t('addWord.duplicate', userLanguage, { word: parsedRawItem.word });
             } else {
-                responseMessageText = dbResponse.message || '🚫 Something went wrong! Please, try again.'
+                responseMessageText = dbResponse.message || t('addWord.error', userLanguage);
             }
         }
         return bot.sendMessage(
             chatId,
             responseMessageText,
-            ADD_WORD_KEYBOARD_OPTIONS
+            getAddWordKeyboardOptions(userLanguage)
         );
     }
 
@@ -414,10 +420,12 @@ export class MessageService {
         message: string = ''
     ): Promise<TelegramBot.Message> {
 
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
+
         if (!message) {
             return bot.sendMessage(
                 chatId,
-                'I did not receive any message from You, Please, try again.',
+                t('errors.noMessage', userLanguage),
             );
         }
 
@@ -426,14 +434,14 @@ export class MessageService {
         if (isNaN(parsedRawItem)) {
             return bot.sendMessage(
                 chatId,
-                'I did not receive any interval number from You, Please, try again.',
+                t('errors.noInterval', userLanguage),
             );
         }
 
         if (parsedRawItem < 1 || parsedRawItem > 12) {
             return bot.sendMessage(
                 chatId,
-                'Interval must be from 1 to 12. Please, try again.',
+                t('errors.intervalRange', userLanguage),
             );
         }
 
@@ -451,14 +459,14 @@ export class MessageService {
 
             return bot.sendMessage(
                 chatId,
-                `You have set interval to ${parsedRawItem} hours.`,
-                REPLY_KEYBOARD_OPTIONS
+                t('interval.set', userLanguage, { interval: parsedRawItem }),
+                getReplyKeyboardOptions(userLanguage)
             );
 
         } catch (error: any) {
             return bot.sendMessage(
                 chatId,
-                `Something went wrong. Please, try again`,
+                t('errors.generic', userLanguage),
             );
         }
     }
@@ -470,22 +478,24 @@ export class MessageService {
         chatId: number,
         wordId: string
     ): Promise<TelegramBot.Message> {
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
 
         if (!wordId) {
             return bot.sendMessage(
                 chatId,
-                `Word didn't find`,
+                t('removeWord.noWordId', userLanguage),
             );
         }
 
         const dbResponse: DbResponse = await this.dbService.removeWordById(userId, wordId);
-        let responseMessageText = `✅ The word has been deleted successfully. You can delete more!`;
+        let responseMessageText = t('removeWord.success', userLanguage);
 
         if (!dbResponse.success) {
             if (dbResponse.status === DbResponseStatus.WRONG_INPUT) {
-                responseMessageText = `🚫 The word with number hasn't been find. Please, try again`;
+                responseMessageText = t('removeWord.notFound', userLanguage);
+            } else {
+                responseMessageText = dbResponse.message || t('errors.generic', userLanguage);
             }
-            responseMessageText = dbResponse.message || '🚫 Something went wrong! Please, try again.'
         }
         return bot.sendMessage(
             chatId,
@@ -500,10 +510,12 @@ export class MessageService {
         chatId: number,
         callbackData: string
     ): Promise<TelegramBot.Message> {
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
+
         if (!callbackData.startsWith(FAVORITE_CATEGORY_CALLBACK_PREFIX)) {
             return bot.sendMessage(
                 chatId,
-                'Unknown category. Please, try again.',
+                t('favoriteCategories.unknownCategory', userLanguage),
             );
         }
         const categoryIndex = parseInt(callbackData.replace(FAVORITE_CATEGORY_CALLBACK_PREFIX, ''), 10);
@@ -511,7 +523,7 @@ export class MessageService {
         if (!category) {
             return bot.sendMessage(
                 chatId,
-                'Unknown category. Please, try again.',
+                t('favoriteCategories.unknownCategory', userLanguage),
             );
         }
 
@@ -527,18 +539,18 @@ export class MessageService {
             const updatedFavorites = await this.dbService.getUserFavoriteCategories(userId);
             const selectedCategoriesText = updatedFavorites.length
                 ? updatedFavorites.join(', ')
-                : 'No favorite categories selected yet.';
+                : t('favoriteCategories.noCategories', userLanguage);
 
             return bot.sendMessage(
                 chatId,
-                `Updated favorite categories:\n${selectedCategoriesText}`,
-                getFavoriteCategoriesKeyboard(updatedFavorites)
+                t('favoriteCategories.updated', userLanguage, { categories: selectedCategoriesText }),
+                getFavoriteCategoriesKeyboard(updatedFavorites, userLanguage)
             );
         } catch (error: any) {
             LogService.error(`Error toggling favorite category for user ${userId}:`, error);
             return bot.sendMessage(
                 chatId,
-                `Something went wrong while toggling favorite category. Please, try again.`,
+                t('favoriteCategories.error', userLanguage),
             );
         }
     }
@@ -605,7 +617,7 @@ export class MessageService {
             return bot.sendMessage(
                 chatId,
                 t('language.changed', selectedLanguage),
-                REPLY_KEYBOARD_OPTIONS
+                getReplyKeyboardOptions(selectedLanguage)
             );
         } catch (error: any) {
             LogService.error(`Error setting language for user ${userId}:`, error);

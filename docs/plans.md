@@ -201,9 +201,9 @@ check implemented changes for refactoring code. Check. can we extract any logic 
 8. [x] Create `LANGUAGE_KEYBOARD_OPTIONS`
 9. [x] Add `languageMessageHandler()` and `setLanguageHandler()`
 10. [x] Refactor `message-service.ts` to use translations
-11. [ ] Refactor keyboards to be language-aware
-12. [ ] Update `formatter-helper.ts`
-13. [ ] Auto-detect language in `startMessageHandler()`
+11. [x] Refactor keyboards to be language-aware
+12. [x] Update `formatter-helper.ts`
+13. [x] Auto-detect language in `startMessageHandler()`
 14. [ ] Update documentation (`architecture.md`, `architecture-rules.md`, `requirements.md`, `tasksTrackingSystem.md`)
 
 ---
