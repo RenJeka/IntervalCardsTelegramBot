@@ -183,7 +183,6 @@ export class DbAwsService implements IDbService {
         try {
             const command = new ScanCommand(scanInput);
 
-            console.log(command)
             const response: ScanCommandOutput = await this.client.send(command) as ScanCommandOutput;
 
             if (!response || !response?.Items || response?.Items?.length === 0) {

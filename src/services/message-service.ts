@@ -280,14 +280,14 @@ export class MessageService {
         try {
             await bot.sendMessage(
                 chatId,
-                t('removeWord.selectWord', userLanguage) + '\n ⬇️⬇️⬇️',
+                t('removeWord.prompt', userLanguage) + '\n ⬇️⬇️⬇️',
                 getRemoveWordsKeyboard((await this.dbService.getUserDictionary(userId)) as unknown as UserItemAWS[])
             );
 
             // We can't pass empty message in 'bot.sendMessage' method
             return bot.sendMessage(
                 chatId,
-                '⬆️⬆️⬆️\n ' + t('removeWord.pressToDelete', userLanguage),
+                '⬆️⬆️⬆️\n ' + t('removeWord.promptBottom', userLanguage),
                 REMOVE_WORD_KEYBOARD_OPTIONS
             );
         } catch (error: any) {
@@ -315,9 +315,13 @@ export class MessageService {
                 t('showAll.noWords', userLanguage),
             );
         }
+
+        const titleText = t('showAll.title', userLanguage);
+        const escapedTitle = FormatterHelper.escapeMarkdownV2(titleText);
+
         return bot.sendMessage(
             chatId,
-            t('showAll.yourWords', userLanguage) + '\n ' + userWordsWithTranslations.join(', \n'),
+            escapedTitle + '\n ' + userWordsWithTranslations.join(', \n'),
             { parse_mode: 'MarkdownV2' }
         );
     }
