@@ -1,13 +1,14 @@
 import TelegramBot, { CallbackQuery, Message } from "node-telegram-bot-api";
 import { UserStatus } from "../common/enums/userStatus";
 import {
-    ADD_WORD_KEYBOARD_OPTIONS,
-    REMOVE_WORD_KEYBOARD_OPTIONS,
+    getAddWordKeyboardOptions,
+    getRemoveWordKeyboardOptions,
     getFavoriteCategoriesKeyboard,
-    REPLY_KEYBOARD_OPTIONS,
-    SET_INTERVAL_KEYBOARD_OPTIONS,
-    START_LEARN_KEYBOARD_OPTIONS,
+    getReplyKeyboardOptions,
+    getSetIntervalKeyboardOptions,
+    getStartLearnKeyboardOptions,
     getRemoveWordsKeyboard,
+    LANGUAGE_KEYBOARD_OPTIONS,
 } from "../const/keyboards";
 import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
 import { ScheduleService } from "./schedule-service";
@@ -16,9 +17,11 @@ import { IDbService } from "../common/interfaces/iDbService";
 import { UserItemAWS, UserStatusSnapshot, UserWord } from "../common/interfaces/common";
 import { CommonHelper } from "../helpers/common-helper";
 import { FormatterHelper } from "../helpers/formatter-helper";
-import { DEFAULT_USER_INTERVAL } from "../const/common";
+import { DEFAULT_USER_INTERVAL, LANGUAGE_CALLBACK_PREFIX, DEFAULT_LANGUAGE } from "../const/common";
 import { FAVORITE_CATEGORIES, FAVORITE_CATEGORY_CALLBACK_PREFIX } from "../const/favoriteCategories";
 import { LogService } from "./log.service";
+import { t, detectLanguage, getLanguageDisplayName } from "./i18n.service";
+import { SupportedLanguage } from "../common/interfaces/common";
 
 export class MessageService {
 
@@ -31,73 +34,85 @@ export class MessageService {
     async startMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
         const { chatId, userId } = this.getIdsFromMessage(message);
 
-        await this.dbService.initUser(userId);
+        // Detect language from Telegram's language_code
+        const telegramLangCode = message.from?.language_code;
+        const detectedLanguage = detectLanguage(telegramLangCode);
+
+        await this.dbService.initUser(userId, detectedLanguage);
+
+        // Get user's language (might already exist or just created)
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
 
         return bot.sendMessage(
             chatId,
-            `Welcome to the IntervalCards Telegram Bot! \n  Here you will can add words and receive messages with random word from your words periodically.\n  Please, use '☰ Menu' ➼ '/instruction' for more information \n  If you wish to add word — please go to 'Add word' menu.`,
-            REPLY_KEYBOARD_OPTIONS
+            t('welcome', userLanguage),
+            getReplyKeyboardOptions(userLanguage)
         );
     }
 
     async instructionMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
         const { chatId, userId } = this.getIdsFromMessage(message);
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
 
         await this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
 
+        const instructionText = [
+            t('instruction.title', userLanguage),
+            t('instruction.step1', userLanguage, { addWordButton: t('buttons.addWord', userLanguage) }),
+            t('instruction.step2', userLanguage, { startLearnButton: t('buttons.startLearn', userLanguage) }),
+            '',
+            t('instruction.info1', userLanguage),
+            t('instruction.info2', userLanguage),
+            t('instruction.info3', userLanguage, { stopLearnButton: t('buttons.stopLearn', userLanguage) }),
+            t('instruction.info4', userLanguage, { stopLearnButton: t('buttons.stopLearn', userLanguage) }),
+            t('instruction.info5', userLanguage, { showAllButton: t('buttons.showAll', userLanguage) }),
+        ].join('\n');
+
         return bot.sendMessage(
             chatId,
-            `
-            This bot helps you to learn words:
-            1. Firstly, add several words You wand to learn (use the '${MainReplyKeyboardData.ADD_WORD}' button).
-            2. Press '${MainReplyKeyboardData.START_LEARN}' button to start learning process.
-            
-            ⦿ Every 1 hour You will get 1 word from your words while you in the learning process.
-            ⦿ This will continue from 9:00 (9:00 a.m.) to 22:00 (10:00 p.m.).
-            ⦿ If you want to stop learn — just press '${MainReplyKeyboardData.STOP_LEARN}' button.
-            ⦿ If you wan to remove word — go out from learning mode, press '${MainReplyKeyboardData.STOP_LEARN}' button, remove unnecessary words and start learning mode again.
-            ⦿ You can get all of your word by pressing '${MainReplyKeyboardData.SHOW_ALL}' button.
-            `,
-            REPLY_KEYBOARD_OPTIONS
+            instructionText,
+            getReplyKeyboardOptions(userLanguage)
         );
     }
 
     async setIntervalMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
         const { chatId, userId } = this.getIdsFromMessage(message);
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
 
         await this.dbService.setUserStatus(userId, UserStatus.SET_INTERVAL);
 
         const currentUserInterval: number | null = await this.dbService.getUserInterval(userId);
 
+        const messageText = t('interval.current', userLanguage, { interval: currentUserInterval ?? DEFAULT_USER_INTERVAL }) +
+            '\n\n' + t('interval.prompt', userLanguage);
+
         return bot.sendMessage(
             chatId,
-            `
-                You have already set interval to ${currentUserInterval ?? DEFAULT_USER_INTERVAL} hours.
-
-Here You can set interval for learning.
-Please, chose the interval you want to set.
-`,
-            SET_INTERVAL_KEYBOARD_OPTIONS
+            messageText,
+            getSetIntervalKeyboardOptions(userLanguage)
         );
     }
 
     async favoriteCategoriesMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
         const { chatId, userId } = this.getIdsFromMessage(message);
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
         await this.dbService.setUserStatus(userId, UserStatus.FAVORITE_CATEGORIES);
         const selectedCategories = await this.dbService.getUserFavoriteCategories(userId);
         const selectedCategoriesText = selectedCategories.length
             ? selectedCategories.join(', ')
-            : 'No favorite categories selected yet.';
+            : t('favoriteCategories.noCategories', userLanguage);
 
         return bot.sendMessage(
             chatId,
-            `Your favorite categories:\n${selectedCategoriesText}\n\nChoose categories to add:`,
-            getFavoriteCategoriesKeyboard(selectedCategories)
+            t('favoriteCategories.prompt', userLanguage, { categories: selectedCategoriesText }),
+            getFavoriteCategoriesKeyboard(selectedCategories, userLanguage)
         );
     }
 
     async myStatusMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
         const { chatId, userId } = this.getIdsFromMessage(message);
+
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
 
         try {
             const [userDictionary, currentUserStatus, userInterval, userFavoriteCategories] = await Promise.all([
@@ -115,7 +130,7 @@ Please, chose the interval you want to set.
                 favoriteCategories: userFavoriteCategories ?? null,
             };
 
-            const messageText = FormatterHelper.formatUserStatusSnapshot(snapshot);
+            const messageText = FormatterHelper.formatUserStatusSnapshot(snapshot, userLanguage);
 
             return bot.sendMessage(
                 chatId,
@@ -125,10 +140,25 @@ Please, chose the interval you want to set.
         } catch (error: any) {
             return bot.sendMessage(
                 chatId,
-                `Something went wrong: ${error?.message || ''}. Please, try again`,
-                REPLY_KEYBOARD_OPTIONS
+                t('errors.generic', userLanguage, { error: error?.message || '' }),
+                getReplyKeyboardOptions(userLanguage)
             );
         }
+    }
+
+    async languageMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
+        const { chatId, userId } = this.getIdsFromMessage(message);
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
+
+        await this.dbService.setUserStatus(userId, UserStatus.SET_LANGUAGE);
+
+        const currentLanguageDisplay = getLanguageDisplayName(userLanguage);
+
+        return bot.sendMessage(
+            chatId,
+            t('language.current', userLanguage, { language: currentLanguageDisplay }) + '\n\n' + t('language.prompt', userLanguage),
+            LANGUAGE_KEYBOARD_OPTIONS
+        );
     }
 
     async generalMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
@@ -185,6 +215,10 @@ Please, chose the interval you want to set.
         }
 
 
+        if (query.data.startsWith(LANGUAGE_CALLBACK_PREFIX)) {
+            return this.setLanguageHandler(bot, userId, chatId, query.data);
+        }
+
         if (query.data.startsWith(FAVORITE_CATEGORY_CALLBACK_PREFIX)) {
             return this.toggleFavoriteCategoryHandler(bot, userId, chatId, query.data);
         }
@@ -201,6 +235,9 @@ Please, chose the interval you want to set.
             case UserStatus.SET_INTERVAL:
                 return await this.setParticularIntervalHandler(bot, userId, chatId, query.data);
 
+            case UserStatus.SET_LANGUAGE:
+                return await this.setLanguageHandler(bot, userId, chatId, query.data);
+
             case UserStatus.FAVORITE_CATEGORIES:
                 return await this.toggleFavoriteCategoryHandler(bot, userId, chatId, query.data);
 
@@ -210,20 +247,20 @@ Please, chose the interval you want to set.
     }
 
     async goToMainPage(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
-
         const { chatId, userId } = this.getIdsFromMessage(message);
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
         await this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
 
         return bot.sendMessage(
             chatId,
-            'You are on the \'Home page\'',
-            REPLY_KEYBOARD_OPTIONS
+            t('navigation.home', userLanguage),
+            getReplyKeyboardOptions(userLanguage)
         );
     }
 
     async addWordMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
-
         const { chatId, userId } = this.getIdsFromMessage(message);
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
         await this.dbService.setUserStatus(userId, UserStatus.ADD_WORD);
 
         if (!chatId) {
@@ -231,44 +268,42 @@ Please, chose the interval you want to set.
         }
         return bot.sendMessage(
             chatId,
-            `
-Please, type your word and press 'Enter' or send button.
-You can add translation via  <code>/</code>  separator. For example: <code>my word / my translation</code>`,
-            ADD_WORD_KEYBOARD_OPTIONS
+            t('addWord.prompt', userLanguage),
+            getAddWordKeyboardOptions(userLanguage)
         );
     }
 
     async removeWordMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
-
         const { chatId, userId } = this.getIdsFromMessage(message);
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
 
         await this.dbService.setUserStatus(userId, UserStatus.REMOVE_WORD)
 
         try {
-
             await bot.sendMessage(
                 chatId,
-                `Please, chose the word You want to delete \n ⬇️⬇️⬇️`,
+                t('removeWord.prompt', userLanguage),
                 getRemoveWordsKeyboard((await this.dbService.getUserDictionary(userId)) as unknown as UserItemAWS[])
             );
 
-            // We can't pass empty message in  'bot.sendMessage' method
+            // We can't pass empty message in 'bot.sendMessage' method
             return bot.sendMessage(
                 chatId,
-                '⬆️⬆️⬆️\n Chose word to delete and press it!',
-                REMOVE_WORD_KEYBOARD_OPTIONS
+                t('removeWord.promptBottom', userLanguage),
+                getRemoveWordKeyboardOptions(userLanguage)
             );
         } catch (error: any) {
             return bot.sendMessage(
                 chatId,
-                `Something went wrong: ${error?.message || ''}. Please, try again`,
-                REMOVE_WORD_KEYBOARD_OPTIONS
+                t('errors.generic', userLanguage, { error: error?.message || '' }),
+                getRemoveWordKeyboardOptions(userLanguage)
             );
         }
     }
 
     async getAllMessagesHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
         const { chatId, userId } = this.getIdsFromMessage(message);
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
         const userDictionary: UserItemAWS[] = await this.dbService.getUserDictionary(userId);
         const userWordsWithTranslations: string[] = userDictionary.map((userItem: UserItemAWS) => {
             return userItem.translation
@@ -279,26 +314,30 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
         if (!userDictionary || !userDictionary.length) {
             return bot.sendMessage(
                 chatId,
-                'You have no words yet. Try to add some.',
+                t('showAll.noWords', userLanguage),
             );
         }
+
+        const titleText = t('showAll.title', userLanguage);
+        const escapedTitle = FormatterHelper.escapeMarkdownV2(titleText);
+
         return bot.sendMessage(
             chatId,
-            `Your words:\n ${userWordsWithTranslations.join(', \n')}`,
+            escapedTitle + '\n ' + userWordsWithTranslations.join(', \n'),
             { parse_mode: 'MarkdownV2' }
         );
     }
 
     async startLearn(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
         const { chatId, userId } = this.getIdsFromMessage(message);
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
         try {
-
             const userItems: UserItemAWS[] = await this.dbService.getUserDictionary(userId);
             if (!userItems || !userItems?.length) {
                 return bot.sendMessage(
                     chatId,
-                    `You are have no words. Please, add some`,
-                    REPLY_KEYBOARD_OPTIONS
+                    t('learn.noWords', userLanguage),
+                    getReplyKeyboardOptions(userLanguage)
                 );
             }
             await this.dbService.setUserStatus(userId, UserStatus.START_LEARN);
@@ -308,20 +347,21 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
             await this.scheduleService.startLearnByUserId(bot, userItems, userId, userInterval, chatId);
             return bot.sendMessage(
                 chatId,
-                `You are in learning. Every ${userInterval} hour You will get 1 word. This will continue from 9:00 (9:00 a.m.) to 22:00 (10:00 p.m.)`,
-                START_LEARN_KEYBOARD_OPTIONS
+                t('learn.started', userLanguage, { interval: userInterval }),
+                getStartLearnKeyboardOptions(userLanguage)
             );
         } catch (error: any) {
             return bot.sendMessage(
                 chatId,
-                `Something went wrong: ${error?.message || ''}. Please, try again`,
-                REPLY_KEYBOARD_OPTIONS
+                t('errors.generic', userLanguage, { error: error?.message || '' }),
+                getReplyKeyboardOptions(userLanguage)
             );
         }
     }
 
     async stopLearn(bot: TelegramBot, message: Message): Promise<TelegramBot.Message | undefined> {
         const { chatId, userId } = this.getIdsFromMessage(message);
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
         try {
             this.scheduleService.stopLearnByUserId(userId);
 
@@ -329,14 +369,14 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
 
             return bot.sendMessage(
                 chatId,
-                `You have been exit from learn mode. Nice work!`,
-                REPLY_KEYBOARD_OPTIONS
+                t('learn.stopped', userLanguage),
+                getReplyKeyboardOptions(userLanguage)
             );
         } catch (error: any) {
             return bot.sendMessage(
                 chatId,
-                `Something went wrong: ${error?.message || ''}. Please, try again`,
-                REPLY_KEYBOARD_OPTIONS
+                t('errors.generic', userLanguage, { error: error?.message || '' }),
+                getReplyKeyboardOptions(userLanguage)
             );
         }
     }
@@ -347,25 +387,29 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
         chatId: number,
         message: string = ''
     ): Promise<TelegramBot.Message> {
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
         const dbResponse: DbResponse = await this.dbService.writeWordByUserId(userId, message || '');
         const parsedRawItem = CommonHelper.parseUserRawItem(message);
-        let responseMessageText = `✅ The word <b> <u>${FormatterHelper.escapeMarkdownV2(parsedRawItem.word)}</u></b> has been added. You can add more!`;
+        let responseMessageText = t('addWord.success', userLanguage, { word: FormatterHelper.escapeMarkdownV2(parsedRawItem.word) });
 
         if (parsedRawItem.translation) {
-            responseMessageText = `✅ The word <b> <u>${parsedRawItem.word}</u></b> with translation <b> <u>${parsedRawItem.translation}</u></b> has been added. You can add more!`;
+            responseMessageText = t('addWord.successWithTranslation', userLanguage, {
+                word: parsedRawItem.word,
+                translation: parsedRawItem.translation
+            });
         }
 
         if (!dbResponse.success) {
             if (dbResponse.status === DbResponseStatus.DUPLICATE_WORD) {
-                responseMessageText = `🚫 The word <b> <u>${parsedRawItem.word}</u></b> already exist. Please, send other word.`;
+                responseMessageText = t('addWord.duplicate', userLanguage, { word: parsedRawItem.word });
             } else {
-                responseMessageText = dbResponse.message || '🚫 Something went wrong! Please, try again.'
+                responseMessageText = dbResponse.message || t('addWord.error', userLanguage);
             }
         }
         return bot.sendMessage(
             chatId,
             responseMessageText,
-            ADD_WORD_KEYBOARD_OPTIONS
+            getAddWordKeyboardOptions(userLanguage)
         );
     }
 
@@ -376,10 +420,12 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
         message: string = ''
     ): Promise<TelegramBot.Message> {
 
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
+
         if (!message) {
             return bot.sendMessage(
                 chatId,
-                'I did not receive any message from You, Please, try again.',
+                t('errors.noMessage', userLanguage),
             );
         }
 
@@ -388,14 +434,14 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
         if (isNaN(parsedRawItem)) {
             return bot.sendMessage(
                 chatId,
-                'I did not receive any interval number from You, Please, try again.',
+                t('errors.noInterval', userLanguage),
             );
         }
 
         if (parsedRawItem < 1 || parsedRawItem > 12) {
             return bot.sendMessage(
                 chatId,
-                'Interval must be from 1 to 12. Please, try again.',
+                t('errors.intervalRange', userLanguage),
             );
         }
 
@@ -413,14 +459,14 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
 
             return bot.sendMessage(
                 chatId,
-                `You have set interval to ${parsedRawItem} hours.`,
-                REPLY_KEYBOARD_OPTIONS
+                t('interval.set', userLanguage, { interval: parsedRawItem }),
+                getReplyKeyboardOptions(userLanguage)
             );
 
         } catch (error: any) {
             return bot.sendMessage(
                 chatId,
-                `Something went wrong. Please, try again`,
+                t('errors.generic', userLanguage),
             );
         }
     }
@@ -432,22 +478,24 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
         chatId: number,
         wordId: string
     ): Promise<TelegramBot.Message> {
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
 
         if (!wordId) {
             return bot.sendMessage(
                 chatId,
-                `Word didn't find`,
+                t('removeWord.noWordId', userLanguage),
             );
         }
 
         const dbResponse: DbResponse = await this.dbService.removeWordById(userId, wordId);
-        let responseMessageText = `✅ The word has been deleted successfully. You can delete more!`;
+        let responseMessageText = t('removeWord.success', userLanguage);
 
         if (!dbResponse.success) {
             if (dbResponse.status === DbResponseStatus.WRONG_INPUT) {
-                responseMessageText = `🚫 The word with number hasn't been find. Please, try again`;
+                responseMessageText = t('removeWord.notFound', userLanguage);
+            } else {
+                responseMessageText = dbResponse.message || t('errors.generic', userLanguage);
             }
-            responseMessageText = dbResponse.message || '🚫 Something went wrong! Please, try again.'
         }
         return bot.sendMessage(
             chatId,
@@ -462,10 +510,12 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
         chatId: number,
         callbackData: string
     ): Promise<TelegramBot.Message> {
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
+
         if (!callbackData.startsWith(FAVORITE_CATEGORY_CALLBACK_PREFIX)) {
             return bot.sendMessage(
                 chatId,
-                'Unknown category. Please, try again.',
+                t('favoriteCategories.unknownCategory', userLanguage),
             );
         }
         const categoryIndex = parseInt(callbackData.replace(FAVORITE_CATEGORY_CALLBACK_PREFIX, ''), 10);
@@ -473,7 +523,7 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
         if (!category) {
             return bot.sendMessage(
                 chatId,
-                'Unknown category. Please, try again.',
+                t('favoriteCategories.unknownCategory', userLanguage),
             );
         }
 
@@ -489,18 +539,18 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
             const updatedFavorites = await this.dbService.getUserFavoriteCategories(userId);
             const selectedCategoriesText = updatedFavorites.length
                 ? updatedFavorites.join(', ')
-                : 'No favorite categories selected yet.';
+                : t('favoriteCategories.noCategories', userLanguage);
 
             return bot.sendMessage(
                 chatId,
-                `Updated favorite categories:\n${selectedCategoriesText}`,
-                getFavoriteCategoriesKeyboard(updatedFavorites)
+                t('favoriteCategories.updated', userLanguage, { categories: selectedCategoriesText }),
+                getFavoriteCategoriesKeyboard(updatedFavorites, userLanguage)
             );
         } catch (error: any) {
             LogService.error(`Error toggling favorite category for user ${userId}:`, error);
             return bot.sendMessage(
                 chatId,
-                `Something went wrong while toggling favorite category. Please, try again.`,
+                t('favoriteCategories.error', userLanguage),
             );
         }
     }
@@ -537,5 +587,45 @@ You can add translation via  <code>/</code>  separator. For example: <code>my wo
         }
 
         return { chatId, userId }
+    }
+
+    private async getUserLanguageOrDefault(userId: number): Promise<SupportedLanguage> {
+        const userLanguage = await this.dbService.getUserLanguage(userId);
+        return (userLanguage as SupportedLanguage) || DEFAULT_LANGUAGE;
+    }
+
+    private async setLanguageHandler(
+        bot: TelegramBot,
+        userId: number,
+        chatId: number,
+        callbackData: string
+    ): Promise<TelegramBot.Message> {
+        if (!callbackData.startsWith(LANGUAGE_CALLBACK_PREFIX)) {
+            const userLanguage = await this.getUserLanguageOrDefault(userId);
+            return bot.sendMessage(
+                chatId,
+                t('errors.noData', userLanguage),
+            );
+        }
+
+        const selectedLanguage = callbackData.replace(LANGUAGE_CALLBACK_PREFIX, '') as SupportedLanguage;
+
+        try {
+            await this.dbService.setUserLanguage(userId, selectedLanguage);
+            await this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
+
+            return bot.sendMessage(
+                chatId,
+                t('language.changed', selectedLanguage),
+                getReplyKeyboardOptions(selectedLanguage)
+            );
+        } catch (error: any) {
+            LogService.error(`Error setting language for user ${userId}:`, error);
+            const userLanguage = await this.getUserLanguageOrDefault(userId);
+            return bot.sendMessage(
+                chatId,
+                t('errors.generic', userLanguage, { error: error?.message || '' }),
+            );
+        }
     }
 }

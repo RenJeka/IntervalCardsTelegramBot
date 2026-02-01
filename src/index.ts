@@ -7,6 +7,7 @@ import {
     RemovingWordsReplyKeyboardData,
     StartLearningReplyKeyboardData
 } from "./common/enums/mainInlineKeyboard";
+import { CommandHelper, UserAction } from "./helpers/command-helper";
 import { DbAwsService } from "./services/db-aws-service";
 import { MessageService } from "./services/message-service";
 import { ScheduleService } from "./services/schedule-service";
@@ -36,6 +37,7 @@ const commands: BotCommand[] = [
     { command: 'instruction', description: 'Additional information about the bot' },
     { command: 'set_interval', description: 'Set the time interval for learning' },
     { command: 'set_favorite_categories', description: 'Select the favorite categories for learning' },
+    { command: 'language', description: 'Change interface language' },
     { command: 'my_status', description: 'Show your current status and settings' }
 ];
 
@@ -56,6 +58,8 @@ bot.setMyCommands(commands)
 
 bot.on('message', async (msg: Message, metadata: Metadata) => {
     const messageText = msg.text;
+
+    const userAction = CommandHelper.getActionFromText(messageText || '');
 
     switch (messageText) {
         case '/start':
@@ -78,40 +82,41 @@ bot.on('message', async (msg: Message, metadata: Metadata) => {
             await messageService.myStatusMessageHandler(bot, msg);
             break;
 
-        case MainReplyKeyboardData.SHOW_ALL:
-            await messageService.getAllMessagesHandler(bot, msg);
-            break;
-
-        case MainReplyKeyboardData.ADD_WORD:
-            await messageService.addWordMessageHandler(bot, msg);
-            break;
-
-        case MainReplyKeyboardData.REMOVE_WORD:
-            await messageService.removeWordMessageHandler(bot, msg);
-            break;
-
-        case MainReplyKeyboardData.START_LEARN:
-            await messageService.startLearn(bot, msg);
-            break;
-
-        case StartLearningReplyKeyboardData.STOP_LEARN:
-            await messageService.stopLearn(bot, msg);
-            break;
-
-        case AddingWordsReplyKeyboardData.CANCEL:
-            await messageService.goToMainPage(bot, msg);
-            break;
-
-        case AddingWordsReplyKeyboardData.FINISH:
-            await messageService.goToMainPage(bot, msg);
-            break;
-
-        case RemovingWordsReplyKeyboardData.FINISH:
-            await messageService.goToMainPage(bot, msg);
+        case '/language':
+            await messageService.languageMessageHandler(bot, msg);
             break;
 
         default:
-            await messageService.generalMessageHandler(bot, msg);
+            switch (userAction) {
+                case UserAction.SHOW_ALL:
+                    await messageService.getAllMessagesHandler(bot, msg);
+                    break;
+
+                case UserAction.ADD_WORD:
+                    await messageService.addWordMessageHandler(bot, msg);
+                    break;
+
+                case UserAction.REMOVE_WORD:
+                    await messageService.removeWordMessageHandler(bot, msg);
+                    break;
+
+                case UserAction.START_LEARN:
+                    await messageService.startLearn(bot, msg);
+                    break;
+
+                case UserAction.STOP_LEARN:
+                    await messageService.stopLearn(bot, msg);
+                    break;
+
+                case UserAction.CANCEL:
+                case UserAction.FINISH_ADDING:
+                case UserAction.FINISH_REMOVING:
+                    await messageService.goToMainPage(bot, msg);
+                    break;
+
+                default:
+                    await messageService.generalMessageHandler(bot, msg);
+            }
     }
 });
 
