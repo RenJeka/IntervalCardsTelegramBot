@@ -1,0 +1,140 @@
+{
+    "welcome": "Welcome to the IntervalCards Telegram Bot!\nHere you will can add words and receive messages with random word from your words periodically.\nPlease, use '☰ Menu' ➼ '/instruction' for more information\nIf you wish to add word — please go to 'Add word' menu.",
+    "instruction": {
+        "title": "This bot helps you to learn words:",
+        "step1": "1. Firstly, add several words You want to learn (use the '{{addWordButton}}' button).",
+        "step2": "2. Press '{{startLearnButton}}' button to start learning process.",
+        "info1": "⦿ Every 1 hour You will get 1 word from your words while you in the learning process.",
+        "info2": "⦿ This will continue from 9:00 (9:00 a.m.) to 22:00 (10:00 p.m.).",
+        "info3": "⦿ If you want to stop learn — just press '{{stopLearnButton}}' button.",
+        "info4": "⦿ If you want to remove word — go out from learning mode, press '{{stopLearnButton}}' button, remove unnecessary words and start learning mode again.",
+        "info5": "⦿ You can get all of your word by pressing '{{showAllButton}}' button."
+    },
+    "interval": {
+        "current": "You have already set interval to {{interval}} hours.",
+        "prompt": "Here You can set interval for learning.\nPlease, chose the interval you want to set.",
+        "set": "You have set interval to {{interval}} hours.",
+        "everyHour": "Every hour",
+        "everyPHours": "Every {{n}} hours",
+        "everyNHours": "Every {{n}} hours"
+    },
+    "language": {
+        "prompt": "Choose your preferred language:",
+        "current": "Current language: {{language}}",
+        "changed": "Language changed to English.",
+        "english": "🇬🇧 English",
+        "ukrainian": "🇺🇦 Українська"
+    },
+    "favoriteCategories": {
+        "prompt": "Your favorite categories:\n{{categories}}\n\nChoose categories to add:",
+        "noCategories": "No favorite categories selected yet.",
+        "updated": "Updated favorite categories:\n{{categories}}",
+        "unknownCategory": "Unknown category. Please, try again.",
+        "error": "Something went wrong while toggling favorite category. Please, try again."
+    },
+    "status": {
+        "title": "Your status",
+        "wordsCount": "📝 Words count",
+        "currentMode": "🔄 Current mode",
+        "intervalHours": "⏱️ Interval (hours)",
+        "learningLanguage": "🇬🇧 Learning language",
+        "favoriteCategories": "⭐ Favorite categories",
+        "interfaceLanguage": "🌐 Interface language"
+    },
+    "addWord": {
+        "prompt": "Please, type your word and press 'Enter' or send button.\nYou can add translation via <code>/</code> separator. For example: <code>my word / my translation</code>",
+        "success": "✅ The word <b><u>{{word}}</u></b> has been added. You can add more!",
+        "successWithTranslation": "✅ The word <b><u>{{word}}</u></b> with translation <b><u>{{translation}}</u></b> has been added. You can add more!",
+        "duplicate": "🚫 The word <b><u>{{word}}</u></b> already exist. Please, send other word.",
+        "error": "🚫 Something went wrong! Please, try again."
+    },
+    "removeWord": {
+        "prompt": "Please, chose the word You want to delete\n⬇️⬇️⬇️",
+        "promptBottom": "⬆️⬆️⬆️\nChose word to delete and press it!",
+        "success": "✅ The word has been deleted successfully. You can delete more!",
+        "notFound": "🚫 The word with number hasn't been find. Please, try again",
+        "noWordId": "Word didn't find"
+    },
+    "learn": {
+        "started": "You are in learning. Every {{interval}} hour You will get 1 word. This will continue from 9:00 (9:00 a.m.) to 22:00 (10:00 p.m.)",
+        "stopped": "You have been exit from learn mode. Nice work!",
+        "noWords": "You are have no words. Please, add some",
+        "inLearningMode": "Now You are in learning mode. Please, use the keyboard menu to navigate or do action you want."
+    },
+    "showAll": {
+        "noWords": "You have no words yet. Try to add some.",
+        "title": "Your words:"
+    },
+    "navigation": {
+        "home": "You are on the 'Home page'"
+    },
+    "errors": {
+        "generic": "Something went wrong: {{error}}. Please, try again",
+        "noMessage": "I did not receive any message from You, Please, try again.",
+        "noData": "I did not receive any data from You, Please, try again.",
+        "noInterval": "I did not receive any interval number from You, Please, try again.",
+        "intervalRange": "Interval must be from 1 to 12. Please, try again."
+    },
+    "buttons": {
+        "showAll": "📜️️ Show all words",
+        "addWord": "➕️ Add word",
+        "removeWord": "➖️ Remove word",
+        "startLearn": "🟢️ Start learning",
+        "stopLearn": "🟥️ Stop learn",
+        "finishAdding": "✔️ Finish adding words",
+        "finishRemoving": "✔️ Finish removing words",
+        "cancel": "❌️ Cancel"
+    },
+    "categories": {
+        "Animals": "Animals",
+        "Art": "Art",
+        "Body": "Body",
+        "Books": "Books",
+        "Business": "Business",
+        "Clothing": "Clothing",
+        "Colors": "Colors",
+        "Culture": "Culture",
+        "Daily Routine": "Daily Routine",
+        "Education": "Education",
+        "Emotions": "Emotions",
+        "Family": "Family",
+        "Fashion": "Fashion",
+        "Fitness": "Fitness",
+        "Food": "Food",
+        "Gaming": "Gaming",
+        "Geography": "Geography",
+        "Health": "Health",
+        "History": "History",
+        "Hobbies": "Hobbies",
+        "Holidays": "Holidays",
+        "Home": "Home",
+        "Hotels": "Hotels",
+        "Idiomatic Expressions": "Idiomatic Expressions",
+        "Idioms": "Idioms",
+        "Marketing": "Marketing",
+        "Medicine": "Medicine",
+        "Money": "Money",
+        "Movies": "Movies",
+        "Music": "Music",
+        "Nature": "Nature",
+        "Numbers": "Numbers",
+        "Office": "Office",
+        "Phrasal Verbs": "Phrasal Verbs",
+        "Politics": "Politics",
+        "Programming": "Programming",
+        "Relationships": "Relationships",
+        "Restaurants": "Restaurants",
+        "School": "School",
+        "Science": "Science",
+        "Shopping": "Shopping",
+        "Social Media": "Social Media",
+        "Sports": "Sports",
+        "Technology": "Technology",
+        "Time": "Time",
+        "Transportation": "Transportation",
+        "Travel": "Travel",
+        "University": "University",
+        "Weather": "Weather",
+        "Work": "Work"
+    }
+}
