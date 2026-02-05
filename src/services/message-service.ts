@@ -17,9 +17,10 @@ import { IDbService } from "../common/interfaces/iDbService";
 import { UserItemAWS, UserStatusSnapshot, UserWord } from "../common/interfaces/common";
 import { CommonHelper } from "../helpers/common-helper";
 import { FormatterHelper } from "../helpers/formatter-helper";
-import { DEFAULT_USER_INTERVAL, LANGUAGE_CALLBACK_PREFIX, DEFAULT_LANGUAGE } from "../const/common";
-import { FAVORITE_CATEGORIES, FAVORITE_CATEGORY_CALLBACK_PREFIX } from "../const/favoriteCategories";
+import { DEFAULT_USER_INTERVAL, LANGUAGE_CALLBACK_PREFIX, DEFAULT_LANGUAGE, FAVORITE_CATEGORY_CALLBACK_PREFIX } from "../const/common";
+import { FAVORITE_CATEGORIES } from "../const/favoriteCategories";
 import { LogService } from "./log.service";
+import { CategoryHelper } from "../helpers/category-helper";
 import { t, detectLanguage, getLanguageDisplayName } from "./i18n.service";
 import { SupportedLanguage } from "../common/interfaces/common";
 
@@ -99,7 +100,7 @@ export class MessageService {
         await this.dbService.setUserStatus(userId, UserStatus.FAVORITE_CATEGORIES);
         const selectedCategories = await this.dbService.getUserFavoriteCategories(userId);
         const selectedCategoriesText = selectedCategories.length
-            ? selectedCategories.join(', ')
+            ? CategoryHelper.getSortedTranslatedCategoriesString(selectedCategories, userLanguage)
             : t('favoriteCategories.noCategories', userLanguage);
 
         return bot.sendMessage(
@@ -538,7 +539,7 @@ export class MessageService {
 
             const updatedFavorites = await this.dbService.getUserFavoriteCategories(userId);
             const selectedCategoriesText = updatedFavorites.length
-                ? updatedFavorites.join(', ')
+                ? CategoryHelper.getSortedTranslatedCategoriesString(updatedFavorites, userLanguage)
                 : t('favoriteCategories.noCategories', userLanguage);
 
             return bot.sendMessage(

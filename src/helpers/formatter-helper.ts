@@ -1,5 +1,6 @@
 import { UserStatusSnapshot } from "../common/interfaces/common";
 import { SupportedLanguage, t, getLanguageDisplayName } from "../services/i18n.service";
+import { CategoryHelper } from "./category-helper";
 
 export class FormatterHelper {
 
@@ -23,7 +24,7 @@ export class FormatterHelper {
             { label: t('status.learningLanguage', language), value: snapshot.learningLanguage ?? 'English' },
             {
                 label: t('status.favoriteCategories', language),
-                value: snapshot.favoriteCategories?.length ? snapshot.favoriteCategories.join(', ') : '–'
+                value: snapshot.favoriteCategories?.length ? CategoryHelper.getSortedTranslatedCategoriesString(snapshot.favoriteCategories, language) : '–'
             },
             { label: t('status.interfaceLanguage', language), value: getLanguageDisplayName(language) }
         ];

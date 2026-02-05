@@ -1,8 +1,8 @@
 import { InlineKeyboardButton, SendMessageOptions } from "node-telegram-bot-api";
 import { UserItemAWS } from "../common/interfaces/common";
-import { FAVORITE_CATEGORIES, FAVORITE_CATEGORY_CALLBACK_PREFIX } from "./favoriteCategories";
 import { t } from "../services/i18n.service";
 import { LANGUAGE_CALLBACK_PREFIX } from "../const/common";
+import { CategoryHelper } from "../helpers/category-helper";
 import { SupportedLanguage } from "../common/interfaces/common";
 
 export function getReplyKeyboardOptions(lang: SupportedLanguage): SendMessageOptions {
@@ -91,34 +91,7 @@ export function getRemoveWordsKeyboard(userDictionary: UserItemAWS[]): SendMessa
 }
 
 export function getFavoriteCategoriesKeyboard(selectedCategories: string[], lang: SupportedLanguage): SendMessageOptions {
-    const keyboard: InlineKeyboardButton[][] = [];
-
-    // TODO: refactor (extract to separate helper or FavoriteCategoriesService)
-    for (let index = 0; index < FAVORITE_CATEGORIES.length; index += 2) {
-        const firstCategory = FAVORITE_CATEGORIES[index];
-        const secondCategory = FAVORITE_CATEGORIES[index + 1];
-        const row: InlineKeyboardButton[] = [];
-
-        if (firstCategory) {
-            row.push({
-                text: selectedCategories.includes(firstCategory)
-                    ? `✅ ${t(`categories.${firstCategory}`, lang)}`
-                    : t(`categories.${firstCategory}`, lang),
-                callback_data: `${FAVORITE_CATEGORY_CALLBACK_PREFIX}${index}`
-            });
-        }
-
-        if (secondCategory) {
-            row.push({
-                text: selectedCategories.includes(secondCategory)
-                    ? `✅ ${t(`categories.${secondCategory}`, lang)}`
-                    : t(`categories.${secondCategory}`, lang),
-                callback_data: `${FAVORITE_CATEGORY_CALLBACK_PREFIX}${index + 1}`
-            });
-        }
-
-        keyboard.push(row);
-    }
+    const keyboard = CategoryHelper.getSortedCategoriesKeyboard(selectedCategories, lang);
 
     return {
         reply_markup: {

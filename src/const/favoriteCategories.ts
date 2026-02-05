@@ -1,5 +1,3 @@
-export const FAVORITE_CATEGORY_CALLBACK_PREFIX = 'favorite_category:';
-
 export const FAVORITE_CATEGORIES: string[] = [
     'Animals',
     'Art',

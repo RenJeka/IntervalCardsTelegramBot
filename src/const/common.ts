@@ -19,5 +19,6 @@ export const SUPPORTED_LANGUAGES = ['en', 'uk'] as const;
 
 export const DEFAULT_LANGUAGE: SupportedLanguage = 'en';
 
-// Language callback prefix for inline keyboard
+// Callback prefixes for inline keyboard
 export const LANGUAGE_CALLBACK_PREFIX = 'lang_';
+export const FAVORITE_CATEGORY_CALLBACK_PREFIX = 'favorite_category:';
