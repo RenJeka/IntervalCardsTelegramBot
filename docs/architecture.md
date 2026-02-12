@@ -12,7 +12,7 @@ IntervalCardsTelegramBot — це проєкт на Node.js/TypeScript, який
 
 ## 2. Точка входу
 
-- **Bootstrapping:** `src/index.ts` завантажує конфіг з `.env` через `dotenv`, створює `TelegramBot` з polling, реєструє команди (`/start`, `/instruction`, `/set_interval`).
+- **Bootstrapping:** `src/index.ts` завантажує конфіг з `.env` через `dotenv`, створює `TelegramBot` з polling, ініціалізує сервіси та делегує налаштування бота в `BotInitService`.
 - **DI (інʼєкція залежностей):** у `index.ts` створюються сервіси `DbAwsService`, `ScheduleService`, `MessageService` і передаються у хендлери — точка входу лишається тонкою.
 - **Обробники подій:** події `message` та `callback_query` делегуються в `MessageService`, який маршрутизує їх залежно від стану користувача та даних повідомлення/колбеку.
 
@@ -87,6 +87,11 @@ IntervalCardsTelegramBot — це проєкт на Node.js/TypeScript, який
   - `detectLanguage(telegramLangCode)` — визначає мову з Telegram settings
   - `getLanguageDisplayName(lang)` — повертає назву мови для відображення
 - **Файли перекладів:** `src/locales/en.json`, `src/locales/uk.json`
+
+### 4.6 `BotInitService`
+
+- **Роль:** Відповідає за ініціалізацію бота: налаштування команд (локалізованих), логування старту та відновлення завдань планувальника.
+- **Використання:** Викликається один раз у `index.ts` після створення інстансу `TelegramBot`.
 
 ## 5. FSM (машина станів)
 

@@ -1,6 +1,6 @@
 import { config as dotEnvConfig } from 'dotenv'
 import chalk from 'chalk';
-import TelegramBot, { BotCommand, CallbackQuery, Message, Metadata } from 'node-telegram-bot-api'
+import TelegramBot, { CallbackQuery, Message, Metadata } from 'node-telegram-bot-api'
 import {
     AddingWordsReplyKeyboardData,
     MainReplyKeyboardData,
@@ -12,8 +12,7 @@ import { DbAwsService } from "./services/db-aws-service";
 import { MessageService } from "./services/message-service";
 import { ScheduleService } from "./services/schedule-service";
 import { LogService } from "./services/log.service";
-import { t } from "./services/i18n.service";
-import { SUPPORTED_LANGUAGES } from "./const/common";
+import { BotInitService } from "./services/bot-init.service";
 
 dotEnvConfig({ path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env' });
 const TB_TOKEN: string = process.env.TELEGRAM_BOT_TOKEN!;
@@ -34,46 +33,9 @@ const messageService = new MessageService(
     dbAwsService,
     scheduleService
 );
-const commandKeys = [
-    'start',
-    'instruction',
-    'set_interval',
-    'set_favorite_categories',
-    'language',
-    'learning_language',
-    'my_status'
-];
 
-bot.getMe().then(async (me) => {
-    LogService.info(`Bot info: ${JSON.stringify(me)}`);
-
-    // Set commands for each supported language
-    for (const lang of SUPPORTED_LANGUAGES) {
-        const commands: BotCommand[] = commandKeys.map(key => ({
-            command: key,
-            description: t(`commands.${key}`, lang)
-        }));
-        await bot.setMyCommands(commands, { language_code: lang });
-    }
-
-    // Set default commands (English)
-    const defaultCommands: BotCommand[] = commandKeys.map(key => ({
-        command: key,
-        description: t(`commands.${key}`, 'en')
-    }));
-    await bot.setMyCommands(defaultCommands);
-
-    LogService.info(chalk.green.bold(`✔ Bot commands set successfully!`));
-    if (nodeEnv === 'production') {
-        LogService.info(chalk.red(`===[${nodeEnv.toUpperCase()} MODE]===`));
-    } else {
-        LogService.info(chalk.white.bgBlue.bold(`===[${nodeEnv.toUpperCase()} MODE]===`));
-    }
-
-    await scheduleService.resumeAllStartLearning(bot);
-}).catch((error: { message: any; }) => {
-    LogService.error('Error while setting bot commands: ', error);
-});
+const botInitService = new BotInitService(scheduleService);
+botInitService.initBot(bot);
 
 bot.on('message', async (msg: Message, metadata: Metadata) => {
     const messageText = msg.text;
