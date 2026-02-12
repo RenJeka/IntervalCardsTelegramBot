@@ -12,6 +12,8 @@ import { DbAwsService } from "./services/db-aws-service";
 import { MessageService } from "./services/message-service";
 import { ScheduleService } from "./services/schedule-service";
 import { LogService } from "./services/log.service";
+import { t } from "./services/i18n.service";
+import { SUPPORTED_LANGUAGES } from "./const/common";
 
 dotEnvConfig({ path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env' });
 const TB_TOKEN: string = process.env.TELEGRAM_BOT_TOKEN!;
@@ -32,30 +34,46 @@ const messageService = new MessageService(
     dbAwsService,
     scheduleService
 );
-const commands: BotCommand[] = [
-    { command: 'start', description: 'Start the bot' },
-    { command: 'instruction', description: 'Additional information about the bot' },
-    { command: 'set_interval', description: 'Set the time interval for learning' },
-    { command: 'set_favorite_categories', description: 'Select the favorite categories for learning' },
-    { command: 'language', description: 'Change interface language' },
-    { command: 'learning_language', description: 'Change learning language' },
-    { command: 'my_status', description: 'Show your current status and settings' }
+const commandKeys = [
+    'start',
+    'instruction',
+    'set_interval',
+    'set_favorite_categories',
+    'language',
+    'learning_language',
+    'my_status'
 ];
 
-bot.setMyCommands(commands)
-    .then(async () => {
-        LogService.info(chalk.green.bold(`✔ Bot commands set successfully!`));
-        if (nodeEnv === 'production') {
-            LogService.info(chalk.red(`===[${nodeEnv.toUpperCase()} MODE]===`));
-        } else {
-            LogService.info(chalk.white.bgBlue.bold(`===[${nodeEnv.toUpperCase()} MODE]===`));
-        }
+bot.getMe().then(async (me) => {
+    LogService.info(`Bot info: ${JSON.stringify(me)}`);
 
-        await scheduleService.resumeAllStartLearning(bot);
-    })
-    .catch((error: { message: any; }) => {
-        LogService.error('Error while setting bot commands: ', error);
-    });
+    // Set commands for each supported language
+    for (const lang of SUPPORTED_LANGUAGES) {
+        const commands: BotCommand[] = commandKeys.map(key => ({
+            command: key,
+            description: t(`commands.${key}`, lang)
+        }));
+        await bot.setMyCommands(commands, { language_code: lang });
+    }
+
+    // Set default commands (English)
+    const defaultCommands: BotCommand[] = commandKeys.map(key => ({
+        command: key,
+        description: t(`commands.${key}`, 'en')
+    }));
+    await bot.setMyCommands(defaultCommands);
+
+    LogService.info(chalk.green.bold(`✔ Bot commands set successfully!`));
+    if (nodeEnv === 'production') {
+        LogService.info(chalk.red(`===[${nodeEnv.toUpperCase()} MODE]===`));
+    } else {
+        LogService.info(chalk.white.bgBlue.bold(`===[${nodeEnv.toUpperCase()} MODE]===`));
+    }
+
+    await scheduleService.resumeAllStartLearning(bot);
+}).catch((error: { message: any; }) => {
+    LogService.error('Error while setting bot commands: ', error);
+});
 
 bot.on('message', async (msg: Message, metadata: Metadata) => {
     const messageText = msg.text;

@@ -156,5 +156,14 @@
         "University": "University",
         "Weather": "Weather",
         "Work": "Work"
+    },
+    "commands": {
+        "start": "Start the bot",
+        "instruction": "Additional information about the bot",
+        "set_interval": "Set the time interval for learning",
+        "set_favorite_categories": "Select the favorite categories for learning",
+        "language": "Change interface language",
+        "learning_language": "Change learning language",
+        "my_status": "Show your current status and settings"
     }
 }
