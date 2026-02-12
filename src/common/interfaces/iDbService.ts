@@ -13,6 +13,8 @@ export interface IDbService {
     getUserInterval(userId: number): Promise<number | null>;
     setUserLanguage(userId: number, language: string): Promise<DbResponse>;
     getUserLanguage(userId: number): Promise<string | null>;
+    setLearningLanguage(userId: number, language: string): Promise<DbResponse>;
+    getLearningLanguage(userId: number): Promise<string>;
     addUserFavoriteCategory(userId: number, category: string): Promise<DbResponse>;
     removeUserFavoriteCategory(userId: number, category: string): Promise<DbResponse>;
     getUserFavoriteCategories(userId: number): Promise<string[]>;

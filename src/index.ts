@@ -1,6 +1,6 @@
 import { config as dotEnvConfig } from 'dotenv'
 import chalk from 'chalk';
-import TelegramBot, { BotCommand, CallbackQuery, Message, Metadata } from 'node-telegram-bot-api'
+import TelegramBot, { CallbackQuery, Message, Metadata } from 'node-telegram-bot-api'
 import {
     AddingWordsReplyKeyboardData,
     MainReplyKeyboardData,
@@ -12,6 +12,7 @@ import { DbAwsService } from "./services/db-aws-service";
 import { MessageService } from "./services/message-service";
 import { ScheduleService } from "./services/schedule-service";
 import { LogService } from "./services/log.service";
+import { BotInitService } from "./services/bot-init.service";
 
 dotEnvConfig({ path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env' });
 const TB_TOKEN: string = process.env.TELEGRAM_BOT_TOKEN!;
@@ -32,29 +33,9 @@ const messageService = new MessageService(
     dbAwsService,
     scheduleService
 );
-const commands: BotCommand[] = [
-    { command: 'start', description: 'Start the bot' },
-    { command: 'instruction', description: 'Additional information about the bot' },
-    { command: 'set_interval', description: 'Set the time interval for learning' },
-    { command: 'set_favorite_categories', description: 'Select the favorite categories for learning' },
-    { command: 'language', description: 'Change interface language' },
-    { command: 'my_status', description: 'Show your current status and settings' }
-];
 
-bot.setMyCommands(commands)
-    .then(async () => {
-        LogService.info(chalk.green.bold(`✔ Bot commands set successfully!`));
-        if (nodeEnv === 'production') {
-            LogService.info(chalk.red(`===[${nodeEnv.toUpperCase()} MODE]===`));
-        } else {
-            LogService.info(chalk.white.bgBlue.bold(`===[${nodeEnv.toUpperCase()} MODE]===`));
-        }
-
-        await scheduleService.resumeAllStartLearning(bot);
-    })
-    .catch((error: { message: any; }) => {
-        LogService.error('Error while setting bot commands: ', error);
-    });
+const botInitService = new BotInitService(scheduleService);
+botInitService.initBot(bot);
 
 bot.on('message', async (msg: Message, metadata: Metadata) => {
     const messageText = msg.text;
@@ -84,6 +65,10 @@ bot.on('message', async (msg: Message, metadata: Metadata) => {
 
         case '/language':
             await messageService.languageMessageHandler(bot, msg);
+            break;
+
+        case '/learning_language':
+            await messageService.learningLanguageMessageHandler(bot, msg);
             break;
 
         default:

@@ -12,7 +12,7 @@ IntervalCardsTelegramBot — це проєкт на Node.js/TypeScript, який
 
 ## 2. Точка входу
 
-- **Bootstrapping:** `src/index.ts` завантажує конфіг з `.env` через `dotenv`, створює `TelegramBot` з polling, реєструє команди (`/start`, `/instruction`, `/set_interval`).
+- **Bootstrapping:** `src/index.ts` завантажує конфіг з `.env` через `dotenv`, створює `TelegramBot` з polling, ініціалізує сервіси та делегує налаштування бота в `BotInitService`.
 - **DI (інʼєкція залежностей):** у `index.ts` створюються сервіси `DbAwsService`, `ScheduleService`, `MessageService` і передаються у хендлери — точка входу лишається тонкою.
 - **Обробники подій:** події `message` та `callback_query` делегуються в `MessageService`, який маршрутизує їх залежно від стану користувача та даних повідомлення/колбеку.
 
@@ -50,7 +50,7 @@ IntervalCardsTelegramBot — це проєкт на Node.js/TypeScript, який
 - **Таблиці:** використовуються 2 таблиці — `users` і `words`. Назви беруться з env.
   - `users`: `_id`, `status`, `interval`
   - `words`: `_id`, `user_id`, `word`, опційно `translation`, `example`, `comment`
-- **Операції:** `initUser`, `writeWordByUserId` (з перевіркою дубліката), `removeWordById`, `setUserStatus`, `getUserStatus`, `setUserInterval`, `getUserInterval`, `getUserDictionary`, `getAllUsersWithStatus`, `checkIsUserExist`.
+- **Операції:** `initUser`, `writeWordByUserId` (з перевіркою дубліката), `removeWordById`, `setUserStatus`, `getUserStatus`, `setUserInterval`, `getUserInterval`, `getUserDictionary`, `getAllUsersWithStatus`, `checkIsUserExist`, `setUserLanguage`, `getUserLanguage`, `setLearningLanguage`, `getLearningLanguage`.
 - **Технології:** AWS SDK v3 (`@aws-sdk/client-dynamodb`) + `marshall/unmarshall`. Для простоти використовуються `Scan` запити.
 
 ### 4.2 `ScheduleService`
@@ -88,6 +88,11 @@ IntervalCardsTelegramBot — це проєкт на Node.js/TypeScript, який
   - `getLanguageDisplayName(lang)` — повертає назву мови для відображення
 - **Файли перекладів:** `src/locales/en.json`, `src/locales/uk.json`
 
+### 4.6 `BotInitService`
+
+- **Роль:** Відповідає за ініціалізацію бота: налаштування команд (локалізованих), логування старту та відновлення завдань планувальника.
+- **Використання:** Викликається один раз у `index.ts` після створення інстансу `TelegramBot`.
+
 ## 5. FSM (машина станів)
 
 FSM базується на `UserStatus`, який зберігається в `users` (DynamoDB). `MessageService` читає стан і викликає відповідний обробник.
@@ -102,7 +107,7 @@ FSM базується на `UserStatus`, який зберігається в `
 
 ## 6. Модель даних
 
-- **User:** `_id` (Telegram user id), `status` (`UserStatus`), `interval` (години), `language` (код мови, опційно), `favoriteCategories` (масив категорій, опційно). Створюється ліниво через `initUser` з дефолтами: `DEFAULT`, `1 год`, мова визначається з Telegram settings.
+- **User:** `_id` (Telegram user id), `status` (`UserStatus`), `interval` (години), `language` (код мови, опційно), `learningLanguage` (код мови, опційно), `favoriteCategories` (масив категорій, опційно). Створюється ліниво через `initUser` з дефолтами: `DEFAULT`, `1 год`, мова визначається з Telegram settings, мова вивчення — `en`.
 - **Word:** `_id` (timestamp), `user_id` (string), `word`, опційно `translation`, `example`, `comment`. Видалення виконується по ключу (`_id`, `user_id`).
 
 ## 7. Потік планування

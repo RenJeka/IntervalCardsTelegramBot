@@ -22,6 +22,7 @@ export interface UserDataAWS {
     interval?: number;
     favoriteCategories?: string[];
     language?: string;
+    learningLanguage?: string;
 }
 
 export interface UserStatusSnapshot {

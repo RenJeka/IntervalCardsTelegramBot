@@ -21,4 +21,23 @@ export const DEFAULT_LANGUAGE: SupportedLanguage = 'en';
 
 // Callback prefixes for inline keyboard
 export const LANGUAGE_CALLBACK_PREFIX = 'lang_';
+export const LEARNING_LANGUAGE_CALLBACK_PREFIX = 'le_lang_';
 export const FAVORITE_CATEGORY_CALLBACK_PREFIX = 'favorite_category:';
+
+export const SUPPORTED_LEARNING_LANGUAGES = [
+    'en', // English
+    'uk', // Ukrainian
+    'pl', // Polish
+    'de', // German
+    'fr', // French
+    'es', // Spanish
+    'it', // Italian
+    'pt', // Portuguese
+    'nl', // Dutch
+    'tr', // Turkish
+    'zh', // Chinese
+    'ja', // Japanese
+    'ko', // Korean
+    'ar', // Arabic
+    'hi'  // Hindi
+] as const;

@@ -22,7 +22,7 @@ TODO: ICTB-39 add AI connections to implement examples using AI APIs via Open Ro
 ## TODO: ICTB-40 in development mode env file should be named .env.development
 ## TODO: ICTB-41 Preset words (e.g. 100 random words).
 ## TODO: ICTB-42 Categories"favorite" in settings. (add in the user settings the ability to add favorite words-categories, on the basis of which examples from LLM and 100 random words will be formed)
-## TODO: ICTB-43 add to the settings the language that the user is currently learning or leave this field as undefined.
+~~## TODO: ICTB-43 add to the settings the language that the user is currently learning or leave this field as undefined.~~
 ## TODO: ICTB-44 - Add 15, 30, and 45 minutes to the interval settings in the settings menu. Convert hours to minutes for the info interval.
 ## TODO: ICTB-45  Code refactoring, for example, take out a 'switch case' for 'messageText' in a 'index.ts' file. Find more places for refactor.
 ## TODO: ICTB-46 Fix error logging (JSON.stringify circular structure). Create a helper to limit 2 levels of nested objects when logging.

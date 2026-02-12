@@ -8,6 +8,7 @@ import {
     getSetIntervalKeyboardOptions,
     getStartLearnKeyboardOptions,
     getRemoveWordsKeyboard,
+    getLearningLanguageKeyboard,
     LANGUAGE_KEYBOARD_OPTIONS,
 } from "../const/keyboards";
 import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
@@ -17,7 +18,7 @@ import { IDbService } from "../common/interfaces/iDbService";
 import { UserItemAWS, UserStatusSnapshot, UserWord } from "../common/interfaces/common";
 import { CommonHelper } from "../helpers/common-helper";
 import { FormatterHelper } from "../helpers/formatter-helper";
-import { DEFAULT_USER_INTERVAL, LANGUAGE_CALLBACK_PREFIX, DEFAULT_LANGUAGE, FAVORITE_CATEGORY_CALLBACK_PREFIX } from "../const/common";
+import { DEFAULT_USER_INTERVAL, LANGUAGE_CALLBACK_PREFIX, LEARNING_LANGUAGE_CALLBACK_PREFIX, DEFAULT_LANGUAGE, FAVORITE_CATEGORY_CALLBACK_PREFIX } from "../const/common";
 import { FAVORITE_CATEGORIES } from "../const/favoriteCategories";
 import { LogService } from "./log.service";
 import { CategoryHelper } from "../helpers/category-helper";
@@ -116,18 +117,19 @@ export class MessageService {
         const userLanguage = await this.getUserLanguageOrDefault(userId);
 
         try {
-            const [userDictionary, currentUserStatus, userInterval, userFavoriteCategories] = await Promise.all([
+            const [userDictionary, currentUserStatus, userInterval, userFavoriteCategories, learningLanguage] = await Promise.all([
                 this.dbService.getUserDictionary(userId),
                 this.dbService.getUserStatus(userId),
                 this.dbService.getUserInterval(userId),
                 this.dbService.getUserFavoriteCategories(userId),
+                this.dbService.getLearningLanguage(userId),
             ]);
 
             const snapshot: UserStatusSnapshot = {
                 status: currentUserStatus,
                 wordsCount: userDictionary?.length ?? 0,
                 intervalHours: userInterval ?? null,
-                learningLanguage: null,
+                learningLanguage: learningLanguage ?? null,
                 favoriteCategories: userFavoriteCategories ?? null,
             };
 
@@ -159,6 +161,20 @@ export class MessageService {
             chatId,
             t('language.current', userLanguage, { language: currentLanguageDisplay }) + '\n\n' + t('language.prompt', userLanguage),
             LANGUAGE_KEYBOARD_OPTIONS
+        );
+    }
+
+    async learningLanguageMessageHandler(bot: TelegramBot, message: Message): Promise<TelegramBot.Message> {
+        const { chatId, userId } = this.getIdsFromMessage(message);
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
+        const currentLearningLanguage = await this.dbService.getLearningLanguage(userId);
+
+        await this.dbService.setUserStatus(userId, UserStatus.SET_LEARNING_LANGUAGE);
+
+        return bot.sendMessage(
+            chatId,
+            t('learningLanguage.current', userLanguage, { language: t(`learningLanguage.${currentLearningLanguage}`, userLanguage) }) + '\n\n' + t('learningLanguage.prompt', userLanguage),
+            getLearningLanguageKeyboard(userLanguage)
         );
     }
 
@@ -220,6 +236,10 @@ export class MessageService {
             return this.setLanguageHandler(bot, userId, chatId, query.data);
         }
 
+        if (query.data.startsWith(LEARNING_LANGUAGE_CALLBACK_PREFIX)) {
+            return this.setLearningLanguageHandler(bot, userId, chatId, query.data);
+        }
+
         if (query.data.startsWith(FAVORITE_CATEGORY_CALLBACK_PREFIX)) {
             return this.toggleFavoriteCategoryHandler(bot, userId, chatId, query.data);
         }
@@ -238,6 +258,9 @@ export class MessageService {
 
             case UserStatus.SET_LANGUAGE:
                 return await this.setLanguageHandler(bot, userId, chatId, query.data);
+
+            case UserStatus.SET_LEARNING_LANGUAGE:
+                return await this.setLearningLanguageHandler(bot, userId, chatId, query.data);
 
             case UserStatus.FAVORITE_CATEGORIES:
                 return await this.toggleFavoriteCategoryHandler(bot, userId, chatId, query.data);
@@ -623,6 +646,41 @@ export class MessageService {
         } catch (error: any) {
             LogService.error(`Error setting language for user ${userId}:`, error);
             const userLanguage = await this.getUserLanguageOrDefault(userId);
+            return bot.sendMessage(
+                chatId,
+                t('errors.generic', userLanguage, { error: error?.message || '' }),
+            );
+        }
+    }
+
+    private async setLearningLanguageHandler(
+        bot: TelegramBot,
+        userId: number,
+        chatId: number,
+        callbackData: string
+    ): Promise<TelegramBot.Message> {
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
+
+        if (!callbackData.startsWith(LEARNING_LANGUAGE_CALLBACK_PREFIX)) {
+            return bot.sendMessage(
+                chatId,
+                t('errors.noData', userLanguage),
+            );
+        }
+
+        const selectedLanguage = callbackData.replace(LEARNING_LANGUAGE_CALLBACK_PREFIX, '');
+
+        try {
+            await this.dbService.setLearningLanguage(userId, selectedLanguage);
+            await this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
+
+            return bot.sendMessage(
+                chatId,
+                t('learningLanguage.set', userLanguage, { language: t(`learningLanguage.${selectedLanguage}`, userLanguage) }),
+                getReplyKeyboardOptions(userLanguage)
+            );
+        } catch (error: any) {
+            LogService.error(`Error setting learning language for user ${userId}:`, error);
             return bot.sendMessage(
                 chatId,
                 t('errors.generic', userLanguage, { error: error?.message || '' }),
