@@ -6,5 +6,6 @@ export enum UserStatus {
     STOP_LEARN = 'stop_learn',
     SET_INTERVAL = 'set_interval',
     SET_LANGUAGE = 'set_language',
+    SET_LEARNING_LANGUAGE = 'set_learning_language',
     FAVORITE_CATEGORIES = 'favorite_categories',
 }

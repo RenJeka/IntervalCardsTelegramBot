@@ -1,7 +1,11 @@
 import { InlineKeyboardButton, SendMessageOptions } from "node-telegram-bot-api";
 import { UserItemAWS } from "../common/interfaces/common";
 import { t } from "../services/i18n.service";
-import { LANGUAGE_CALLBACK_PREFIX } from "../const/common";
+import {
+    LANGUAGE_CALLBACK_PREFIX,
+    LEARNING_LANGUAGE_CALLBACK_PREFIX,
+    SUPPORTED_LEARNING_LANGUAGES
+} from "../const/common";
 import { CategoryHelper } from "../helpers/category-helper";
 import { SupportedLanguage } from "../common/interfaces/common";
 
@@ -101,6 +105,8 @@ export function getFavoriteCategoriesKeyboard(selectedCategories: string[], lang
     };
 }
 
+
+
 export const LANGUAGE_KEYBOARD_OPTIONS: SendMessageOptions = {
     reply_markup: {
         inline_keyboard: [
@@ -110,3 +116,16 @@ export const LANGUAGE_KEYBOARD_OPTIONS: SendMessageOptions = {
         resize_keyboard: true
     }
 };
+
+export function getLearningLanguageKeyboard(lang: SupportedLanguage): SendMessageOptions {
+    const keyboard = SUPPORTED_LEARNING_LANGUAGES.map((code) => {
+        return [{ text: t(`learningLanguage.${code}`, lang), callback_data: `${LEARNING_LANGUAGE_CALLBACK_PREFIX}${code}` }];
+    });
+
+    return {
+        reply_markup: {
+            inline_keyboard: keyboard,
+            resize_keyboard: true
+        }
+    };
+}

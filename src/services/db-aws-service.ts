@@ -314,6 +314,63 @@ export class DbAwsService implements IDbService {
         }
     }
 
+    /**
+     * Set user learning language preference
+     * @param userId
+     * @param language Language code (e.g. 'en', 'de', 'es')
+     */
+    async setLearningLanguage(userId: number, language: string): Promise<DbResponse> {
+        const updateItemParams: UpdateItemCommandInput = {
+            TableName: this.tableNames.users,
+            Key: { '_id': { S: userId.toString() } },
+            UpdateExpression: 'SET #learningLanguage = :learningLanguage',
+            ExpressionAttributeNames: { '#learningLanguage': 'learningLanguage' },
+            ExpressionAttributeValues: { ':learningLanguage': { S: language } },
+            ReturnConsumedCapacity: 'INDEXES'
+        };
+
+        const command = new UpdateItemCommand(updateItemParams);
+        const response: UpdateItemCommandOutput = await this.client.send(command) as UpdateItemCommandOutput;
+
+        if (response?.$metadata?.httpStatusCode !== 200) {
+            throw new Error(`❌️Something went wrong while writing learning language to DB: ${LogService.safeStringify(response)}`);
+        }
+
+        return {
+            success: true,
+            status: DbResponseStatus.OK,
+            message: `✔️ User learning language has been written successfully`
+        };
+    }
+
+    async getLearningLanguage(userId: number): Promise<string> {
+        if (!userId) {
+            return 'en';
+        }
+
+        const scanInput: ScanCommandInput = {
+            TableName: this.tableNames.users,
+            ReturnConsumedCapacity: "INDEXES",
+            FilterExpression: "#id = :uid",
+            ExpressionAttributeNames: { '#id': '_id' },
+            ExpressionAttributeValues: { ':uid': { S: userId.toString() } }
+        };
+
+        try {
+            const command = new ScanCommand(scanInput);
+            const response: ScanCommandOutput = await this.client.send(command) as ScanCommandOutput;
+
+            if (!response || !response?.Items || response?.Items?.length === 0) {
+                return 'en';
+            }
+
+            return unmarshall(response.Items[0])?.learningLanguage ?? 'en';
+
+        } catch (error) {
+            throw new Error(`Something wrong while scanning DynamoDB: ${LogService.safeStringify(error)}`);
+        }
+    }
+
     async addUserFavoriteCategory(userId: number, category: string): Promise<DbResponse> {
         const updateItemParams: UpdateItemCommandInput = {
             TableName: this.tableNames.users,

@@ -25,6 +25,26 @@
         "english": "🇬🇧 English",
         "ukrainian": "🇺🇦 Українська"
     },
+    "learningLanguage": {
+        "prompt": "Choose the language you want to learn:",
+        "current": "Current learning language: {{language}}",
+        "set": "Learning language set to {{language}}.",
+        "en": "🇬🇧 English",
+        "uk": "🇺🇦 Ukrainian",
+        "pl": "🇵🇱 Polish",
+        "de": "🇩🇪 German",
+        "fr": "🇫🇷 French",
+        "es": "🇪🇸 Spanish",
+        "it": "🇮🇹 Italian",
+        "pt": "🇵🇹 Portuguese",
+        "nl": "🇳🇱 Dutch",
+        "tr": "🇹🇷 Turkish",
+        "zh": "🇨🇳 Chinese",
+        "ja": "🇯🇵 Japanese",
+        "ko": "🇰🇷 Korean",
+        "ar": "🇸🇦 Arabic",
+        "hi": "🇮🇳 Hindi"
+    },
     "favoriteCategories": {
         "prompt": "Your favorite categories:\n{{categories}}\n\nChoose categories to add:",
         "noCategories": "No favorite categories selected yet.",

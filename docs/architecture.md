@@ -50,7 +50,7 @@ IntervalCardsTelegramBot — це проєкт на Node.js/TypeScript, який
 - **Таблиці:** використовуються 2 таблиці — `users` і `words`. Назви беруться з env.
   - `users`: `_id`, `status`, `interval`
   - `words`: `_id`, `user_id`, `word`, опційно `translation`, `example`, `comment`
-- **Операції:** `initUser`, `writeWordByUserId` (з перевіркою дубліката), `removeWordById`, `setUserStatus`, `getUserStatus`, `setUserInterval`, `getUserInterval`, `getUserDictionary`, `getAllUsersWithStatus`, `checkIsUserExist`.
+- **Операції:** `initUser`, `writeWordByUserId` (з перевіркою дубліката), `removeWordById`, `setUserStatus`, `getUserStatus`, `setUserInterval`, `getUserInterval`, `getUserDictionary`, `getAllUsersWithStatus`, `checkIsUserExist`, `setUserLanguage`, `getUserLanguage`, `setLearningLanguage`, `getLearningLanguage`.
 - **Технології:** AWS SDK v3 (`@aws-sdk/client-dynamodb`) + `marshall/unmarshall`. Для простоти використовуються `Scan` запити.
 
 ### 4.2 `ScheduleService`
@@ -102,7 +102,7 @@ FSM базується на `UserStatus`, який зберігається в `
 
 ## 6. Модель даних
 
-- **User:** `_id` (Telegram user id), `status` (`UserStatus`), `interval` (години), `language` (код мови, опційно), `favoriteCategories` (масив категорій, опційно). Створюється ліниво через `initUser` з дефолтами: `DEFAULT`, `1 год`, мова визначається з Telegram settings.
+- **User:** `_id` (Telegram user id), `status` (`UserStatus`), `interval` (години), `language` (код мови, опційно), `learningLanguage` (код мови, опційно), `favoriteCategories` (масив категорій, опційно). Створюється ліниво через `initUser` з дефолтами: `DEFAULT`, `1 год`, мова визначається з Telegram settings, мова вивчення — `en`.
 - **Word:** `_id` (timestamp), `user_id` (string), `word`, опційно `translation`, `example`, `comment`. Видалення виконується по ключу (`_id`, `user_id`).
 
 ## 7. Потік планування

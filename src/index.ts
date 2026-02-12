@@ -38,6 +38,7 @@ const commands: BotCommand[] = [
     { command: 'set_interval', description: 'Set the time interval for learning' },
     { command: 'set_favorite_categories', description: 'Select the favorite categories for learning' },
     { command: 'language', description: 'Change interface language' },
+    { command: 'learning_language', description: 'Change learning language' },
     { command: 'my_status', description: 'Show your current status and settings' }
 ];
 
@@ -84,6 +85,10 @@ bot.on('message', async (msg: Message, metadata: Metadata) => {
 
         case '/language':
             await messageService.languageMessageHandler(bot, msg);
+            break;
+
+        case '/learning_language':
+            await messageService.learningLanguageMessageHandler(bot, msg);
             break;
 
         default:
