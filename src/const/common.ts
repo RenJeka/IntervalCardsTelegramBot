@@ -46,7 +46,7 @@ export const SUPPORTED_LEARNING_LANGUAGES = [
 export const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 export const DEFAULT_LLM_MODEL = 'openai/gpt-5-nano';
 export const DEFAULT_LLM_TEMPERATURE = 0.7;
-export const DEFAULT_LLM_MAX_TOKENS = 500;
+export const DEFAULT_LLM_MAX_TOKENS = 2000;
 export const DEFAULT_WORDS_PER_SET = 10;
 
 // Cache configuration

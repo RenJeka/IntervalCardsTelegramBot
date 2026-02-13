@@ -9,7 +9,7 @@ export interface LLMMessage {
 
 export interface LLMCompletionRequest {
     model: string;
-    messages: LLMMessage[];
+    messages: LLMMessage[] | null;
     temperature?: number;
     max_tokens?: number;
     top_p?: number;

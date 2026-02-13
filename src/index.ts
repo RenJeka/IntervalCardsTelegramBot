@@ -13,6 +13,11 @@ import { MessageService } from "./services/message-service";
 import { ScheduleService } from "./services/schedule-service";
 import { LogService } from "./services/log.service";
 import { BotInitService } from "./services/bot-init.service";
+ 
+// LLM exports
+export { LLMService } from './services/llm.service';
+export { LLMHelper } from './helpers/llm-helper';
+export * from './common/interfaces/llm';
 
 dotEnvConfig({ path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env' });
 const TB_TOKEN: string = process.env.TELEGRAM_BOT_TOKEN!;
