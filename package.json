@@ -35,6 +35,7 @@
     "@aws-sdk/client-dynamodb": "^3.650.0",
     "@aws-sdk/util-dynamodb": "^3.650.0",
     "aws-sdk": "^2.1691.0",
+    "axios": "^1.13.5",
     "chalk": "4.1.2",
     "cron": "^3.1.7",
     "dotenv": "16.3.1",
