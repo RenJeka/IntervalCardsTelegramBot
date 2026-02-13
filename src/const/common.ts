@@ -41,3 +41,12 @@ export const SUPPORTED_LEARNING_LANGUAGES = [
     'ar', // Arabic
     'hi'  // Hindi
 ] as const;
+
+// LLM Configuration
+export const DEFAULT_LLM_MODEL = 'openai/gpt-5-nano';
+export const DEFAULT_LLM_TEMPERATURE = 0.7;
+export const DEFAULT_LLM_MAX_TOKENS = 500;
+export const DEFAULT_WORDS_PER_SET = 10;
+
+// Cache configuration
+export const LLM_CACHE_TTL_MS = 1000 * 60 * 60 * 24; // 24 hours
