@@ -170,6 +170,25 @@ Core behavior:
    - random categories fallback works.
 8. LLM failure/timeout path returns localized error and does not break bot state.
 
+### 8) Documentation Update
+
+**Files**:
+- `docs/requirements.md`
+- `docs/architecture.md`
+- `docs/architecture-rules.md` (only if rules are changed)
+- `docs/tasksTrackingSystem.md`
+- `docs/plans.md`
+
+**Changes**:
+- Add/adjust requirements for `/add_words_set` flow:
+  - command trigger
+  - confirmation step
+  - unique-only insertion behavior
+  - language mapping (learning language for words, UI language for translations).
+- Update architecture docs with generic confirm module and words-set flow.
+- Mark ICTB-41 progress in tracking docs after implementation.
+- Keep `docs/plans.md` status aligned with implementation progress.
+
 ## Risks and Mitigations
 
 - **Risk**: LLM returns duplicates or invalid JSON.  
@@ -190,4 +209,108 @@ Core behavior:
 - [ ] Implement preset words add flow in message service.
 - [ ] Add localization keys (`en`, `uk`).
 - [ ] Perform manual verification scenarios.
+- [ ] Update documentation (`requirements`, `architecture`, tracking docs).
 
+## Manual Test Cases (Detailed)
+
+### TC-01: Command Availability in Menu
+- **Preconditions**: bot is running; user started chat.
+- **Steps**:
+  1. Open Telegram bot menu.
+  2. Check commands list.
+- **Expected**:
+  - `/add_words_set` is present with localized description for current UI language.
+
+### TC-02: Confirmation Dialog Appears
+- **Preconditions**: user in default state.
+- **Steps**:
+  1. Send `/add_words_set`.
+- **Expected**:
+  - Bot sends confirmation message.
+  - Inline buttons include `YES` and `NO (Cancel)`.
+
+### TC-03: Cancel Path
+- **Preconditions**: confirmation message shown.
+- **Steps**:
+  1. Press `NO (Cancel)`.
+- **Expected**:
+  - No words are added.
+  - User state returns to default.
+  - Bot sends cancellation confirmation.
+
+### TC-04: Happy Path (50 Words Added)
+- **Preconditions**: user has empty/low dictionary; LLM is available.
+- **Steps**:
+  1. Send `/add_words_set`.
+  2. Press `YES`.
+  3. Wait until completion.
+- **Expected**:
+  - Bot adds up to `PRESET_WORDS_SET_COUNT` (`50`) unique words.
+  - Final message contains requested vs added count.
+
+### TC-05: Re-Run Adds Additional Set
+- **Preconditions**: TC-04 completed at least once.
+- **Steps**:
+  1. Run `/add_words_set` again.
+  2. Confirm `YES`.
+- **Expected**:
+  - New words are appended to dictionary.
+  - Existing words are not removed/replaced.
+
+### TC-06: Duplicate Protection with Existing Dictionary
+- **Preconditions**: dictionary already contains many common words.
+- **Steps**:
+  1. Run `/add_words_set`.
+  2. Confirm `YES`.
+- **Expected**:
+  - Only unique words are inserted.
+  - No duplicate words appear in final dictionary.
+
+### TC-07: Iterative Refill for Remaining Count
+- **Preconditions**: prompt/model tends to return duplicates.
+- **Steps**:
+  1. Run `/add_words_set`.
+  2. Confirm `YES`.
+  3. Inspect logs/results for multi-attempt generation.
+- **Expected**:
+  - Service re-calls LLM for missing words (`remaining = 50 - addedUnique`).
+  - Stops on target reached or max attempts.
+
+### TC-08: Favorites-Based Generation
+- **Preconditions**: user has favorite categories set.
+- **Steps**:
+  1. Run `/add_words_set`.
+  2. Confirm `YES`.
+- **Expected**:
+  - Generated words align with favorite categories context.
+
+### TC-09: Fallback When Favorites Empty
+- **Preconditions**: user has no favorite categories.
+- **Steps**:
+  1. Run `/add_words_set`.
+  2. Confirm `YES`.
+- **Expected**:
+  - Bot uses random categories fallback.
+  - Flow succeeds without requiring favorite categories setup.
+
+### TC-10: Language Mapping Validation
+- **Preconditions**:
+  - UI language is, for example, `uk`.
+  - learning language is, for example, `de`.
+- **Steps**:
+  1. Run `/add_words_set`.
+  2. Confirm `YES`.
+  3. Inspect added words and translations.
+- **Expected**:
+  - Words are in learning language (`de` in this example).
+  - Translations are in UI language (`uk` in this example).
+
+### TC-11: LLM Error Handling
+- **Preconditions**: simulate invalid API key or temporary LLM failure.
+- **Steps**:
+  1. Run `/add_words_set`.
+  2. Confirm `YES`.
+- **Expected**:
+  - User gets localized error message.
+  - Bot does not crash.
+  - User state is restored to safe/default state.
