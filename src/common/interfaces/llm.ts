@@ -13,6 +13,14 @@ export interface LLMCompletionRequest {
     temperature?: number;
     max_tokens?: number;
     top_p?: number;
+
+    // @see https://openrouter.ai/docs/guides/best-practices/reasoning-tokens
+    reasoning?: {
+        effort?: 'xhigh' | 'high' | 'medium' | 'low' | 'minimal' | 'none';
+        max_tokens?: number;
+        exclude?: boolean;
+        enabled?: boolean;
+    };
 }
 
 export interface LLMCompletionResponse {

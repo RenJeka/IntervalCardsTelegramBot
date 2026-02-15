@@ -56,3 +56,10 @@ git merge --no-ff release/1.0.0
 git branch -d release/1.0.0
 
 ```
+
+
+### NUANCES
+
+#### LLM
+
+* For some models in OpenRouter API Reasoning is mandatory for this endpoint and cannot be disabled

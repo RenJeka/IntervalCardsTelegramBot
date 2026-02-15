@@ -26,7 +26,6 @@ export class LLMService {
             model?: string;
             temperature?: number;
             max_tokens?: number;
-            
         }
     ): Promise<string> {
         if (!this.apiKey) {
@@ -37,11 +36,14 @@ export class LLMService {
             model: options?.model || this.llmModel,
             messages: messages as any,
             temperature: options?.temperature ?? DEFAULT_LLM_TEMPERATURE,
-            max_tokens: options?.max_tokens ?? DEFAULT_LLM_MAX_TOKENS
+            max_tokens: options?.max_tokens ?? DEFAULT_LLM_MAX_TOKENS,
+            reasoning: {
+                effort: 'none'
+            }
         };
 
 
-        // // DEBUG:
+        // // // DEBUG REQUEST:
 
         // console.log('DEBUG: OpenRouter Request Body:', JSON.stringify(requestBody, null, 2));
 
@@ -60,7 +62,7 @@ export class LLMService {
                 }
             );
 
-            // // DEBUG:
+            // //  DEBUG  RESPONSE:
 
             // console.log('DEBUG: Raw OpenRouter response:', JSON.stringify(response.data, null, 2));
 
@@ -93,7 +95,7 @@ export class LLMService {
     private static handleError(error: unknown): never {
         if (axios.isAxiosError(error)) {
             const axiosError = error as AxiosError<LLMError>;
-            
+
             if (axiosError.response) {
                 const status = axiosError.response.status;
                 const errorData = axiosError.response.data;
