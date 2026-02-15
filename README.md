@@ -63,3 +63,27 @@ git branch -d release/1.0.0
 #### LLM
 
 * For some models in OpenRouter API Reasoning is mandatory for this endpoint and cannot be disabled
+
+## LLM Integration
+
+This bot uses [OpenRouter API](https://openrouter.ai) to generate vocabulary word sets using AI.
+
+### Configuration
+
+Add the following to your `.env` file:
+
+```env
+OPENROUTER_API_KEY=your_api_key_here
+OPENROUTER_MODEL=google/gemini-2.5-flash-lite
+```
+
+Get your API key at: [openrouter.ai/keys](https://openrouter.ai/keys)
+
+### Rate Limits
+
+* **Free tier**: 50 requests/day, 20 requests/minute
+* **Paid tier ($10+)**: unlimited requests on paid models
+
+### Caching
+
+Generated word sets are cached in-memory for 24 hours to reduce API calls and costs.

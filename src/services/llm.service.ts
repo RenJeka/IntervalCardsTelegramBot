@@ -13,12 +13,19 @@ import {
     OPENROUTER_API_URL
 } from '../const/common';
 
+/**
+ * Service for interacting with OpenRouter LLM API
+ */
 export class LLMService {
     private static readonly apiKey = process.env.OPENROUTER_API_KEY;
     private static readonly llmModel = process.env.OPENROUTER_MODEL || DEFAULT_LLM_MODEL;
 
     /**
      * Send a completion request to OpenRouter API
+     * @param messages - Array of messages for the completion
+     * @param options - Optional configuration (model, temperature, max_tokens)
+     * @returns A promise that resolves to the completion response string
+     * @throws Error if API key is missing, request fails, or response is malformed
      */
     static async complete(
         messages: LLMMessage[] | null,
@@ -90,7 +97,10 @@ export class LLMService {
     }
 
     /**
-     * Handle API errors and convert to user-friendly messages
+     * Handle API errors and convert them to user-friendly messages
+     * @param error - The error object to handle
+     * @returns Never (always throws an error)
+     * @private
      */
     private static handleError(error: unknown): never {
         if (axios.isAxiosError(error)) {

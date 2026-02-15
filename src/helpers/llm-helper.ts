@@ -17,9 +17,15 @@ const wordSetCache = new Map<string, {
     timestamp: number;
 }>();
 
+/**
+ * Helper class for high-level LLM operations, such as generating word sets
+ */
 export class LLMHelper {
     /**
      * Generate a set of vocabulary words using LLM
+     * @param params - Parameters for word set generation (categories, languages, count)
+     * @returns A promise that resolves to the generation result containing words and cache status
+     * @throws Error if generation fails or response is invalid
      */
     static async generateWordSet(
         params: WordSetGenerationParams
@@ -34,7 +40,7 @@ export class LLMHelper {
         // Check cache first
         const cacheKey = this.getCacheKey(categories, learningLanguage, nativeLanguage, count);
         const cached = this.getFromCache(cacheKey);
-        
+
         if (cached) {
             LogService.info('Word set retrieved from cache', { cacheKey });
             return {
@@ -80,6 +86,10 @@ export class LLMHelper {
 
     /**
      * Parse LLM response and extract word/translation pairs
+     * @param response - The raw JSON string from LLM
+     * @returns Array of generated words
+     * @throws Error if response format is invalid
+     * @private
      */
     private static parseWordSetResponse(response: string): GeneratedWord[] {
         try {
@@ -97,7 +107,7 @@ export class LLMHelper {
 
             // Validate and filter valid entries
             const words: GeneratedWord[] = parsed
-                .filter(item => 
+                .filter(item =>
                     item &&
                     typeof item === 'object' &&
                     typeof item.word === 'string' &&
@@ -134,8 +144,14 @@ export class LLMHelper {
     }
 
     /**
-     * Generate cache key
+     * Generate cache key for the given parameters
      * Categories are sorted to ensure the same set of categories yields the same cache key
+     * @param categories - Array of categories
+     * @param learningLanguage - Language being learned
+     * @param nativeLanguage - User's native language
+     * @param count - Number of words
+     * @returns The generated cache key string
+     * @private
      */
     private static getCacheKey(
         categories: string[],
@@ -152,7 +168,7 @@ export class LLMHelper {
      */
     private static getFromCache(key: string): GeneratedWord[] | null {
         const cached = wordSetCache.get(key);
-        
+
         if (!cached) {
             return null;
         }

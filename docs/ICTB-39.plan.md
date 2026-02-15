@@ -30,7 +30,7 @@
 
 ```typescript
 // LLM Configuration
-export const DEFAULT_LLM_MODEL = "openai/gpt-5-nano";
+export const DEFAULT_LLM_MODEL = "google/gemini-2.5-flash-lite";
 export const DEFAULT_LLM_TEMPERATURE = 0.7;
 export const DEFAULT_LLM_MAX_TOKENS = 500;
 export const DEFAULT_WORDS_PER_SET = 10;
@@ -90,7 +90,7 @@ Example format:
 ```env
 # OpenRouter API Configuration
 OPENROUTER_API_KEY=your_api_key_here
-OPENROUTER_MODEL=openai/gpt-5-nano
+OPENROUTER_MODEL=google/gemini-2.5-flash-lite
 ```
 
 **Файл**: `.env.example` (оновити)
@@ -100,7 +100,7 @@ OPENROUTER_MODEL=openai/gpt-5-nano
 ```env
 # OpenRouter API Configuration
 OPENROUTER_API_KEY=
-OPENROUTER_MODEL=openai/gpt-5-nano
+OPENROUTER_MODEL=google/gemini-2.5-flash-lite
 ```
 
 ---
@@ -632,7 +632,7 @@ Add the following to your `.env` file:
 
 ```env
 OPENROUTER_API_KEY=your_api_key_here
-OPENROUTER_MODEL=openai/gpt-5-nano
+OPENROUTER_MODEL=google/gemini-2.5-flash-lite
 ```
 ````
 
