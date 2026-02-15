@@ -7,6 +7,7 @@
     "start": "npm run dev",
     "dev": "rm -rf dist && cross-env NODE_ENV=development npx nodemon",
     "prod": "rm -rf dist && tsc && cross-env NODE_ENV=production node dist/index.js",
+    "test-llm": "npx ts-node src/test-llm.ts",
     "build-prod": "rm -rf dist && tsc && cp package.json .env.production dist && cd dist && npm install --production",
     "docker-build": "npm run build-prod && docker build -t telegram-bot-docker-alpine-production .",
     "docker-run": "docker run -d telegram-bot-docker-alpine-production"
@@ -35,6 +36,7 @@
     "@aws-sdk/client-dynamodb": "^3.650.0",
     "@aws-sdk/util-dynamodb": "^3.650.0",
     "aws-sdk": "^2.1691.0",
+    "axios": "^1.13.5",
     "chalk": "4.1.2",
     "cron": "^3.1.7",
     "dotenv": "16.3.1",
