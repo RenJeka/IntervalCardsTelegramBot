@@ -1,43 +1,45 @@
-import { config as dotEnvConfig } from 'dotenv'
+import { config as dotEnvConfig } from 'dotenv';
 import chalk from 'chalk';
-import TelegramBot, { CallbackQuery, Message, Metadata } from 'node-telegram-bot-api'
+import TelegramBot, {
+    CallbackQuery,
+    Message,
+    Metadata,
+} from 'node-telegram-bot-api';
 import {
     AddingWordsReplyKeyboardData,
     MainReplyKeyboardData,
     RemovingWordsReplyKeyboardData,
-    StartLearningReplyKeyboardData
-} from "./common/enums/mainInlineKeyboard";
-import { CommandHelper, UserAction } from "./helpers/command-helper";
-import { DbAwsService } from "./services/db-aws-service";
-import { MessageService } from "./services/message-service";
-import { ScheduleService } from "./services/schedule-service";
-import { LogService } from "./services/log.service";
-import { BotInitService } from "./services/bot-init.service";
- 
+    StartLearningReplyKeyboardData,
+} from './common/enums/mainInlineKeyboard';
+import { CommandHelper, UserAction } from './helpers/command-helper';
+import { DbAwsService } from './services/db-aws-service';
+import { MessageService } from './services/message-service';
+import { ScheduleService } from './services/schedule-service';
+import { LogService } from './services/log.service';
+import { BotInitService } from './services/bot-init.service';
+
 // LLM exports
 export { LLMService } from './services/llm.service';
 export { LLMHelper } from './helpers/llm-helper';
 export * from './common/interfaces/llm';
 
-dotEnvConfig({ path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env' });
+dotEnvConfig({
+    path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env',
+});
 const TB_TOKEN: string = process.env.TELEGRAM_BOT_TOKEN!;
 const nodeEnv: string = process.env.NODE_ENV!;
 
 LogService.info(`TB_TOKEN:  ${chalk.gray(TB_TOKEN)}`);
-const bot = new TelegramBot(TB_TOKEN,
-    {
-        polling: {
-            interval: 300,
-            autoStart: true
-        }
-    });
+const bot = new TelegramBot(TB_TOKEN, {
+    polling: {
+        interval: 300,
+        autoStart: true,
+    },
+});
 
 const dbAwsService = new DbAwsService();
 const scheduleService = new ScheduleService(dbAwsService);
-const messageService = new MessageService(
-    dbAwsService,
-    scheduleService
-);
+const messageService = new MessageService(dbAwsService, scheduleService);
 
 const botInitService = new BotInitService(scheduleService);
 botInitService.initBot(bot);
@@ -74,6 +76,10 @@ bot.on('message', async (msg: Message, metadata: Metadata) => {
 
         case '/learning_language':
             await messageService.learningLanguageMessageHandler(bot, msg);
+            break;
+
+        case '/add_words_set':
+            await messageService.addWordsSetMessageHandler(bot, msg);
             break;
 
         default:
@@ -114,4 +120,6 @@ bot.on('callback_query', async (query: CallbackQuery) => {
     await messageService.generalCallbackHandler(bot, query);
 });
 
-bot.on("polling_error", (err: any) => LogService.error(chalk.red(`❌ ERROR:`), err));
+bot.on('polling_error', (err: any) =>
+    LogService.error(chalk.red(`❌ ERROR:`), err)
+);

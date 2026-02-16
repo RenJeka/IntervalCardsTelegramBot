@@ -169,6 +169,10 @@
         "set_favorite_categories": "Select the favorite categories for learning",
         "language": "Change interface language",
         "learning_language": "Change learning language",
-        "my_status": "Show your current status and settings"
+        "my_status": "Show your current status and settings",
+        "add_words_set": "Add preset set of 50 words"
+    },
+    "addWordsSet": {
+        "confirm": "Do you want to generate and add 50 words to your dictionary? This will use AI to find words based on your favorite categories."
     }
 }
