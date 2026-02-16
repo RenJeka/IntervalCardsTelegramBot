@@ -1087,7 +1087,8 @@ export class MessageService {
                 const wordWithTranslation = `${item.word} ${ADD_USER_ITEM_SEPARATOR} ${item.translation}`;
                 const response = await this.dbService.writeWordByUserId(
                     userId,
-                    wordWithTranslation
+                    wordWithTranslation,
+                    false // Skip duplicate check — words are pre-validated via LLM exclusion list
                 );
                 if (response.success) {
                     addedCount++;
