@@ -8,4 +8,5 @@ export enum UserStatus {
     SET_LANGUAGE = 'set_language',
     SET_LEARNING_LANGUAGE = 'set_learning_language',
     FAVORITE_CATEGORIES = 'favorite_categories',
+    CONFIRM_ACTION = 'confirm_action',
 }

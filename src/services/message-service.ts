@@ -10,6 +10,7 @@ import {
     getRemoveWordsKeyboard,
     getLearningLanguageKeyboard,
     LANGUAGE_KEYBOARD_OPTIONS,
+    getConfirmActionKeyboard,
 } from "../const/keyboards";
 import { DbResponse, DbResponseStatus } from "../common/interfaces/dbResponse";
 import { ScheduleService } from "./schedule-service";
@@ -18,7 +19,7 @@ import { IDbService } from "../common/interfaces/iDbService";
 import { UserItemAWS, UserStatusSnapshot, UserWord } from "../common/interfaces/common";
 import { CommonHelper } from "../helpers/common-helper";
 import { FormatterHelper } from "../helpers/formatter-helper";
-import { DEFAULT_USER_INTERVAL, LANGUAGE_CALLBACK_PREFIX, LEARNING_LANGUAGE_CALLBACK_PREFIX, DEFAULT_LANGUAGE, FAVORITE_CATEGORY_CALLBACK_PREFIX } from "../const/common";
+import { DEFAULT_USER_INTERVAL, LANGUAGE_CALLBACK_PREFIX, LEARNING_LANGUAGE_CALLBACK_PREFIX, DEFAULT_LANGUAGE, FAVORITE_CATEGORY_CALLBACK_PREFIX, CONFIRM_ACTION_CALLBACK_PREFIX } from "../const/common";
 import { FAVORITE_CATEGORIES } from "../const/favoriteCategories";
 import { LogService } from "./log.service";
 import { CategoryHelper } from "../helpers/category-helper";
@@ -242,6 +243,10 @@ export class MessageService {
 
         if (query.data.startsWith(FAVORITE_CATEGORY_CALLBACK_PREFIX)) {
             return this.toggleFavoriteCategoryHandler(bot, userId, chatId, query.data);
+        }
+
+        if (query.data.startsWith(CONFIRM_ACTION_CALLBACK_PREFIX)) {
+            return this.handleConfirmActionCallback(bot, userId, chatId, query.data, query.message?.message_id);
         }
 
         switch (currentUserStatus) {
@@ -685,6 +690,107 @@ export class MessageService {
                 chatId,
                 t('errors.generic', userLanguage, { error: error?.message || '' }),
             );
+        }
+    }
+
+    /**
+     * Generic confirmation request
+     */
+    async requestActionConfirmation(
+        bot: TelegramBot,
+        chatId: number,
+        userId: number,
+        actionKey: string,
+        text: string
+    ): Promise<TelegramBot.Message> {
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
+        await this.dbService.setUserStatus(userId, UserStatus.CONFIRM_ACTION);
+        return bot.sendMessage(
+            chatId,
+            text,
+            getConfirmActionKeyboard(actionKey, userLanguage)
+        );
+    }
+
+    /**
+     * Handle confirmation callback (YES/NO)
+     */
+    private async handleConfirmActionCallback(
+        bot: TelegramBot,
+        userId: number,
+        chatId: number,
+        callbackData: string,
+        messageId?: number
+    ): Promise<TelegramBot.Message> {
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
+
+        if (!callbackData.startsWith(CONFIRM_ACTION_CALLBACK_PREFIX)) {
+            return bot.sendMessage(
+                chatId,
+                t('errors.noData', userLanguage),
+            );
+        }
+
+        // Parse: "confirm_action:yes:actionKey" or "confirm_action:no:actionKey"
+        const withoutPrefix = callbackData.replace(CONFIRM_ACTION_CALLBACK_PREFIX, '');
+        const [yesOrNo, actionKey] = withoutPrefix.split(':');
+
+        if (yesOrNo === 'no') {
+            // Cancel action
+            await this.dbService.setUserStatus(userId, UserStatus.DEFAULT);
+
+            if (messageId) {
+                try {
+                    await bot.editMessageText(
+                        t('confirmation.cancelled', userLanguage),
+                        {
+                            chat_id: chatId,
+                            message_id: messageId
+                        }
+                    );
+                } catch (error: any) {
+                    LogService.error('Error editing message on cancel:', error);
+                }
+            }
+
+            return bot.sendMessage(
+                chatId,
+                t('navigation.home', userLanguage),
+                getReplyKeyboardOptions(userLanguage)
+            );
+        }
+
+        if (yesOrNo === 'yes') {
+            return this.dispatchConfirmedAction(bot, userId, chatId, actionKey, messageId);
+        }
+
+        return bot.sendMessage(
+            chatId,
+            t('errors.noData', userLanguage),
+        );
+    }
+
+    /**
+     * Dispatch confirmed action by actionKey
+     */
+    private async dispatchConfirmedAction(
+        bot: TelegramBot,
+        userId: number,
+        chatId: number,
+        actionKey: string,
+        messageId?: number
+    ): Promise<TelegramBot.Message> {
+        const userLanguage = await this.getUserLanguageOrDefault(userId);
+
+        switch (actionKey) {
+            // Future actions will be added here (e.g., 'add_words_set')
+            default:
+                LogService.error(`Unknown action key: ${actionKey}`);
+                return bot.sendMessage(
+                    chatId,
+                    t('errors.generic', userLanguage, { error: 'Unknown action' }),
+                    getReplyKeyboardOptions(userLanguage)
+                );
         }
     }
 }

@@ -88,6 +88,9 @@
     "navigation": {
         "home": "You are on the 'Home page'"
     },
+    "confirmation": {
+        "cancelled": "Action cancelled."
+    },
     "errors": {
         "generic": "Something went wrong: {{error}}. Please, try again",
         "noMessage": "I did not receive any message from You, Please, try again.",
@@ -103,7 +106,9 @@
         "stopLearn": "🟥️ Stop learn",
         "finishAdding": "✔️ Finish adding words",
         "finishRemoving": "✔️ Finish removing words",
-        "cancel": "❌️ Cancel"
+        "cancel": "❌️ Cancel",
+        "yes": "✅ Yes",
+        "no": "❌ No (Cancel)"
     },
     "categories": {
         "Animals": "Animals",
