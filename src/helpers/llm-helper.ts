@@ -45,8 +45,6 @@ export class LLMHelper {
             excludedWords = [],
         } = params;
 
-        // Check cache first (only if no specific exclusions, as cache might contain excluded words)
-        // If we have strict exclusions, we skip cache to ensure uniqueness
         const cacheKey = this.getCacheKey(
             categories,
             learningLanguage,
@@ -54,52 +52,103 @@ export class LLMHelper {
             count
         );
 
-        if (excludedWords.length === 0) {
-            const cached = this.getFromCache(cacheKey);
-            if (cached) {
-                LogService.info('Word set retrieved from cache', { cacheKey });
-                return {
-                    words: cached,
-                    cached: true,
-                };
-            }
+        // 1. Try to get from cache
+        const cachedResult = this.tryGetFromCache(cacheKey, excludedWords);
+        if (cachedResult) {
+            return cachedResult;
         }
 
-        // Generate new word set with retries for uniqueness
+        // 2. Generate new word set with retries for uniqueness
+        try {
+            const generatedWords = await this.generateUniqueWordsLoop(
+                params,
+                excludedWords
+            );
+
+            // 3. Cache the result if applicable
+            if (excludedWords.length === 0 && generatedWords.length >= count) {
+                this.saveToCache(cacheKey, generatedWords);
+            }
+
+            LogService.info('Word set generated successfully', {
+                categories: categories.join(', '),
+                learningLanguage,
+                count: generatedWords.length,
+            });
+
+            return {
+                words: generatedWords,
+                cached: false,
+            };
+        } catch (error) {
+            LogService.error('Failed to generate word set', error);
+            throw error;
+        }
+    }
+
+    private static tryGetFromCache(
+        cacheKey: string,
+        excludedWords: string[]
+    ): WordSetGenerationResult | null {
+        if (excludedWords.length > 0) {
+            return null;
+        }
+
+        const cached = this.getFromCache(cacheKey);
+        if (cached) {
+            LogService.info('Word set retrieved from cache', { cacheKey });
+            return {
+                words: cached,
+                cached: true,
+            };
+        }
+
+        return null;
+    }
+
+    private static async generateUniqueWordsLoop(
+        params: WordSetGenerationParams,
+        initialExcludedWords: string[]
+    ): Promise<GeneratedWord[]> {
+        const {
+            categories,
+            learningLanguage,
+            nativeLanguage,
+            count = DEFAULT_WORDS_PER_SET,
+        } = params;
+
         const generatedWords: GeneratedWord[] = [];
         let attempts = 0;
         const maxAttempts = 3;
         const currentExcluded = new Set(
-            excludedWords.map((w) => w.toLowerCase())
+            initialExcludedWords.map((w) => w.toLowerCase())
         );
 
-        try {
-            while (generatedWords.length < count && attempts < maxAttempts) {
-                attempts++;
-                const wordsNeeded = count - generatedWords.length;
-                const REQUEST_MULTIPLEXOR = 1.5; // Request slightly more than needed to account for duplicates
+        while (generatedWords.length < count && attempts < maxAttempts) {
+            attempts++;
+            const wordsNeeded = count - generatedWords.length;
+            const REQUEST_MULTIPLEXOR = 1.5;
 
-                const requestCount = Math.ceil(
-                    wordsNeeded * REQUEST_MULTIPLEXOR
-                );
+            const requestCount = Math.ceil(wordsNeeded * REQUEST_MULTIPLEXOR);
 
-                LogService.info(
-                    `Generating words attempt ${attempts}/${maxAttempts}`,
-                    {
-                        needed: wordsNeeded,
-                        requesting: requestCount,
-                        excludedCount: currentExcluded.size,
-                    }
-                );
+            LogService.info(
+                `Generating words attempt ${attempts}/${maxAttempts}`,
+                {
+                    needed: wordsNeeded,
+                    requesting: requestCount,
+                    excludedCount: currentExcluded.size,
+                }
+            );
 
-                const userPrompt = this.generateUserPrompt(
-                    categories,
-                    learningLanguage,
-                    nativeLanguage,
-                    requestCount,
-                    Array.from(currentExcluded)
-                );
+            const userPrompt = this.generateUserPrompt(
+                categories,
+                learningLanguage,
+                nativeLanguage,
+                requestCount,
+                Array.from(currentExcluded)
+            );
 
+            try {
                 const response = await LLMService.complete([
                     { role: 'system', content: WORD_SET_GENERATION_PROMPT },
                     { role: 'user', content: userPrompt },
@@ -123,41 +172,26 @@ export class LLMHelper {
                         'LLM returned zero valid words in this attempt'
                     );
                 }
+            } catch (error) {
+                LogService.warn(`Attempt ${attempts} failed:`, error);
+                // Continue to next attempt
             }
-
-            // Validate final word count
-            if (generatedWords.length === 0) {
-                throw new Error(
-                    'LLM failed to generate any valid words after retries'
-                );
-            }
-
-            if (generatedWords.length < count) {
-                LogService.warn(
-                    `Could not generate full set of ${count} words. Got ${generatedWords.length}.`
-                );
-            }
-
-            // Cache the result only if it was a standard request (no specific exclusions passed initially)
-            if (excludedWords.length === 0 && generatedWords.length >= count) {
-                this.saveToCache(cacheKey, generatedWords);
-            }
-
-            LogService.info('Word set generated successfully', {
-                categories: categories.join(', '),
-                learningLanguage,
-                count: generatedWords.length,
-                attempts,
-            });
-
-            return {
-                words: generatedWords,
-                cached: false,
-            };
-        } catch (error) {
-            LogService.error('Failed to generate word set', error);
-            throw error;
         }
+
+        // Validate final word count
+        if (generatedWords.length === 0) {
+            throw new Error(
+                'LLM failed to generate any valid words after retries'
+            );
+        }
+
+        if (generatedWords.length < count) {
+            LogService.warn(
+                `Could not generate full set of ${count} words. Got ${generatedWords.length}.`
+            );
+        }
+
+        return generatedWords;
     }
 
     /**

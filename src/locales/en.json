@@ -170,9 +170,13 @@
         "language": "Change interface language",
         "learning_language": "Change learning language",
         "my_status": "Show your current status and settings",
-        "add_words_set": "Add preset set of 50 words"
+        "add_words_set": "Add a preset set of words via AI"
     },
     "addWordsSet": {
-        "confirm": "Do you want to generate and add 50 words to your dictionary? This will use AI to find words based on your favorite categories."
+        "confirmation": "🤖 *Generate Word Set*\n\nDo you want to generate and add 50 new words to your dictionary?\n\n• Based on your favorite categories\n• Words in your learning language\n• Translations in your interface language\n• Only unique words will be added",
+        "generating": "🤖 Generating words... Please wait.",
+        "success": "✅ Successfully added {{count}} new words to your dictionary!",
+        "error": "❌ Failed to generate word set. Please try again later.",
+        "partial": "⚠️ Added {{count}} words. Could not generate full set of {{total}} unique words."
     }
 }

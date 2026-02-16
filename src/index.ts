@@ -1,4 +1,10 @@
+// CRITICAL: Load environment variables FIRST, before any other imports
+// that might use process.env during class initialization
 import { config as dotEnvConfig } from 'dotenv';
+dotEnvConfig({
+    path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env',
+});
+
 import chalk from 'chalk';
 import TelegramBot, {
     CallbackQuery,
@@ -22,10 +28,6 @@ import { BotInitService } from './services/bot-init.service';
 export { LLMService } from './services/llm.service';
 export { LLMHelper } from './helpers/llm-helper';
 export * from './common/interfaces/llm';
-
-dotEnvConfig({
-    path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env',
-});
 const TB_TOKEN: string = process.env.TELEGRAM_BOT_TOKEN!;
 const nodeEnv: string = process.env.NODE_ENV!;
 
