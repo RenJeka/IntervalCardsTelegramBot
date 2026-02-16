@@ -584,7 +584,7 @@ export class MessageService {
             chatId,
             userId,
             'add_words_set',
-            t('addWordsSet.confirm', userLanguage)
+            t('addWordsSet.confirmation', userLanguage)
         );
     }
 
