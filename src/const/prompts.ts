@@ -10,6 +10,7 @@ Requirements:
 - Words should be appropriate for the specified categories
 - Translations should be accurate and commonly used
 - Focus on basic, everyday vocabulary
+- Do NOT include words from the exclusion list (if provided)
 
 Example format:
 [{"word":"cat","translation":"кіт"},{"word":"dog","translation":"собака"}]`;

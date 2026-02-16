@@ -61,7 +61,8 @@ export interface WordSetGenerationParams {
     categories: string[];
     learningLanguage: string;
     nativeLanguage: string;
-    count: number;
+    count?: number;
+    excludedWords?: string[];
 }
 
 export interface WordSetGenerationResult {
