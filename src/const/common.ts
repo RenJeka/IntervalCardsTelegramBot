@@ -1,4 +1,4 @@
-import { SupportedLanguage } from "../services/i18n.service";
+import { SupportedLanguage } from '../services/i18n.service';
 
 /**
  * @description separator, when user add item and separate word and translation e.t.c.
@@ -23,6 +23,7 @@ export const DEFAULT_LANGUAGE: SupportedLanguage = 'en';
 export const LANGUAGE_CALLBACK_PREFIX = 'lang_';
 export const LEARNING_LANGUAGE_CALLBACK_PREFIX = 'le_lang_';
 export const FAVORITE_CATEGORY_CALLBACK_PREFIX = 'favorite_category:';
+export const CONFIRM_ACTION_CALLBACK_PREFIX = 'confirm_action:';
 
 export const SUPPORTED_LEARNING_LANGUAGES = [
     'en', // English
@@ -39,15 +40,22 @@ export const SUPPORTED_LEARNING_LANGUAGES = [
     'ja', // Japanese
     'ko', // Korean
     'ar', // Arabic
-    'hi'  // Hindi
+    'hi', // Hindi
 ] as const;
 
 // LLM Configuration
-export const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+export const OPENROUTER_API_URL =
+    'https://openrouter.ai/api/v1/chat/completions';
 export const DEFAULT_LLM_MODEL = 'google/gemini-2.5-flash-lite';
 export const DEFAULT_LLM_TEMPERATURE = 0.7;
 export const DEFAULT_LLM_MAX_TOKENS = 2000;
 export const DEFAULT_WORDS_PER_SET = 10;
+export const PRESET_WORDS_SET_COUNT = 50;
+export const PRESET_WORDS_MAX_GENERATION_ATTEMPTS = 5;
+export const PRESET_WORDS_LLM_BATCH_SIZE = 50;
+
+// We limit the number of excluded words sent to avoid hitting token limits
+export const PRESET_WORDS_EXCLUDED_WORDS_LIMIT = 100;
 
 // Cache configuration
 export const LLM_CACHE_TTL_MS = 1000 * 60 * 60 * 24; // 24 hours

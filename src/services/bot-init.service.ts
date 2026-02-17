@@ -13,10 +13,11 @@ export class BotInitService {
         'set_favorite_categories',
         'language',
         'learning_language',
-        'my_status'
+        'my_status',
+        'add_words_set',
     ];
 
-    constructor(private scheduleService: ScheduleService) { }
+    constructor(private scheduleService: ScheduleService) {}
 
     async initBot(bot: TelegramBot): Promise<void> {
         const nodeEnv = process.env.NODE_ENV!;
@@ -27,25 +28,35 @@ export class BotInitService {
 
             // Set commands for each supported language
             for (const lang of SUPPORTED_LANGUAGES) {
-                const commands: BotCommand[] = this.commandKeys.map(key => ({
+                const commands: BotCommand[] = this.commandKeys.map((key) => ({
                     command: key,
-                    description: t(`commands.${key}`, lang)
+                    description: t(`commands.${key}`, lang),
                 }));
                 await bot.setMyCommands(commands, { language_code: lang });
             }
 
             // Set default commands (English)
-            const defaultCommands: BotCommand[] = this.commandKeys.map(key => ({
-                command: key,
-                description: t(`commands.${key}`, 'en')
-            }));
+            const defaultCommands: BotCommand[] = this.commandKeys.map(
+                (key) => ({
+                    command: key,
+                    description: t(`commands.${key}`, 'en'),
+                })
+            );
             await bot.setMyCommands(defaultCommands);
 
-            LogService.info(chalk.green.bold(`✔ Bot commands set successfully!`));
+            LogService.info(
+                chalk.green.bold(`✔ Bot commands set successfully!`)
+            );
             if (nodeEnv === 'production') {
-                LogService.info(chalk.red(`===[${nodeEnv.toUpperCase()} MODE]===`));
+                LogService.info(
+                    chalk.red(`===[${nodeEnv.toUpperCase()} MODE]===`)
+                );
             } else {
-                LogService.info(chalk.white.bgBlue.bold(`===[${nodeEnv.toUpperCase()} MODE]===`));
+                LogService.info(
+                    chalk.white.bgBlue.bold(
+                        `===[${nodeEnv.toUpperCase()} MODE]===`
+                    )
+                );
             }
 
             await this.scheduleService.resumeAllStartLearning(bot);

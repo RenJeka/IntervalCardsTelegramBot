@@ -88,6 +88,9 @@
     "navigation": {
         "home": "You are on the 'Home page'"
     },
+    "confirmation": {
+        "cancelled": "Action cancelled."
+    },
     "errors": {
         "generic": "Something went wrong: {{error}}. Please, try again",
         "noMessage": "I did not receive any message from You, Please, try again.",
@@ -103,7 +106,9 @@
         "stopLearn": "🟥️ Stop learn",
         "finishAdding": "✔️ Finish adding words",
         "finishRemoving": "✔️ Finish removing words",
-        "cancel": "❌️ Cancel"
+        "cancel": "❌️ Cancel",
+        "yes": "✅ Yes",
+        "no": "❌ No (Cancel)"
     },
     "categories": {
         "Animals": "Animals",
@@ -164,6 +169,14 @@
         "set_favorite_categories": "Select the favorite categories for learning",
         "language": "Change interface language",
         "learning_language": "Change learning language",
-        "my_status": "Show your current status and settings"
+        "my_status": "Show your current status and settings",
+        "add_words_set": "Add a preset set of words via AI"
+    },
+    "addWordsSet": {
+        "confirmation": "🤖 *Generate Word Set*\n\nDo you want to generate and add 50 new words to your dictionary?\n\n• Based on your favorite categories\n• Words in your learning language\n• Translations in your interface language\n• Only unique words will be added",
+        "generating": "🤖 Generating words... Please wait.",
+        "success": "✅ Successfully added {{count}} new words to your dictionary!",
+        "error": "❌ Failed to generate word set. Please try again later.",
+        "partial": "⚠️ Added {{count}} words. Could not generate full set of {{total}} unique words."
     }
 }

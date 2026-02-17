@@ -4,7 +4,8 @@ import { t } from "../services/i18n.service";
 import {
     LANGUAGE_CALLBACK_PREFIX,
     LEARNING_LANGUAGE_CALLBACK_PREFIX,
-    SUPPORTED_LEARNING_LANGUAGES
+    SUPPORTED_LEARNING_LANGUAGES,
+    CONFIRM_ACTION_CALLBACK_PREFIX
 } from "../const/common";
 import { CategoryHelper } from "../helpers/category-helper";
 import { SupportedLanguage } from "../common/interfaces/common";
@@ -125,6 +126,18 @@ export function getLearningLanguageKeyboard(lang: SupportedLanguage): SendMessag
     return {
         reply_markup: {
             inline_keyboard: keyboard,
+            resize_keyboard: true
+        }
+    };
+}
+
+export function getConfirmActionKeyboard(actionKey: string, lang: SupportedLanguage): SendMessageOptions {
+    return {
+        reply_markup: {
+            inline_keyboard: [
+                [{ text: t('buttons.yes', lang), callback_data: `${CONFIRM_ACTION_CALLBACK_PREFIX}yes:${actionKey}` }],
+                [{ text: t('buttons.no', lang), callback_data: `${CONFIRM_ACTION_CALLBACK_PREFIX}no:${actionKey}` }]
+            ],
             resize_keyboard: true
         }
     };
