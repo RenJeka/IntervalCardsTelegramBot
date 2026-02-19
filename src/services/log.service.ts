@@ -1,8 +1,16 @@
-import { LOG_MAX_DEPTH } from "../const/common";
+import chalk from 'chalk';
+import { LOG_MAX_DEPTH } from '../const/common';
+
+const IS_DEV = process.env.NODE_ENV === 'development';
+
+const DIVIDER = chalk.gray('─'.repeat(60));
 
 export class LogService {
-
-    private static clean(obj: any, depth: number = 0, seen: WeakSet<any> = new WeakSet()): any {
+    private static clean(
+        obj: any,
+        depth: number = 0,
+        seen: WeakSet<any> = new WeakSet()
+    ): any {
         if (depth > LOG_MAX_DEPTH) {
             return '[DepthLimit]';
         }
@@ -16,7 +24,7 @@ export class LogService {
         seen.add(obj);
 
         if (Array.isArray(obj)) {
-            return obj.map(item => this.clean(item, depth + 1, seen));
+            return obj.map((item) => this.clean(item, depth + 1, seen));
         }
 
         if (obj instanceof Error) {
@@ -25,7 +33,7 @@ export class LogService {
                 message: obj.message,
                 name: obj.name,
                 stack: obj.stack,
-                ...this.clean({ ...obj }, depth + 1, seen) // Catch any other attached properties
+                ...this.clean({ ...obj }, depth + 1, seen), // Catch any other attached properties
             };
         }
 
@@ -47,6 +55,22 @@ export class LogService {
         } catch (err) {
             return '[LogService Error: Failed to stringify]';
         }
+    }
+
+    /**
+     * Logs incoming request info in developer mode only.
+     * Prints a divider, a color-coded label, and the basic request JSON.
+     */
+    static devRequest(label: string, data: Record<string, any>): void {
+        if (!IS_DEV) return;
+
+        const timestamp = chalk.gray(new Date().toISOString());
+        const header = `${chalk.bgCyan.black(' DEV REQUEST ')} ${chalk.cyan(label)} ${timestamp}`;
+
+        console.log(DIVIDER);
+        console.log(header);
+        console.log(chalk.yellow(this.safeStringify(data)));
+        console.log(DIVIDER);
     }
 
     static error(message: string, error?: any) {

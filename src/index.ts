@@ -49,6 +49,16 @@ botInitService.initBot(bot);
 bot.on('message', async (msg: Message, metadata: Metadata) => {
     const messageText = msg.text;
 
+    LogService.devRequest('message', {
+        userId: msg.from?.id,
+        username: msg.from?.username,
+        firstName: msg.from?.first_name,
+        chatType: msg.chat.type,
+        text: messageText,
+        messageId: msg.message_id,
+        date: new Date(msg.date * 1000).toISOString(),
+    });
+
     const userAction = CommandHelper.getActionFromText(messageText || '');
 
     switch (messageText) {
@@ -119,6 +129,14 @@ bot.on('message', async (msg: Message, metadata: Metadata) => {
 });
 
 bot.on('callback_query', async (query: CallbackQuery) => {
+    LogService.devRequest('callback_query', {
+        userId: query.from?.id,
+        username: query.from?.username,
+        firstName: query.from?.first_name,
+        data: query.data,
+        messageId: query.message?.message_id,
+    });
+
     await messageService.generalCallbackHandler(bot, query);
 });
 
